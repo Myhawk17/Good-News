@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0e0e10">
+  <meta name="description" content="Daily Slides – Nachrichten in kurzen Vollbild-Slides.">
+  <title>Daily Slides</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="appbar">
+    <button class="brand-btn" id="homeBtn" aria-label="Zum neuesten Beitrag">
+      <img id="brandLogo" class="brand-logo" alt="App-Logo">
+      <span class="brand-mark">D</span>
+      <span class="brand-name">Daily Slides</span>
+    </button>
+    <div class="appbar-actions">
+      <button class="icon-btn" id="searchBtn" aria-label="Suche">⌕</button>
+      <button class="icon-btn" id="archiveBtn" aria-label="Archiv">▦</button>
+      <button class="icon-btn" id="favoritesBtn" aria-label="Favoriten">♡</button>
+      <button class="icon-btn" id="adminBtn" aria-label="Redaktion">⚙</button>
+    </div>
+  </header>
+
+  <main id="feed" class="feed" aria-live="polite"></main>
+
+  <div class="swipe-hint" id="swipeHint">↑ wischen</div>
+
+  <dialog id="readerDialog" class="sheet">
+    <div class="dialog-head">
+      <div>
+        <div class="eyebrow" id="readerEyebrow">Daily Slides</div>
+        <h2 id="readerTitle">Menü</h2>
+      </div>
+      <button class="icon-btn dialog-close" data-close="readerDialog">✕</button>
+    </div>
+    <div id="readerContent"></div>
+  </dialog>
+
+  <dialog id="adminDialog" class="admin-dialog">
+    <div class="dialog-head">
+      <div>
+        <div class="eyebrow">Daily Slides</div>
+        <h2>Redaktion</h2>
+      </div>
+      <button class="icon-btn dialog-close" data-close="adminDialog">✕</button>
+    </div>
+
+    <section id="loginView">
+      <p class="muted">Nur für die Redaktion.</p>
+      <form id="loginForm" class="stack">
+        <label>E-Mail<input id="loginEmail" type="email" autocomplete="email" required></label>
+        <label>Passwort<input id="loginPassword" type="password" autocomplete="current-password" required></label>
+        <button class="primary" type="submit">Anmelden</button>
+        <div id="loginMessage" class="message"></div>
+      </form>
+    </section>
+
+    <section id="adminView" hidden>
+      <div class="admin-toolbar">
+        <div>
+          <div class="muted">Angemeldet als</div>
+          <strong id="whoAmI"></strong>
+        </div>
+        <button class="secondary" id="logoutBtn">Abmelden</button>
+      </div>
+
+      <nav class="tabs" aria-label="Redaktion">
+        <button class="tab active" data-tab="dashboard">Übersicht</button>
+        <button class="tab" data-tab="editor">Neuer Beitrag</button>
+        <button class="tab" data-tab="manage">Beiträge</button>
+        <button class="tab" data-tab="settings">Design & App</button>
+      </nav>
+
+      <section id="tab-dashboard" class="tab-panel">
+        <div id="dashboardCards" class="metric-grid"></div>
+        <h3>Heute</h3>
+        <div id="todayList"></div>
+      </section>
+
+      <section id="tab-editor" class="tab-panel" hidden>
+        <form id="newsForm" class="stack">
+          <input id="newsId" type="hidden">
+          <input id="existingImagePath" type="hidden">
+
+          <div class="form-grid two">
+            <label>Datum<input id="publishedDate" type="date" required></label>
+            <label>Uhrzeit<input id="publishedTime" type="time" required></label>
+          </div>
+
+          <div class="form-grid two">
+            <label>Kategorie
+              <input id="category" list="categoryOptions" maxlength="40" placeholder="Politik" required>
+              <datalist id="categoryOptions">
+                <option value="Politik"><option value="Welt"><option value="Wirtschaft">
+                <option value="Sport"><option value="Wissenschaft"><option value="Kultur">
+                <option value="Technologie"><option value="Gesellschaft"><option value="Region">
+              </datalist>
+            </label>
+            <label>Thema / Serie
+              <input id="storyKey" maxlength="80" placeholder="z. B. Ukraine-Krieg">
+            </label>
+          </div>
+
+          <label>Überschrift
+            <textarea id="title" rows="2" maxlength="180" required></textarea>
+          </label>
+
+          <label>Kurztext
+            <textarea id="summary" rows="7" maxlength="1800" required></textarea>
+          </label>
+
+          <div class="form-grid two">
+            <label>Status
+              <select id="status">
+                <option value="draft">Entwurf</option>
+                <option value="published">Veröffentlicht</option>
+              </select>
+            </label>
+            <label>Priorität
+              <select id="priority">
+                <option value="normal">Normal</option>
+                <option value="top">Topmeldung</option>
+              </select>
+            </label>
+          </div>
+
+          <fieldset>
+            <legend>Bild</legend>
+            <label>Bild hochladen
+              <input id="imageFile" type="file" accept="image/*">
+            </label>
+            <label>Alternativ Bild-URL
+              <input id="imageUrl" type="url" placeholder="https://…">
+            </label>
+            <label>Bildnachweis
+              <input id="imageCredit" maxlength="160" placeholder="Foto: …">
+            </label>
+            <div id="imagePreviewBox" class="image-preview-box" hidden>
+              <img id="imagePreview" alt="Bildvorschau">
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Quellen</legend>
+            <div id="sourcesEditor"></div>
+            <button class="secondary compact" type="button" id="addSourceBtn">+ Quelle hinzufügen</button>
+          </fieldset>
+
+          <fieldset>
+            <legend>Zusatz</legend>
+            <label>Kurz erklärt / Kontext
+              <textarea id="contextText" rows="4" maxlength="1400" placeholder="Optionaler Hintergrund für Leserinnen und Leser"></textarea>
+            </label>
+          </fieldset>
+
+          <div class="sticky-actions">
+            <button class="secondary" type="button" id="previewBtn">Vorschau</button>
+            <button class="primary" type="submit" id="saveBtn">Speichern</button>
+            <button class="secondary" type="button" id="cancelEditBtn" hidden>Bearbeiten abbrechen</button>
+          </div>
+          <div id="editorMessage" class="message"></div>
+        </form>
+      </section>
+
+      <section id="tab-manage" class="tab-panel" hidden>
+        <div class="filters">
+          <input id="adminSearch" type="search" placeholder="Beiträge durchsuchen">
+          <select id="adminStatus">
+            <option value="all">Alle</option>
+            <option value="published">Veröffentlicht</option>
+            <option value="draft">Entwürfe</option>
+          </select>
+        </div>
+        <div id="adminList"></div>
+      </section>
+
+      <section id="tab-settings" class="tab-panel" hidden>
+        <form id="settingsForm" class="stack">
+          <fieldset>
+            <legend>App</legend>
+            <label>App-Name
+              <input id="settingAppName" maxlength="40" placeholder="Daily Slides">
+            </label>
+            <label>Logo hochladen
+              <input id="settingLogoFile" type="file" accept="image/*">
+            </label>
+            <label>Alternativ Logo-URL
+              <input id="settingLogoUrl" type="url" placeholder="https://…">
+            </label>
+            <div id="logoPreviewBox" class="logo-preview-box" hidden>
+              <img id="logoPreview" alt="Logo-Vorschau">
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Farben</legend>
+            <div class="form-grid three">
+              <label>Hintergrund
+                <input id="settingBg" type="color" value="#0e0e10">
+              </label>
+              <label>Text
+                <input id="settingText" type="color" value="#f5f5f5">
+              </label>
+              <label>Akzent
+                <input id="settingAccent" type="color" value="#ffffff">
+              </label>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Darstellung</legend>
+            <div class="form-grid two">
+              <label>Überschriftengröße
+                <select id="settingTitleSize">
+                  <option value="compact">Kompakt</option>
+                  <option value="normal" selected>Normal</option>
+                  <option value="large">Groß</option>
+                </select>
+              </label>
+              <label>Ecken
+                <select id="settingRadius">
+                  <option value="square">Eckig</option>
+                  <option value="soft" selected>Leicht rund</option>
+                  <option value="round">Stark rund</option>
+                </select>
+              </label>
+            </div>
+
+            <label>Bilddarstellung
+              <select id="settingImageMode">
+                <option value="full" selected>Vollbild</option>
+                <option value="top">Bild oben</option>
+                <option value="hidden">Bilder ausblenden</option>
+              </select>
+            </label>
+
+            <label>Bildabdunklung
+              <input id="settingOverlay" type="range" min="0" max="90" step="5" value="65">
+            </label>
+
+            <div class="toggle-grid">
+              <label class="toggle-row"><input id="settingShowCategory" type="checkbox" checked> Kategorie anzeigen</label>
+              <label class="toggle-row"><input id="settingShowDate" type="checkbox" checked> Datum anzeigen</label>
+              <label class="toggle-row"><input id="settingShowSources" type="checkbox" checked> Quellen anzeigen</label>
+              <label class="toggle-row"><input id="settingShowCounter" type="checkbox" checked> Zähler anzeigen</label>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Vorschau</legend>
+            <div id="themePreview" class="theme-preview">
+              <div class="preview-kicker">Politik · 23.08.2026</div>
+              <div class="preview-headline">So sieht deine App aus</div>
+              <div class="preview-copy">Farben, Abstände und Bilddarstellung kannst du hier verändern.</div>
+            </div>
+          </fieldset>
+
+          <div class="sticky-actions">
+            <button class="primary" type="submit">Design speichern</button>
+            <button class="secondary" type="button" id="resetThemeBtn">Standard wiederherstellen</button>
+          </div>
+          <div id="settingsMessage" class="message"></div>
+        </form>
+      </section>
+    </section>
+  </dialog>
+
+  <dialog id="previewDialog" class="preview-dialog">
+    <button class="preview-close" data-close="previewDialog">✕</button>
+    <div id="previewContent"></div>
+  </dialog>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
