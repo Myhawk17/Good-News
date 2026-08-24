@@ -1,6 +1,6 @@
 {
-  "name": "Daily Slides",
-  "short_name": "Daily",
+  "name": "Good News",
+  "short_name": "GoNe",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#0e0e10",
