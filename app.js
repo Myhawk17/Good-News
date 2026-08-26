@@ -168,18 +168,20 @@ function buildSlide(item, index, total) {
       ${item.context_text ? `<div class="context-box"><strong>Kurz erklärt</strong>${esc(item.context_text)}</div>` : ""}
       ${item.feel_good_text ? `<div class="feel-good-box"><strong>💛 Darum macht das Freude</strong>${esc(item.feel_good_text)}</div>` : ""}
 
-      ${reactionBar(item)}
       <div class="slide-actions">
         <button class="slide-action fav-btn ${fav ? "active":""}" data-id="${item.id}">${fav ? "♥ Gespeichert" : "♡ Merken"}</button>
         <button class="slide-action share-btn" data-id="${item.id}">↗ Teilen</button>
-        ${sourcesOf(item).length > 0 ? `<button class="slide-action sources-btn" data-id="${item.id}">Quellen (${sourcesOf(item).length})</button>` : ""}
-        ${item.story_key ? `<button class="slide-action story-btn" data-story="${esc(item.story_key)}">Was bisher geschah</button>` : ""}
       </div>
 
-      ${item.image_credit ? `<div class="credit">${esc(item.image_credit)}</div>` : ""}
-      <div class="source-line">
-        <span>${primarySource ? `Quelle: ${esc(primarySource.name)}` : "Good News"}</span>
-        <span>${String(index+1).padStart(2,"0")} / ${String(total).padStart(2,"0")}</span>
+      ${item.image_credit ? (
+        primarySource?.url
+          ? `<a class="credit quiet-link" href="${esc(primarySource.url)}" target="_blank" rel="noopener noreferrer">${esc(item.image_credit)}</a>`
+          : `<div class="credit">${esc(item.image_credit)}</div>`
+      ) : ""}
+      <div class="source-line source-line-simple">
+        ${primarySource
+          ? `<a class="quiet-link" href="${esc(primarySource.url)}" target="_blank" rel="noopener noreferrer">Quelle: ${esc(primarySource.name)}</a>`
+          : `<span>Good News</span>`}
       </div>
     </div>`;
   article.querySelector(".fav-btn").onclick = (e) => {
@@ -188,9 +190,6 @@ function buildSlide(item, index, total) {
     e.currentTarget.textContent = active ? "♥ Gespeichert" : "♡ Merken";
   };
   article.querySelector(".share-btn").onclick = () => shareItem(item);
-  article.querySelector(".sources-btn")?.addEventListener("click",()=>openSources(item));
-  article.querySelector(".story-btn")?.addEventListener("click",()=>openStory(item.story_key));
-  article.querySelectorAll(".reaction-btn").forEach(btn=>btn.addEventListener("click",()=>reactToNews(item.id,btn.dataset.reaction)));
   return article;
 }
 

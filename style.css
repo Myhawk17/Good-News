@@ -303,3 +303,28 @@ input[type="range"]{padding:0}
   .metric-grid-compact .metric span{font-size:.63rem}
   .tabs.admin-menu .admin-menu-item{min-height:60px;padding:10px 11px}
 }
+
+
+/* Good News 2.7 – ruhige Quellenzeile, keine Reaktionen/Seitennummer */
+.quiet-link{
+  color:inherit;
+  text-decoration:none;
+  -webkit-tap-highlight-color:rgba(255,255,255,.10);
+  transition:opacity .15s ease, background-color .15s ease;
+}
+.quiet-link:hover,
+.quiet-link:focus-visible{
+  opacity:.78;
+  text-decoration:none;
+}
+.quiet-link:active{
+  opacity:.62;
+}
+.source-line-simple{
+  justify-content:flex-start;
+}
+.credit.quiet-link{
+  display:block;
+  width:max-content;
+  max-width:100%;
+}
