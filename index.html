@@ -7,7 +7,7 @@
   <meta name="description" content="Good News – Jeden Tag passiert auch Gutes.">
   <title>Good News</title>
   <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="style.css?v=25">
+  <link rel="stylesheet" href="style.css?v=26">
 </head>
 <body>
   <header class="appbar">
@@ -82,16 +82,53 @@
         <button class="secondary" id="logoutBtn">Abmelden</button>
       </div>
 
-      <nav class="tabs" aria-label="Redaktion">
-        <button class="tab active" data-tab="dashboard">Übersicht</button>
-        <button class="tab" data-tab="editor">Neuer Beitrag</button>
-        <button class="tab" data-tab="manage">Beiträge</button>
-        <button class="tab" data-tab="submissions">📬 Einsendungen <span id="submissionBadge" class="badge" hidden></span></button>
-        <button class="tab" data-tab="settings">Design & App</button>
+      <!-- Kompakte Statistik direkt unter dem Login -->
+      <div id="dashboardCards" class="metric-grid metric-grid-compact"></div>
+
+      <!-- Funktionen der Redaktion untereinander -->
+      <nav class="tabs admin-menu" aria-label="Redaktion">
+        <button class="tab admin-menu-item active" data-tab="dashboard">
+          <span class="admin-menu-icon">🏠</span>
+          <span class="admin-menu-copy">
+            <strong>Übersicht</strong>
+            <small>Täglichen Dreier ansehen</small>
+          </span>
+        </button>
+
+        <button class="tab admin-menu-item" data-tab="editor">
+          <span class="admin-menu-icon">✏️</span>
+          <span class="admin-menu-copy">
+            <strong>Neuer Beitrag</strong>
+            <small>Eine neue Good News erstellen</small>
+          </span>
+        </button>
+
+        <button class="tab admin-menu-item" data-tab="manage">
+          <span class="admin-menu-icon">📰</span>
+          <span class="admin-menu-copy">
+            <strong>Beiträge</strong>
+            <small>Beiträge bearbeiten und verwalten</small>
+          </span>
+        </button>
+
+        <button class="tab admin-menu-item" data-tab="submissions">
+          <span class="admin-menu-icon">📬</span>
+          <span class="admin-menu-copy">
+            <strong>Einsendungen <span id="submissionBadge" class="badge" hidden></span></strong>
+            <small>Vorschläge der Leser prüfen</small>
+          </span>
+        </button>
+
+        <button class="tab admin-menu-item" data-tab="settings">
+          <span class="admin-menu-icon">🎨</span>
+          <span class="admin-menu-copy">
+            <strong>Design der App</strong>
+            <small>Farben, Logo und Darstellung</small>
+          </span>
+        </button>
       </nav>
 
       <section id="tab-dashboard" class="tab-panel">
-        <div id="dashboardCards" class="metric-grid"></div>
         <h3>Heute</h3>
         <div id="todayList"></div>
       </section>
@@ -377,6 +414,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="app.js?v=25"></script>
+  <script src="app.js?v=26"></script>
 </body>
 </html>

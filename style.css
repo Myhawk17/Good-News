@@ -210,3 +210,96 @@ input[type="range"]{padding:0}
 .reaction-btn span{opacity:.72;font-variant-numeric:tabular-nums}
 .reaction-btn.active{background:#fff;color:#111;border-color:#fff}
 @media(max-width:430px){.reaction-bar{gap:6px}.reaction-btn{padding:8px 10px;font-size:12px}}
+
+
+/* Good News 2.6 – Redaktion kompakter und vertikal */
+.metric-grid-compact{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:8px;
+  margin:2px 0 14px;
+}
+.metric-grid-compact .metric{
+  padding:9px 8px;
+  border-radius:12px;
+  text-align:center;
+  min-width:0;
+}
+.metric-grid-compact .metric strong{
+  font-size:1.25rem;
+  line-height:1.05;
+  letter-spacing:-.03em;
+}
+.metric-grid-compact .metric span{
+  display:block;
+  margin-top:3px;
+  font-size:.68rem;
+  line-height:1.15;
+}
+
+.tabs.admin-menu{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:9px;
+  overflow:visible;
+  border-bottom:0;
+  margin:0 0 20px;
+}
+.tabs.admin-menu .admin-menu-item{
+  width:100%;
+  min-height:64px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  text-align:left;
+  white-space:normal;
+  padding:11px 13px;
+  border:1px solid #34343a;
+  border-radius:16px;
+  background:#19191c;
+  color:#f5f5f5;
+}
+.tabs.admin-menu .admin-menu-item.active{
+  color:#fff;
+  border-color:#66666f;
+  background:#222226;
+  box-shadow:inset 3px 0 0 #fff;
+}
+.admin-menu-icon{
+  width:36px;
+  height:36px;
+  flex:0 0 36px;
+  display:grid;
+  place-items:center;
+  border-radius:11px;
+  background:#242429;
+  font-size:1.15rem;
+}
+.admin-menu-copy{
+  display:flex;
+  flex-direction:column;
+  min-width:0;
+  gap:2px;
+}
+.admin-menu-copy strong{
+  font-size:.96rem;
+  line-height:1.2;
+}
+.admin-menu-copy small{
+  color:#9e9ea5;
+  font-size:.76rem;
+  line-height:1.25;
+  font-weight:500;
+}
+
+#tab-dashboard > h3{
+  margin:4px 0 10px;
+}
+
+@media(max-width:420px){
+  .metric-grid-compact{gap:6px}
+  .metric-grid-compact .metric{padding:8px 5px}
+  .metric-grid-compact .metric strong{font-size:1.12rem}
+  .metric-grid-compact .metric span{font-size:.63rem}
+  .tabs.admin-menu .admin-menu-item{min-height:60px;padding:10px 11px}
+}
