@@ -105,8 +105,8 @@ function imageViewOf(item={}){
   return {
     fit:item.image_fit === "contain" ? "contain" : "cover",
     zoom:clampNum(item.image_zoom,0.35,2.5,1),
-    x:clampNum(item.image_pos_x,0,100,50),
-    y:clampNum(item.image_pos_y,0,100,50)
+    x:clampNum(item.image_x ?? item.image_pos_x,0,100,50),
+    y:clampNum(item.image_y ?? item.image_pos_y,0,100,50)
   };
 }
 function imageStyleOf(item={}){const v=imageViewOf(item);return `object-fit:${v.fit};object-position:${v.x}% ${v.y}%;transform:scale(${v.zoom});transform-origin:center center;`}
@@ -417,16 +417,26 @@ function resetEditor(){
   $("publishedTime").value=now.toTimeString().slice(0,5);
   $("status").value="draft";$("priority").value="normal";
   $("saveBtn").textContent="Speichern";$("cancelEditBtn").hidden=true;
-  $("imagePreviewBox").hidden=true;$("imagePreview").removeAttribute("src");$("imagePreviewBlur")?.removeAttribute("src");
+  $("imagePreviewBox").hidden=true;$("imagePreview").removeAttribute("src");$("imagePreviewBlur")?.removeAttribute("src"); editorCroppedFile=null; editorOriginalPreviewSrc=null;
   if($("imageFit")) $("imageFit").value="cover"; if($("imageZoom")) $("imageZoom").value="1"; if($("imagePosX")) $("imagePosX").value="50"; if($("imagePosY")) $("imagePosY").value="50";
   applyImageEditorState();
   $("editorMessage").textContent="";
 }
 $("cancelEditBtn").onclick=()=>{resetEditor();switchAdminTab("dashboard")};
 
-function setEditorImage(src){
+let editorCroppedFile=null;
+let editorOriginalPreviewSrc=null;
+
+function setEditorImage(src,{preserveOriginal=true}={}){
   if(!src)return;
-  $("imagePreview").src=src; $("imagePreviewBlur").src=src; $("imagePreviewBox").hidden=false; applyImageEditorState();
+  if(preserveOriginal && !editorOriginalPreviewSrc) editorOriginalPreviewSrc=src;
+  const main=$("imagePreview"), blur=$("imagePreviewBlur");
+  if(!src.startsWith("blob:") && !src.startsWith("data:")){
+    main.crossOrigin="anonymous"; blur.crossOrigin="anonymous";
+  }else{
+    main.removeAttribute("crossorigin"); blur.removeAttribute("crossorigin");
+  }
+  main.src=src; blur.src=src; $("imagePreviewBox").hidden=false; applyImageEditorState();
 }
 function currentImageEditorState(){return {
   image_fit:$("imageFit")?.value||"cover", image_zoom:clampNum($("imageZoom")?.value,0.35,2.5,1),
@@ -450,11 +460,57 @@ function endCropPointer(e){cropPointers.delete(e.pointerId);if(cropPointers.size
 cropper?.addEventListener("pointerup",endCropPointer);cropper?.addEventListener("pointercancel",endCropPointer);
 
 $("imageFile").onchange=()=>{
-  const f=$("imageFile").files?.[0];if(!f)return; setEditorImage(URL.createObjectURL(f));
+  const f=$("imageFile").files?.[0];if(!f)return; editorCroppedFile=null; editorOriginalPreviewSrc=null; setEditorImage(URL.createObjectURL(f));
 };
 $("imageUrl").oninput=()=>{
   if($("imageFile").files?.[0])return; const url=$("imageUrl").value.trim(); if(url)setEditorImage(url);
 };
+
+async function cropVisibleImage(){
+  const img=$("imagePreview");
+  if(!img?.src) throw new Error("Bitte zuerst ein Bild auswählen.");
+  if(!img.complete) await new Promise((resolve,reject)=>{img.addEventListener("load",resolve,{once:true});img.addEventListener("error",()=>reject(new Error("Bild konnte nicht geladen werden.")),{once:true})});
+  const sw=img.naturalWidth, sh=img.naturalHeight;
+  if(!sw||!sh) throw new Error("Die Bildgröße konnte nicht gelesen werden.");
+  const W=1080,H=1920, v=currentImageEditorState();
+  const canvas=document.createElement("canvas");canvas.width=W;canvas.height=H;
+  const ctx=canvas.getContext("2d");
+  function layout(fit,zoom=1,x=v.image_pos_x,y=v.image_pos_y){
+    const scale=(fit==="contain"?Math.min(W/sw,H/sh):Math.max(W/sw,H/sh));
+    const bw=sw*scale,bh=sh*scale;
+    const ox=(W-bw)*(x/100), oy=(H-bh)*(y/100);
+    return {x:(ox-W/2)*zoom+W/2,y:(oy-H/2)*zoom+H/2,w:bw*zoom,h:bh*zoom};
+  }
+  try{
+    // Bei "Ganzes Bild" wird derselbe weiche Hintergrund wie in der App eingebrannt.
+    if(v.image_fit==="contain"){
+      const b=layout("cover",1.08,50,50);
+      ctx.save();ctx.filter="blur(34px)";ctx.globalAlpha=.82;ctx.drawImage(img,b.x,b.y,b.w,b.h);ctx.restore();
+      ctx.fillStyle="rgba(0,0,0,.12)";ctx.fillRect(0,0,W,H);
+    }else{ctx.fillStyle="#000";ctx.fillRect(0,0,W,H)}
+    const a=layout(v.image_fit,v.image_zoom,v.image_pos_x,v.image_pos_y);
+    ctx.drawImage(img,a.x,a.y,a.w,a.h);
+  }catch(err){
+    throw new Error("Dieses externe Bild darf der Browser nicht zuschneiden. Lade es bitte als Bilddatei hoch und versuche es erneut.");
+  }
+  const blob=await new Promise(resolve=>canvas.toBlob(resolve,"image/jpeg",.92));
+  if(!blob) throw new Error("Der Bildausschnitt konnte nicht erstellt werden.");
+  editorCroppedFile=new File([blob],`good-news-crop-${Date.now()}.jpg`,{type:"image/jpeg"});
+  const url=URL.createObjectURL(blob);
+  setEditorImage(url,{preserveOriginal:false});
+  $("imageFit").value="cover";$("imageZoom").value="1";$("imagePosX").value="50";$("imagePosY").value="50";applyImageEditorState();
+  if($("imageCropMessage")) $("imageCropMessage").textContent="Ausschnitt erstellt. Beim Speichern wird dieses zugeschnittene Bild verwendet.";
+}
+
+$("imageCropBtn")?.addEventListener("click",async()=>{
+  const btn=$("imageCropBtn");btn.disabled=true;
+  try{await cropVisibleImage()}catch(err){if($("imageCropMessage")) $("imageCropMessage").textContent=err.message||String(err)}finally{btn.disabled=false}
+});
+$("imageUndoCropBtn")?.addEventListener("click",()=>{
+  if(!editorOriginalPreviewSrc)return;
+  editorCroppedFile=null;setEditorImage(editorOriginalPreviewSrc,{preserveOriginal:false});
+  if($("imageCropMessage")) $("imageCropMessage").textContent="Originalansicht wiederhergestellt.";
+});
 
 async function uploadImage(file){
   if(!file)return null;
@@ -514,7 +570,7 @@ async function editArticle(id){
   const iv=imageViewOf(n); if($("imageFit")) $("imageFit").value=iv.fit; if($("imageZoom")) $("imageZoom").value=iv.zoom; if($("imagePosX")) $("imagePosX").value=iv.x; if($("imagePosY")) $("imagePosY").value=iv.y;
   $("sourcesEditor").innerHTML="";
   (sourcesOf(n).length?sourcesOf(n):[{name:"",url:""}]).forEach(s=>addSourceRow(s.name,s.url));
-  if(n.image_url){setEditorImage(n.image_url)}else $("imagePreviewBox").hidden=true; applyImageEditorState();
+  editorCroppedFile=null; editorOriginalPreviewSrc=null; if(n.image_url){setEditorImage(n.image_url)}else $("imagePreviewBox").hidden=true; applyImageEditorState();
   $("saveBtn").textContent="Änderungen speichern";$("cancelEditBtn").hidden=false;
   switchAdminTab("editor");
 }
@@ -525,7 +581,7 @@ $("newsForm").onsubmit=async(e)=>{
     const d=formToDraft();
     if(!d.sources.length)throw new Error("Bitte mindestens eine Quelle mit Name und Link angeben.");
     let imageUrl=d.image_url,imagePath=$("existingImagePath").value||null;
-    const file=$("imageFile").files?.[0];
+    const file=editorCroppedFile || $("imageFile").files?.[0];
     if(file){
       const uploaded=await uploadImage(file);imageUrl=uploaded.url;imagePath=uploaded.path;
     }
@@ -536,7 +592,7 @@ $("newsForm").onsubmit=async(e)=>{
       title:d.title,summary:d.summary,status:d.status,priority:d.priority,priority_rank:d.priority==="top"?1:0,
       context_text:d.context_text,daily_slot:d.daily_slot,years_ago:d.years_ago,feel_good_text:d.feel_good_text,
       image_url:imageUrl,image_path:imagePath,image_credit:d.image_credit,
-      image_fit:d.image_fit,image_zoom:d.image_zoom,image_pos_x:d.image_pos_x,image_pos_y:d.image_pos_y,
+      image_fit:d.image_fit,image_zoom:d.image_zoom,image_x:d.image_pos_x,image_y:d.image_pos_y,
       sources:d.sources,publish_at:publishAt,updated_at:new Date().toISOString()
     };
     const id=$("newsId").value;
@@ -554,7 +610,16 @@ resetEditor();
 fetchPublicNews();
 
 if("serviceWorker" in navigator){
-  addEventListener("load",()=>navigator.serviceWorker.register("sw.js"));
+  addEventListener("load",async()=>{
+    try{
+      const reg=await navigator.serviceWorker.register("sw.js");
+      await reg.update();
+      let reloading=false;
+      navigator.serviceWorker.addEventListener("controllerchange",()=>{
+        if(reloading)return;reloading=true;location.reload();
+      });
+    }catch(e){console.warn("Service Worker konnte nicht aktualisiert werden",e)}
+  });
 }
 
 

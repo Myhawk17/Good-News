@@ -7,7 +7,7 @@
   <meta name="description" content="Good News – Jeden Tag passiert auch Gutes.">
   <title>Good News</title>
   <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=23">
 </head>
 <body>
   <header class="appbar">
@@ -186,7 +186,12 @@
                   <button class="secondary compact" type="button" id="imageWholeBtn">Ganzes Bild</button>
                   <button class="secondary compact" type="button" id="imageResetBtn">Zurücksetzen</button>
                 </div>
-                <p class="muted image-help">Beim Herauszoomen wird freier Raum automatisch mit einer unscharfen Version des Fotos gefüllt. Das Originalbild wird nicht verändert.</p>
+                <div class="crop-actions">
+                  <button class="primary crop-save-btn" type="button" id="imageCropBtn">✂️ Ausschnitt zuschneiden</button>
+                  <button class="secondary compact" type="button" id="imageUndoCropBtn">Original wiederherstellen</button>
+                </div>
+                <p id="imageCropMessage" class="muted image-crop-message" aria-live="polite"></p>
+                <p class="muted image-help">Verschiebe und zoome das Foto zuerst. Mit „Ausschnitt zuschneiden“ wird genau die sichtbare 9:16-Fläche als neues Bild gespeichert. Bei „Ganzes Bild“ wird der weiche Hintergrund mit übernommen.</p>
               </div>
             </div>
           </fieldset>
@@ -349,6 +354,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="app.js"></script>
+  <script src="app.js?v=23"></script>
 </body>
 </html>
