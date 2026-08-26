@@ -100,6 +100,17 @@ function addDayBreak(date) {
   feed.appendChild(sec);
 }
 
+function clampNum(v,min,max,fallback){const n=Number(v);return Number.isFinite(n)?Math.min(max,Math.max(min,n)):fallback}
+function imageViewOf(item={}){
+  return {
+    fit:item.image_fit === "contain" ? "contain" : "cover",
+    zoom:clampNum(item.image_zoom,0.35,2.5,1),
+    x:clampNum(item.image_pos_x,0,100,50),
+    y:clampNum(item.image_pos_y,0,100,50)
+  };
+}
+function imageStyleOf(item={}){const v=imageViewOf(item);return `object-fit:${v.fit};object-position:${v.x}% ${v.y}%;transform:scale(${v.zoom});transform-origin:center center;`}
+
 function buildSlide(item, index, total) {
   const article = document.createElement("article");
   article.className = `slide${item.image_url ? " has-image" : ""}`;
@@ -109,7 +120,7 @@ function buildSlide(item, index, total) {
   const fav = isFavorite(item.id);
 
   article.innerHTML = `
-    ${item.image_url ? `<img class="slide-bg" src="${esc(item.image_url)}" alt="">` : ""}
+    ${item.image_url ? `<img class="slide-bg-blur" src="${esc(item.image_url)}" alt="" aria-hidden="true"><img class="slide-bg" src="${esc(item.image_url)}" alt="" style="${imageStyleOf(item)}">` : ""}
     <div class="slide-inner">
       <div class="topline">
         <span class="pill">${esc(item.category)}</span>
@@ -406,19 +417,43 @@ function resetEditor(){
   $("publishedTime").value=now.toTimeString().slice(0,5);
   $("status").value="draft";$("priority").value="normal";
   $("saveBtn").textContent="Speichern";$("cancelEditBtn").hidden=true;
-  $("imagePreviewBox").hidden=true;$("imagePreview").removeAttribute("src");
+  $("imagePreviewBox").hidden=true;$("imagePreview").removeAttribute("src");$("imagePreviewBlur")?.removeAttribute("src");
+  if($("imageFit")) $("imageFit").value="cover"; if($("imageZoom")) $("imageZoom").value="1"; if($("imagePosX")) $("imagePosX").value="50"; if($("imagePosY")) $("imagePosY").value="50";
+  applyImageEditorState();
   $("editorMessage").textContent="";
 }
 $("cancelEditBtn").onclick=()=>{resetEditor();switchAdminTab("dashboard")};
 
+function setEditorImage(src){
+  if(!src)return;
+  $("imagePreview").src=src; $("imagePreviewBlur").src=src; $("imagePreviewBox").hidden=false; applyImageEditorState();
+}
+function currentImageEditorState(){return {
+  image_fit:$("imageFit")?.value||"cover", image_zoom:clampNum($("imageZoom")?.value,0.35,2.5,1),
+  image_pos_x:clampNum($("imagePosX")?.value,0,100,50), image_pos_y:clampNum($("imagePosY")?.value,0,100,50)
+}}
+function applyImageEditorState(){
+  if(!$("imagePreview"))return; const v=currentImageEditorState();
+  $("imagePreview").style.objectFit=v.image_fit; $("imagePreview").style.objectPosition=`${v.image_pos_x}% ${v.image_pos_y}%`; $("imagePreview").style.transform=`scale(${v.image_zoom})`;
+  if($("imageZoomValue")) $("imageZoomValue").textContent=v.image_zoom.toFixed(2).replace(".",",")+"×";
+}
+["imageFit","imageZoom","imagePosX","imagePosY"].forEach(id=>$(id)?.addEventListener("input",applyImageEditorState));
+$("imageFillBtn")?.addEventListener("click",()=>{$("imageFit").value="cover";$("imageZoom").value="1";applyImageEditorState()});
+$("imageWholeBtn")?.addEventListener("click",()=>{$("imageFit").value="contain";$("imageZoom").value="1";$("imagePosX").value="50";$("imagePosY").value="50";applyImageEditorState()});
+$("imageResetBtn")?.addEventListener("click",()=>{$("imageFit").value="cover";$("imageZoom").value="1";$("imagePosX").value="50";$("imagePosY").value="50";applyImageEditorState()});
+
+const cropper=$("imageCropper"), cropPointers=new Map(); let dragLast=null,pinchStart=null,pinchZoom=1;
+function pointerDistance(){const pts=[...cropPointers.values()];if(pts.length<2)return 0;return Math.hypot(pts[0].x-pts[1].x,pts[0].y-pts[1].y)}
+cropper?.addEventListener("pointerdown",e=>{cropper.setPointerCapture?.(e.pointerId);cropPointers.set(e.pointerId,{x:e.clientX,y:e.clientY});if(cropPointers.size===1)dragLast={x:e.clientX,y:e.clientY};if(cropPointers.size===2){pinchStart=pointerDistance();pinchZoom=currentImageEditorState().image_zoom}});
+cropper?.addEventListener("pointermove",e=>{if(!cropPointers.has(e.pointerId))return;const prev=cropPointers.get(e.pointerId);cropPointers.set(e.pointerId,{x:e.clientX,y:e.clientY});if(cropPointers.size>=2&&pinchStart){const dist=pointerDistance();$("imageZoom").value=clampNum(pinchZoom*(dist/pinchStart),0.35,2.5,1);applyImageEditorState();return}if(cropPointers.size===1&&dragLast){const r=cropper.getBoundingClientRect();$("imagePosX").value=clampNum(Number($("imagePosX").value)+((e.clientX-prev.x)/Math.max(r.width,1))*100,0,100,50);$("imagePosY").value=clampNum(Number($("imagePosY").value)+((e.clientY-prev.y)/Math.max(r.height,1))*100,0,100,50);dragLast={x:e.clientX,y:e.clientY};applyImageEditorState()}});
+function endCropPointer(e){cropPointers.delete(e.pointerId);if(cropPointers.size<2){pinchStart=null;pinchZoom=currentImageEditorState().image_zoom}if(cropPointers.size===1){const p=[...cropPointers.values()][0];dragLast={x:p.x,y:p.y}}else if(!cropPointers.size)dragLast=null}
+cropper?.addEventListener("pointerup",endCropPointer);cropper?.addEventListener("pointercancel",endCropPointer);
+
 $("imageFile").onchange=()=>{
-  const f=$("imageFile").files?.[0];if(!f)return;
-  $("imagePreview").src=URL.createObjectURL(f);$("imagePreviewBox").hidden=false;
+  const f=$("imageFile").files?.[0];if(!f)return; setEditorImage(URL.createObjectURL(f));
 };
 $("imageUrl").oninput=()=>{
-  if($("imageFile").files?.[0])return;
-  const url=$("imageUrl").value.trim();
-  if(url){$("imagePreview").src=url;$("imagePreviewBox").hidden=false}
+  if($("imageFile").files?.[0])return; const url=$("imageUrl").value.trim(); if(url)setEditorImage(url);
 };
 
 async function uploadImage(file){
@@ -443,6 +478,7 @@ function formToDraft(){
     years_ago:$("yearsAgo")?.value?Number($("yearsAgo").value):null,
     feel_good_text:$("feelGoodText")?.value.trim()||null,
     image_url:$("imageUrl").value.trim()||($("imagePreview").src&&!$("imagePreview").src.startsWith("blob:")?$("imagePreview").src:null),
+    ...currentImageEditorState(),
     image_credit:$("imageCredit").value.trim()||null,sources:collectSources()
   };
 }
@@ -451,7 +487,7 @@ $("previewBtn").onclick=()=>openPreview(formToDraft());
 function openPreview(n){
   $("previewContent").innerHTML=`
     <article class="preview-card ${n.image_url?"has-image":""}">
-      ${n.image_url?`<img src="${esc(n.image_url)}" alt="">`:""}
+      ${n.image_url?`<img class="slide-bg-blur" src="${esc(n.image_url)}" alt="" aria-hidden="true"><img class="slide-bg" src="${esc(n.image_url)}" alt="" style="${imageStyleOf(n)}">`:""}
       <div class="slide-inner">
         <div class="topline"><span class="pill">${esc(n.category||"Kategorie")}</span>${n.priority==="top"?'<span class="pill top-pill">Topmeldung</span>':""}</div>
         <h1>${esc(n.title||"Deine Überschrift")}</h1>
@@ -475,9 +511,10 @@ async function editArticle(id){
   if($("feelGoodText")) $("feelGoodText").value=n.feel_good_text||"";
   $("imageUrl").value=n.image_path?"":(n.image_url||"");$("imageCredit").value=n.image_credit||"";
   $("existingImagePath").value=n.image_path||"";
+  const iv=imageViewOf(n); if($("imageFit")) $("imageFit").value=iv.fit; if($("imageZoom")) $("imageZoom").value=iv.zoom; if($("imagePosX")) $("imagePosX").value=iv.x; if($("imagePosY")) $("imagePosY").value=iv.y;
   $("sourcesEditor").innerHTML="";
   (sourcesOf(n).length?sourcesOf(n):[{name:"",url:""}]).forEach(s=>addSourceRow(s.name,s.url));
-  if(n.image_url){$("imagePreview").src=n.image_url;$("imagePreviewBox").hidden=false}else $("imagePreviewBox").hidden=true;
+  if(n.image_url){setEditorImage(n.image_url)}else $("imagePreviewBox").hidden=true; applyImageEditorState();
   $("saveBtn").textContent="Änderungen speichern";$("cancelEditBtn").hidden=false;
   switchAdminTab("editor");
 }
@@ -499,6 +536,7 @@ $("newsForm").onsubmit=async(e)=>{
       title:d.title,summary:d.summary,status:d.status,priority:d.priority,priority_rank:d.priority==="top"?1:0,
       context_text:d.context_text,daily_slot:d.daily_slot,years_ago:d.years_ago,feel_good_text:d.feel_good_text,
       image_url:imageUrl,image_path:imagePath,image_credit:d.image_credit,
+      image_fit:d.image_fit,image_zoom:d.image_zoom,image_pos_x:d.image_pos_x,image_pos_y:d.image_pos_y,
       sources:d.sources,publish_at:publishAt,updated_at:new Date().toISOString()
     };
     const id=$("newsId").value;

@@ -154,8 +154,40 @@
             <label>Bildnachweis
               <input id="imageCredit" maxlength="160" placeholder="Foto: …">
             </label>
-            <div id="imagePreviewBox" class="image-preview-box" hidden>
-              <img id="imagePreview" alt="Bildvorschau">
+            <div id="imagePreviewBox" class="image-editor" hidden>
+              <div class="image-editor-head">
+                <div><strong>🖼️ Bildausschnitt</strong><div class="muted">Ziehen zum Verschieben · zwei Finger oder Regler zum Zoomen</div></div>
+              </div>
+              <div id="imageCropper" class="image-cropper" aria-label="Bildausschnitt verschieben">
+                <img id="imagePreviewBlur" class="image-editor-blur" alt="" aria-hidden="true">
+                <img id="imagePreview" class="image-editor-main" alt="Bildvorschau">
+                <div class="crop-grid" aria-hidden="true"></div>
+              </div>
+              <div class="image-controls">
+                <label>Darstellung
+                  <select id="imageFit">
+                    <option value="cover">Bild füllen</option>
+                    <option value="contain">Ganzes Bild</option>
+                  </select>
+                </label>
+                <label>Zoom <span id="imageZoomValue" class="range-value">1,00×</span>
+                  <input id="imageZoom" type="range" min="0.35" max="2.5" step="0.05" value="1">
+                </label>
+                <div class="form-grid two">
+                  <label>Links / rechts
+                    <input id="imagePosX" type="range" min="0" max="100" step="1" value="50">
+                  </label>
+                  <label>Oben / unten
+                    <input id="imagePosY" type="range" min="0" max="100" step="1" value="50">
+                  </label>
+                </div>
+                <div class="image-quick-actions">
+                  <button class="secondary compact" type="button" id="imageFillBtn">Bild füllen</button>
+                  <button class="secondary compact" type="button" id="imageWholeBtn">Ganzes Bild</button>
+                  <button class="secondary compact" type="button" id="imageResetBtn">Zurücksetzen</button>
+                </div>
+                <p class="muted image-help">Beim Herauszoomen wird freier Raum automatisch mit einer unscharfen Version des Fotos gefüllt. Das Originalbild wird nicht verändert.</p>
+              </div>
             </div>
           </fieldset>
 
