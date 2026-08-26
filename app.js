@@ -287,6 +287,7 @@ async function refreshAuth() {
   if(session){
     $("whoAmI").textContent=session.user.email||"Redaktion";
     await loadAdminNews();
+    await loadSubmissions();
     await loadAppSettings();
     switchAdminTab("dashboard");
   }
@@ -320,7 +321,9 @@ function renderDashboard() {
     <div class="metric"><strong>${todayItems.length}</strong><span>heute</span></div>
     <div class="metric"><strong>${published}</strong><span>veröffentlicht</span></div>
     <div class="metric"><strong>${drafts}</strong><span>Entwürfe</span></div>`;
-  $("todayList").innerHTML=todayItems.length?todayItems.map(adminItemHtml).join(""):`<p class="muted">Für heute gibt es noch keine Beiträge.</p>`;
+  const slots=[['damals','🕰️ DAMALS'],['fortschritt','🚀 FORTSCHRITT'],['heute','❤️ HEUTE']];
+  const triple=slots.map(([key,label])=>{const n=todayItems.find(x=>x.daily_slot===key);return `<div class="triple-slot ${n?'':'missing'}"><div class="slot-label">${label}</div>${n?`<h4>${esc(n.title)}</h4><div class="muted">${n.status==='published'?'Veröffentlicht':'Entwurf'}</div>`:`<div class="muted">Noch nicht besetzt</div>`}</div>`}).join('');
+  $("todayList").innerHTML=`<div class="triple-grid">${triple}</div>`+(todayItems.length?todayItems.map(adminItemHtml).join(""):`<p class="muted">Für heute gibt es noch keine Beiträge.</p>`);
   bindAdminItemButtons($("todayList"));
 }
 
@@ -696,3 +699,86 @@ switchAdminTab = function(name){
 
 // load public design immediately
 loadAppSettings();
+
+// ---------------- GOOD NEWS 2.1: COMMUNITY SUBMISSIONS ----------------
+let readerSubmissions=[];
+const submissionDialog=$("submissionDialog");
+
+$("submitNewsBtn").onclick=()=>{
+  $("submissionForm").reset();
+  $("submissionMessage").textContent="";
+  submissionDialog.showModal();
+};
+
+$("submissionForm").onsubmit=async(e)=>{
+  e.preventDefault();
+  const msg=$("submissionMessage");
+  if(!configured){msg.textContent="Die Einsendefunktion ist noch nicht verbunden.";return}
+  msg.textContent="Wird gesendet …";
+  const row={
+    title:$("submissionTitle").value.trim(),
+    story_text:$("submissionText").value.trim(),
+    source_url:$("submissionUrl").value.trim(),
+    category:$("submissionCategory").value,
+    location:$("submissionLocation").value.trim()||null,
+    submitter_name:$("submissionName").value.trim()||null,
+    status:"new"
+  };
+  const {error}=await db.from("submissions").insert(row);
+  if(error){msg.textContent="Das hat leider nicht geklappt: "+error.message;return}
+  msg.textContent="Danke! 💛 Deine gute Nachricht ist bei der Redaktion angekommen.";
+  e.target.reset();
+  setTimeout(()=>{if(submissionDialog.open)submissionDialog.close()},1800);
+};
+
+async function loadSubmissions(){
+  if(!currentAdminSession)return;
+  const {data,error}=await db.from("submissions").select("*").order("created_at",{ascending:false});
+  if(error){console.warn("Submissions:",error.message);return}
+  readerSubmissions=data||[];
+  const count=readerSubmissions.filter(x=>x.status==="new").length;
+  const badge=$("submissionBadge");badge.textContent=count;badge.hidden=!count;
+  renderSubmissions();
+}
+function submissionStatusLabel(s){return ({new:"Neu",reviewing:"In Prüfung",accepted:"Übernommen",rejected:"Abgelehnt"})[s]||s}
+function renderSubmissions(){
+  const root=$("submissionList");if(!root)return;
+  const filter=$("submissionStatus")?.value||"new";
+  const rows=readerSubmissions.filter(x=>filter==="all"||x.status===filter);
+  root.innerHTML=rows.map(x=>`<article class="submission-card">
+    <div class="submission-meta">${esc(submissionStatusLabel(x.status))} · ${esc(new Date(x.created_at).toLocaleString("de-DE"))}${x.location?` · ${esc(x.location)}`:""}${x.submitter_name?` · von ${esc(x.submitter_name)}`:""}</div>
+    <h4>${esc(x.title)}</h4><p>${esc(x.story_text)}</p>
+    <div class="submission-source">Quelle: <a href="${esc(x.source_url)}" target="_blank" rel="noopener noreferrer">${esc(x.source_url)}</a></div>
+    <div class="submission-actions">
+      ${x.status!=="accepted"?`<button class="primary accept-sub" data-id="${x.id}">Für Redaktion übernehmen</button>`:""}
+      ${x.status!=="reviewing"&&x.status!=="accepted"?`<button class="secondary review-sub" data-id="${x.id}">In Prüfung</button>`:""}
+      ${x.status!=="rejected"&&x.status!=="accepted"?`<button class="secondary reject-sub" data-id="${x.id}">Ablehnen</button>`:""}
+    </div></article>`).join("")||'<p class="muted">Hier gibt es aktuell keine Einsendungen.</p>';
+  root.querySelectorAll(".accept-sub").forEach(b=>b.onclick=()=>acceptSubmission(b.dataset.id));
+  root.querySelectorAll(".review-sub").forEach(b=>b.onclick=()=>setSubmissionStatus(b.dataset.id,"reviewing"));
+  root.querySelectorAll(".reject-sub").forEach(b=>b.onclick=()=>setSubmissionStatus(b.dataset.id,"rejected"));
+}
+$("submissionStatus").onchange=renderSubmissions;
+async function setSubmissionStatus(id,status){
+  const {error}=await db.from("submissions").update({status,reviewed_at:new Date().toISOString()}).eq("id",id);
+  if(error)return alert(error.message);await loadSubmissions();
+}
+async function acceptSubmission(id){
+  const x=readerSubmissions.find(v=>String(v.id)===String(id));if(!x)return;
+  resetEditor();
+  $("category").value=x.category||"Menschen";
+  $("title").value=x.title;
+  $("summary").value=x.story_text;
+  $("sourcesEditor").innerHTML="";addSourceRow("Leserhinweis / Originalquelle",x.source_url);
+  $("feelGoodText").value="";
+  await setSubmissionStatus(id,"accepted");
+  switchAdminTab("editor");
+  $("editorMessage").textContent="Lesereinsendung übernommen. Bitte redaktionell prüfen, umformulieren und erst danach veröffentlichen.";
+}
+
+// Extend admin tab behavior for submissions.
+const _switchAdminTab=switchAdminTab;
+switchAdminTab=function(name){
+  _switchAdminTab(name);
+  if(name==="submissions")loadSubmissions();
+};

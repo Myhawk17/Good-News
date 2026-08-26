@@ -20,6 +20,7 @@
       <button class="icon-btn" id="searchBtn" aria-label="Suche">⌕</button>
       <button class="icon-btn" id="archiveBtn" aria-label="Archiv">▦</button>
       <button class="icon-btn" id="favoritesBtn" aria-label="Favoriten">♡</button>
+      <button class="icon-btn" id="submitNewsBtn" aria-label="Gute Nachricht einreichen">＋</button>
       <button class="icon-btn" id="adminBtn" aria-label="Redaktion">⚙</button>
     </div>
   </header>
@@ -37,6 +38,20 @@
       <button class="icon-btn dialog-close" data-close="readerDialog">✕</button>
     </div>
     <div id="readerContent"></div>
+  </dialog>
+
+  <dialog id="submissionDialog" class="sheet submission-dialog">
+    <div class="dialog-head"><div><div class="eyebrow">Mach mit 💛</div><h2>Gute Nachricht einreichen</h2></div><button class="icon-btn dialog-close" data-close="submissionDialog">✕</button></div>
+    <p class="muted">Du hast etwas Schönes, Bewegendes oder Spannendes entdeckt? Schick es uns. Jede Einsendung wird von der Redaktion geprüft und niemals automatisch veröffentlicht.</p>
+    <form id="submissionForm" class="stack">
+      <label>Überschrift / worum geht es?<input id="submissionTitle" maxlength="180" required placeholder="z. B. Nachbarschaft rettet altes Freibad"></label>
+      <label>Erzähl uns die Geschichte<textarea id="submissionText" rows="6" maxlength="2000" required placeholder="Was ist passiert und warum ist das eine gute Nachricht?"></textarea></label>
+      <label>Quelle / Link<input id="submissionUrl" type="url" required placeholder="https://…"></label>
+      <div class="form-grid two"><label>Kategorie<select id="submissionCategory"><option>Menschen</option><option>Wissenschaft</option><option>Medizin</option><option>Natur</option><option>Tiere</option><option>Technologie</option><option>Kultur</option><option>Sonstiges</option></select></label><label>Ort (optional)<input id="submissionLocation" maxlength="120" placeholder="z. B. Bremen"></label></div>
+      <label>Dein Name oder Pseudonym (optional)<input id="submissionName" maxlength="80"></label>
+      <label class="consent-row"><input id="submissionConsent" type="checkbox" required> <span>Ich bestätige, dass ich keine vertraulichen oder personenbezogenen Daten Dritter einsende und dass die Redaktion den Hinweis prüfen und redaktionell bearbeiten darf.</span></label>
+      <button class="primary" type="submit">💛 Nachricht einsenden</button><div id="submissionMessage" class="message" aria-live="polite"></div>
+    </form>
   </dialog>
 
   <dialog id="adminDialog" class="admin-dialog">
@@ -71,6 +86,7 @@
         <button class="tab active" data-tab="dashboard">Übersicht</button>
         <button class="tab" data-tab="editor">Neuer Beitrag</button>
         <button class="tab" data-tab="manage">Beiträge</button>
+        <button class="tab" data-tab="submissions">📬 Einsendungen <span id="submissionBadge" class="badge" hidden></span></button>
         <button class="tab" data-tab="settings">Design & App</button>
       </nav>
 
@@ -183,6 +199,12 @@
           </div>
           <div id="editorMessage" class="message"></div>
         </form>
+      </section>
+
+      <section id="tab-submissions" class="tab-panel" hidden>
+        <div class="section-head"><div><h3>📬 Lesereinsendungen</h3><p class="muted">Vorschläge werden nie automatisch veröffentlicht.</p></div></div>
+        <div class="filters"><select id="submissionStatus"><option value="new">Neu</option><option value="reviewing">In Prüfung</option><option value="accepted">Übernommen</option><option value="rejected">Abgelehnt</option><option value="all">Alle</option></select></div>
+        <div id="submissionList"></div>
       </section>
 
       <section id="tab-manage" class="tab-panel" hidden>
