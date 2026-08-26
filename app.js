@@ -310,6 +310,7 @@ feed.addEventListener("scroll",()=>{if(feed.scrollTop>100)$("swipeHint").style.d
 
 // ---------------- ADMIN ----------------
 function switchAdminTab(name) {
+  localStorage.setItem("goodNewsAdminTab", name);
   document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("active",t.dataset.tab===name));
   document.querySelectorAll(".tab-panel").forEach(p=>p.hidden = p.id !== `tab-${name}`);
   if(name==="dashboard") renderDashboard();
@@ -337,7 +338,8 @@ async function refreshAuth() {
     await loadAdminNews();
     await loadSubmissions();
     await loadAppSettings();
-    switchAdminTab("dashboard");
+    const lastTab = localStorage.getItem("goodNewsAdminTab") || "dashboard";
+    switchAdminTab(lastTab);
   }
 }
 
@@ -443,6 +445,90 @@ function collectSources(){
   })).filter(s=>s.name&&s.url);
 }
 
+
+const ADMIN_DRAFT_KEY = "goodNewsEditorDraft";
+
+function saveEditorDraft(){
+  const form=$("newsForm");
+  if(!form) return;
+  const draft={
+    newsId:$("newsId")?.value||"",
+    publishedDate:$("publishedDate")?.value||"",
+    publishedTime:$("publishedTime")?.value||"",
+    category:$("category")?.value||"",
+    storyKey:$("storyKey")?.value||"",
+    title:$("title")?.value||"",
+    summary:$("summary")?.value||"",
+    status:$("status")?.value||"draft",
+    priority:$("priority")?.value||"normal",
+    imageUrl:$("imageUrl")?.value||"",
+    imageCredit:$("imageCredit")?.value||"",
+    dailySlot:$("dailySlot")?.value||"none",
+    yearsAgo:$("yearsAgo")?.value||"",
+    feelGoodText:$("feelGoodText")?.value||"",
+    contextText:$("contextText")?.value||"",
+    imageFit:$("imageFit")?.value||"cover",
+    imageZoom:$("imageZoom")?.value||"1",
+    imagePosX:$("imagePosX")?.value||"50",
+    imagePosY:$("imagePosY")?.value||"50",
+    sources:[...$("sourcesEditor").querySelectorAll(".source-edit")].map(r=>({
+      name:r.querySelector(".source-name")?.value||"",
+      url:r.querySelector(".source-url")?.value||""
+    }))
+  };
+  localStorage.setItem(ADMIN_DRAFT_KEY,JSON.stringify(draft));
+}
+
+function clearEditorDraft(){
+  localStorage.removeItem(ADMIN_DRAFT_KEY);
+}
+
+function restoreEditorDraft(){
+  const raw=localStorage.getItem(ADMIN_DRAFT_KEY);
+  if(!raw) return false;
+  try{
+    const d=JSON.parse(raw);
+    $("newsId").value=d.newsId||"";
+    if(d.publishedDate) $("publishedDate").value=d.publishedDate;
+    if(d.publishedTime) $("publishedTime").value=d.publishedTime;
+    $("category").value=d.category||"";
+    $("storyKey").value=d.storyKey||"";
+    $("title").value=d.title||"";
+    $("summary").value=d.summary||"";
+    $("status").value=d.status||"draft";
+    $("priority").value=d.priority||"normal";
+    $("imageUrl").value=d.imageUrl||"";
+    $("imageCredit").value=d.imageCredit||"";
+    if($("dailySlot")) $("dailySlot").value=d.dailySlot||"none";
+    if($("yearsAgo")) $("yearsAgo").value=d.yearsAgo||"";
+    if($("feelGoodText")) $("feelGoodText").value=d.feelGoodText||"";
+    if($("contextText")) $("contextText").value=d.contextText||"";
+    if($("imageFit")) $("imageFit").value=d.imageFit||"cover";
+    if($("imageZoom")) $("imageZoom").value=d.imageZoom||"1";
+    if($("imagePosX")) $("imagePosX").value=d.imagePosX||"50";
+    if($("imagePosY")) $("imagePosY").value=d.imagePosY||"50";
+    $("sourcesEditor").innerHTML="";
+    (d.sources?.length?d.sources:[{name:"",url:""}]).forEach(s=>addSourceRow(s.name,s.url));
+    if(d.imageUrl) setEditorImage(d.imageUrl);
+    applyImageEditorState();
+    $("saveBtn").textContent=d.newsId?"Änderungen speichern":"Speichern";
+    $("cancelEditBtn").hidden=!d.newsId;
+    $("editorMessage").textContent="Nicht gespeicherter Entwurf wiederhergestellt.";
+    return true;
+  }catch(e){
+    console.warn("Lokaler Redaktionsentwurf konnte nicht geladen werden",e);
+    return false;
+  }
+}
+
+function setupEditorAutosave(){
+  const form=$("newsForm");
+  if(!form) return;
+  const save=()=>saveEditorDraft();
+  form.addEventListener("input",save);
+  form.addEventListener("change",save);
+}
+
 function resetEditor(){
   $("newsForm").reset();
   $("newsId").value="";$("existingImagePath").value="";
@@ -459,7 +545,7 @@ function resetEditor(){
   applyImageEditorState();
   $("editorMessage").textContent="";
 }
-$("cancelEditBtn").onclick=()=>{resetEditor();switchAdminTab("dashboard")};
+$("cancelEditBtn").onclick=()=>{clearEditorDraft();resetEditor();switchAdminTab("dashboard")};
 
 let editorCroppedFile=null;
 let editorOriginalPreviewSrc=null;
@@ -646,6 +732,7 @@ async function editArticle(id){
   editorCroppedFile=null; editorOriginalPreviewSrc=null; if(n.image_url){setEditorImage(n.image_url)}else $("imagePreviewBox").hidden=true; applyImageEditorState();
   $("saveBtn").textContent="Änderungen speichern";$("cancelEditBtn").hidden=false;
   switchAdminTab("editor");
+  saveEditorDraft();
 }
 
 $("newsForm").onsubmit=async(e)=>{
@@ -672,6 +759,7 @@ $("newsForm").onsubmit=async(e)=>{
     const result=id?await db.from("news").update(row).eq("id",id):await db.from("news").insert(row);
     if(result.error)throw result.error;
     $("editorMessage").textContent="Gespeichert.";
+    clearEditorDraft();
     resetEditor();
     await Promise.all([loadAdminNews(),fetchPublicNews()]);
     switchAdminTab("dashboard");
@@ -680,6 +768,10 @@ $("newsForm").onsubmit=async(e)=>{
 
 if(db) db.auth.onAuthStateChange(()=>{if(adminDialog.open)setTimeout(refreshAuth,0)});
 resetEditor();
+setupEditorAutosave();
+if(localStorage.getItem("goodNewsAdminTab")==="editor"){
+  restoreEditorDraft();
+}
 fetchPublicNews();
 
 if("serviceWorker" in navigator){
@@ -957,4 +1049,5 @@ const _switchAdminTab=switchAdminTab;
 switchAdminTab=function(name){
   _switchAdminTab(name);
   if(name==="submissions")loadSubmissions();
+  if(name==="editor" && !$("newsId").value && !$("title").value.trim()) restoreEditorDraft();
 };
