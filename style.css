@@ -344,3 +344,109 @@ input[type="range"]{padding:0}
 .date-slide-special strong{display:block;font-size:1.02rem;line-height:1.25}
 .date-slide-hint{margin-top:17px;font-size:.72rem;font-weight:650;opacity:.42}
 .date-slide.past .date-slide-special{background:rgba(255,255,255,.035);border-color:rgba(255,255,255,.10)}
+
+
+/* Good News 3.0 – Vollbildmotiv für Datumsfolien */
+.date-slide{
+  isolation:isolate;
+  padding:0;
+  background:#000;
+}
+.date-slide-art{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  object-position:center center;
+  z-index:-3;
+  pointer-events:none;
+}
+.date-slide-overlay{
+  position:absolute;
+  inset:0;
+  z-index:-2;
+  pointer-events:none;
+  background:
+    linear-gradient(
+      to bottom,
+      rgba(0,0,0,.03) 0%,
+      rgba(0,0,0,.05) 50%,
+      rgba(0,0,0,.34) 69%,
+      rgba(0,0,0,.78) 100%
+    );
+}
+.date-slide.past{
+  background:#27272b;
+}
+.date-slide.past .date-slide-art{
+  opacity:.48;
+  filter:grayscale(.62) brightness(.72);
+}
+.date-slide.past .date-slide-overlay{
+  background:
+    linear-gradient(
+      to bottom,
+      rgba(45,45,49,.22) 0%,
+      rgba(38,38,42,.32) 55%,
+      rgba(28,28,31,.72) 76%,
+      rgba(22,22,25,.92) 100%
+    );
+}
+.date-slide-logo-wrap,
+.date-slide-logo{
+  display:none !important;
+}
+.date-slide-bottom{
+  position:absolute;
+  left:0;
+  right:0;
+  bottom:0;
+  z-index:2;
+  padding:0 24px max(44px,calc(env(safe-area-inset-bottom) + 22px));
+  text-align:center;
+}
+.date-slide-weekday{
+  color:#fff;
+  opacity:.82;
+}
+.date-slide-date{
+  color:#fff;
+  text-shadow:0 2px 18px rgba(0,0,0,.55);
+}
+.date-slide-year{
+  color:#fff;
+  opacity:.62;
+}
+.date-slide-special{
+  color:#fff;
+  background:rgba(0,0,0,.34);
+  border-color:rgba(255,255,255,.20);
+  box-shadow:0 8px 26px rgba(0,0,0,.18);
+}
+.date-slide-hint{
+  color:#fff;
+  opacity:.55;
+}
+.date-slide.past .date-slide-bottom{
+  color:#ececee;
+}
+.date-slide.past .date-slide-date,
+.date-slide.past .date-slide-weekday,
+.date-slide.past .date-slide-year,
+.date-slide.past .date-slide-special,
+.date-slide.past .date-slide-hint{
+  color:#ececee;
+}
+@media (max-height:700px){
+  .date-slide-bottom{
+    padding-bottom:max(28px,calc(env(safe-area-inset-bottom) + 14px));
+  }
+  .date-slide-special{
+    margin-top:12px;
+    padding:10px 13px;
+  }
+  .date-slide-hint{
+    margin-top:10px;
+  }
+}

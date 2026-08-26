@@ -1,5 +1,5 @@
-const CACHE="good-news-v29-2026-08";
-const STATIC=["./","./index.html","./style.css?v=29","./app.js?v=29","./config.js","./manifest.json"];
+const CACHE="good-news-v30-2026-08";
+const STATIC=["./","./index.html","./style.css?v=30","./app.js?v=30","./config.js","./manifest.json"];
 self.addEventListener("install",e=>{self.skipWaiting();e.waitUntil(caches.open(CACHE).then(c=>c.addAll(STATIC)))});
 self.addEventListener("activate",e=>e.waitUntil(Promise.all([caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))),self.clients.claim()])));
 self.addEventListener("fetch",e=>{
