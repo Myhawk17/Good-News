@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#0e0e10">
-  <meta name="description" content="Daily Slides – Nachrichten in kurzen Vollbild-Slides.">
-  <title>Daily Slides</title>
+  <meta name="description" content="Good News – Jeden Tag passiert auch Gutes.">
+  <title>Good News</title>
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="style.css">
 </head>
@@ -14,7 +14,7 @@
     <button class="brand-btn" id="homeBtn" aria-label="Zum neuesten Beitrag">
       <img id="brandLogo" class="brand-logo" alt="App-Logo">
       <span class="brand-mark">D</span>
-      <span class="brand-name">Daily Slides</span>
+      <span class="brand-name">Good News</span>
     </button>
     <div class="appbar-actions">
       <button class="icon-btn" id="searchBtn" aria-label="Suche">⌕</button>
@@ -31,7 +31,7 @@
   <dialog id="readerDialog" class="sheet">
     <div class="dialog-head">
       <div>
-        <div class="eyebrow" id="readerEyebrow">Daily Slides</div>
+        <div class="eyebrow" id="readerEyebrow">Good News</div>
         <h2 id="readerTitle">Menü</h2>
       </div>
       <button class="icon-btn dialog-close" data-close="readerDialog">✕</button>
@@ -42,7 +42,7 @@
   <dialog id="adminDialog" class="admin-dialog">
     <div class="dialog-head">
       <div>
-        <div class="eyebrow">Daily Slides</div>
+        <div class="eyebrow">Good News</div>
         <h2>Redaktion</h2>
       </div>
       <button class="icon-btn dialog-close" data-close="adminDialog">✕</button>
@@ -94,9 +94,9 @@
             <label>Kategorie
               <input id="category" list="categoryOptions" maxlength="40" placeholder="Politik" required>
               <datalist id="categoryOptions">
-                <option value="Politik"><option value="Welt"><option value="Wirtschaft">
-                <option value="Sport"><option value="Wissenschaft"><option value="Kultur">
-                <option value="Technologie"><option value="Gesellschaft"><option value="Region">
+                <option value="Damals"><option value="Fortschritt"><option value="Heute">
+                <option value="Menschen"><option value="Wissenschaft"><option value="Medizin">
+                <option value="Natur"><option value="Tiere"><option value="Technologie"><option value="Kultur">
               </datalist>
             </label>
             <label>Thema / Serie
@@ -150,6 +150,26 @@
           </fieldset>
 
           <fieldset>
+            <legend>Good-News-Dreier</legend>
+            <div class="form-grid two">
+              <label>Rolle im Dreier
+                <select id="dailySlot">
+                  <option value="none">Normaler Beitrag</option>
+                  <option value="damals">🕰️ DAMALS</option>
+                  <option value="fortschritt">🚀 FORTSCHRITT</option>
+                  <option value="heute">❤️ HEUTE</option>
+                </select>
+              </label>
+              <label>Vor X Jahren
+                <input id="yearsAgo" type="number" min="1" max="5000" placeholder="nur bei DAMALS">
+              </label>
+            </div>
+            <label>💛 Darum macht das Freude
+              <textarea id="feelGoodText" rows="3" maxlength="500" placeholder="Der emotionale Kern der Geschichte"></textarea>
+            </label>
+          </fieldset>
+
+          <fieldset>
             <legend>Zusatz</legend>
             <label>Kurz erklärt / Kontext
               <textarea id="contextText" rows="4" maxlength="1400" placeholder="Optionaler Hintergrund für Leserinnen und Leser"></textarea>
@@ -182,7 +202,7 @@
           <fieldset>
             <legend>App</legend>
             <label>App-Name
-              <input id="settingAppName" maxlength="40" placeholder="Daily Slides">
+              <input id="settingAppName" maxlength="40" placeholder="Good News">
             </label>
             <label>Logo hochladen
               <input id="settingLogoFile" type="file" accept="image/*">

@@ -30,10 +30,10 @@ const fmtDateShort = (iso) => new Intl.DateTimeFormat("de-DE", {
 }).format(new Date(`${iso}T12:00:00`));
 
 const getFavorites = () => {
-  try { return JSON.parse(localStorage.getItem("dailySlidesFavorites") || "[]"); }
+  try { return JSON.parse(localStorage.getItem("goodNewsFavorites") || "[]"); }
   catch { return []; }
 };
-const setFavorites = (ids) => localStorage.setItem("dailySlidesFavorites", JSON.stringify(ids));
+const setFavorites = (ids) => localStorage.setItem("goodNewsFavorites", JSON.stringify(ids));
 const isFavorite = (id) => getFavorites().map(String).includes(String(id));
 const toggleFavorite = (id) => {
   const ids = getFavorites().map(String);
@@ -120,6 +120,7 @@ function buildSlide(item, index, total) {
       <p class="summary">${esc(item.summary)}</p>
 
       ${item.context_text ? `<div class="context-box"><strong>Kurz erklärt</strong>${esc(item.context_text)}</div>` : ""}
+      ${item.feel_good_text ? `<div class="feel-good-box"><strong>💛 Darum macht das Freude</strong>${esc(item.feel_good_text)}</div>` : ""}
 
       <div class="slide-actions">
         <button class="slide-action fav-btn ${fav ? "active":""}" data-id="${item.id}">${fav ? "♥ Gespeichert" : "♡ Merken"}</button>
@@ -130,7 +131,7 @@ function buildSlide(item, index, total) {
 
       ${item.image_credit ? `<div class="credit">${esc(item.image_credit)}</div>` : ""}
       <div class="source-line">
-        <span>${primarySource ? `Quelle: ${esc(primarySource.name)}` : "Daily Slides"}</span>
+        <span>${primarySource ? `Quelle: ${esc(primarySource.name)}` : "Good News"}</span>
         <span>${String(index+1).padStart(2,"0")} / ${String(total).padStart(2,"0")}</span>
       </div>
     </div>`;
@@ -395,6 +396,9 @@ function resetEditor(){
   $("newsForm").reset();
   $("newsId").value="";$("existingImagePath").value="";
   $("sourcesEditor").innerHTML="";addSourceRow();
+  if($("dailySlot")) $("dailySlot").value="none";
+  if($("yearsAgo")) $("yearsAgo").value="";
+  if($("feelGoodText")) $("feelGoodText").value="";
   const now=new Date();$("publishedDate").value=now.toISOString().slice(0,10);
   $("publishedTime").value=now.toTimeString().slice(0,5);
   $("status").value="draft";$("priority").value="normal";
@@ -432,6 +436,9 @@ function formToDraft(){
     title:$("title").value.trim(),summary:$("summary").value.trim(),
     status:$("status").value,priority:$("priority").value,
     context_text:$("contextText").value.trim()||null,
+    daily_slot:$("dailySlot")?.value||"none",
+    years_ago:$("yearsAgo")?.value?Number($("yearsAgo").value):null,
+    feel_good_text:$("feelGoodText")?.value.trim()||null,
     image_url:$("imageUrl").value.trim()||($("imagePreview").src&&!$("imagePreview").src.startsWith("blob:")?$("imagePreview").src:null),
     image_credit:$("imageCredit").value.trim()||null,sources:collectSources()
   };
@@ -447,6 +454,7 @@ function openPreview(n){
         <h1>${esc(n.title||"Deine Überschrift")}</h1>
         <p class="summary">${esc(n.summary||"Hier erscheint deine Nachricht.")}</p>
         ${n.context_text?`<div class="context-box"><strong>Kurz erklärt</strong>${esc(n.context_text)}</div>`:""}
+        ${n.feel_good_text?`<div class="feel-good-box"><strong>💛 Darum macht das Freude</strong>${esc(n.feel_good_text)}</div>`:""}
       </div>
     </article>`;
   previewDialog.showModal();
@@ -459,6 +467,9 @@ async function editArticle(id){
   $("publishedTime").value=n.published_time?.slice(0,5)||"00:00";$("category").value=n.category;
   $("storyKey").value=n.story_key||"";$("title").value=n.title;$("summary").value=n.summary;
   $("status").value=n.status;$("priority").value=n.priority||"normal";$("contextText").value=n.context_text||"";
+  if($("dailySlot")) $("dailySlot").value=n.daily_slot||"none";
+  if($("yearsAgo")) $("yearsAgo").value=n.years_ago||"";
+  if($("feelGoodText")) $("feelGoodText").value=n.feel_good_text||"";
   $("imageUrl").value=n.image_path?"":(n.image_url||"");$("imageCredit").value=n.image_credit||"";
   $("existingImagePath").value=n.image_path||"";
   $("sourcesEditor").innerHTML="";
@@ -483,7 +494,8 @@ $("newsForm").onsubmit=async(e)=>{
     const row={
       published_date:d.published_date,published_time:d.published_time,category:d.category,story_key:d.story_key,
       title:d.title,summary:d.summary,status:d.status,priority:d.priority,priority_rank:d.priority==="top"?1:0,
-      context_text:d.context_text,image_url:imageUrl,image_path:imagePath,image_credit:d.image_credit,
+      context_text:d.context_text,daily_slot:d.daily_slot,years_ago:d.years_ago,feel_good_text:d.feel_good_text,
+      image_url:imageUrl,image_path:imagePath,image_credit:d.image_credit,
       sources:d.sources,publish_at:publishAt,updated_at:new Date().toISOString()
     };
     const id=$("newsId").value;
@@ -539,7 +551,7 @@ function applyAppSettings(s){
   document.body.classList.toggle("hide-sources", s.show_sources === false);
   document.body.classList.toggle("hide-counter", s.show_counter === false);
 
-  const name = s.app_name || "Daily Slides";
+  const name = s.app_name || "Good News";
   document.title = name;
   const brandName=document.querySelector(".brand-name");
   if(brandName) brandName.textContent=name;
@@ -558,7 +570,7 @@ function applyAppSettings(s){
 
 function populateSettingsForm(s){
   if(!$("settingAppName")) return;
-  $("settingAppName").value=s.app_name||"Daily Slides";
+  $("settingAppName").value=s.app_name||"Good News";
   $("settingLogoUrl").value=s.logo_path?"":(s.logo_url||"");
   $("settingBg").value=s.background_color||"#0e0e10";
   $("settingText").value=s.text_color||"#f5f5f5";
@@ -582,7 +594,7 @@ function populateSettingsForm(s){
 
 function readSettingsForm(){
   return {
-    app_name:$("settingAppName").value.trim()||"Daily Slides",
+    app_name:$("settingAppName").value.trim()||"Good News",
     background_color:$("settingBg").value,
     text_color:$("settingText").value,
     accent_color:$("settingAccent").value,
@@ -665,7 +677,7 @@ if($("settingLogoFile")){
 
   $("resetThemeBtn").onclick=()=>{
     populateSettingsForm({
-      app_name:"Daily Slides",logo_url:null,logo_path:null,
+      app_name:"Good News",logo_url:null,logo_path:null,
       background_color:"#0e0e10",text_color:"#f5f5f5",accent_color:"#ffffff",
       title_size:"normal",corner_style:"soft",image_mode:"full",overlay_strength:65,
       show_category:true,show_date:true,show_sources:true,show_counter:true

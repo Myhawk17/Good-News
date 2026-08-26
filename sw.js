@@ -1,4 +1,4 @@
-const CACHE="daily-slides-v1-full-2026-08";
+const CACHE="good-news-v2-2026-08";
 const STATIC=["./","./index.html","./style.css","./app.js","./config.js","./manifest.json"];
 self.addEventListener("install",e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(STATIC))));
 self.addEventListener("activate",e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k))))));
