@@ -43,6 +43,39 @@ const toggleFavorite = (id) => {
   return next.includes(key);
 };
 
+const reactionLabels = {hope:"❤️ Hoffnung", touched:"🥹 Berührt", wow:"🤯 Wow"};
+const getDeviceId = () => {
+  let id = localStorage.getItem("goodNewsDeviceId");
+  if (!id) { id = (crypto.randomUUID ? crypto.randomUUID() : `dev-${Date.now()}-${Math.random().toString(36).slice(2)}`); localStorage.setItem("goodNewsDeviceId", id); }
+  return id;
+};
+let reactionCounts = {};
+let myReactions = {};
+async function loadReactions(){
+  if(!configured || !allNews.length) return;
+  const ids=allNews.map(n=>n.id);
+  const [{data:rows,error},{data:mine,error:mineErr}] = await Promise.all([
+    db.from("news_reactions").select("news_id,reaction").in("news_id",ids),
+    db.from("news_reactions").select("news_id,reaction").eq("device_id",getDeviceId()).in("news_id",ids)
+  ]);
+  if(error || mineErr){ console.warn("Reaktionen nicht verfügbar:", (error||mineErr).message); return; }
+  reactionCounts={}; myReactions={};
+  (rows||[]).forEach(r=>{const k=String(r.news_id);reactionCounts[k]??={hope:0,touched:0,wow:0};reactionCounts[k][r.reaction]=(reactionCounts[k][r.reaction]||0)+1});
+  (mine||[]).forEach(r=>myReactions[String(r.news_id)]=r.reaction);
+}
+async function reactToNews(newsId,reaction){
+  const key=String(newsId), current=myReactions[key];
+  let error;
+  if(current===reaction){ ({error}=await db.from("news_reactions").delete().eq("news_id",newsId).eq("device_id",getDeviceId())); }
+  else { ({error}=await db.from("news_reactions").upsert({news_id:newsId,device_id:getDeviceId(),reaction},{onConflict:"news_id,device_id"})); }
+  if(error){alert("Reaktion konnte nicht gespeichert werden: "+error.message);return;}
+  await loadReactions(); renderFeed({startId:newsId});
+}
+function reactionBar(item){
+  const key=String(item.id), counts=reactionCounts[key]||{};
+  return `<div class="reaction-bar" aria-label="Auf diese Good News reagieren">${Object.entries(reactionLabels).map(([r,label])=>`<button class="reaction-btn ${myReactions[key]===r?'active':''}" data-reaction="${r}" data-id="${item.id}">${label}<span>${counts[r]||0}</span></button>`).join('')}</div>`;
+}
+
 function sourcesOf(item) {
   if (!item.sources) return [];
   return Array.isArray(item.sources) ? item.sources : [];
@@ -67,7 +100,9 @@ async function fetchPublicNews() {
     .order("publish_at",{ascending:false});
   if (error) return showFeedError(error.message);
   allNews = data || [];
-  renderFeed();
+  await loadReactions();
+  const deepId = new URL(location.href).searchParams.get("news");
+  renderFeed({startId:deepId});
 }
 
 function showFeedError(message) {
@@ -133,6 +168,7 @@ function buildSlide(item, index, total) {
       ${item.context_text ? `<div class="context-box"><strong>Kurz erklärt</strong>${esc(item.context_text)}</div>` : ""}
       ${item.feel_good_text ? `<div class="feel-good-box"><strong>💛 Darum macht das Freude</strong>${esc(item.feel_good_text)}</div>` : ""}
 
+      ${reactionBar(item)}
       <div class="slide-actions">
         <button class="slide-action fav-btn ${fav ? "active":""}" data-id="${item.id}">${fav ? "♥ Gespeichert" : "♡ Merken"}</button>
         <button class="slide-action share-btn" data-id="${item.id}">↗ Teilen</button>
@@ -154,6 +190,7 @@ function buildSlide(item, index, total) {
   article.querySelector(".share-btn").onclick = () => shareItem(item);
   article.querySelector(".sources-btn")?.addEventListener("click",()=>openSources(item));
   article.querySelector(".story-btn")?.addEventListener("click",()=>openStory(item.story_key));
+  article.querySelectorAll(".reaction-btn").forEach(btn=>btn.addEventListener("click",()=>reactToNews(item.id,btn.dataset.reaction)));
   return article;
 }
 
@@ -166,12 +203,13 @@ function scrollToNews(id) {
 }
 
 async function shareItem(item) {
+  const url = new URL(location.href); url.search=""; url.hash=""; url.searchParams.set("news",item.id);
   const text = `${item.title}\n\n${item.summary}`;
   try {
-    if (navigator.share) await navigator.share({title:item.title,text});
+    if (navigator.share) await navigator.share({title:item.title,text,url:url.toString()});
     else {
-      await navigator.clipboard.writeText(text);
-      alert("Text wurde in die Zwischenablage kopiert.");
+      await navigator.clipboard.writeText(`${text}\n\n${url}`);
+      alert("Good News und Direktlink wurden kopiert.");
     }
   } catch {}
 }
