@@ -109,6 +109,29 @@ function showFeedError(message) {
   feed.innerHTML = `<section class="empty-state"><div><h1>Feed nicht erreichbar</h1><p>${esc(message)}</p></div></section>`;
 }
 
+
+// ---------------- GOOD NEWS 2.9: DATUMSFOLIEN ----------------
+const SPECIAL_DAYS={
+"01-24":["🎓","Internationaler Tag der Bildung"],"01-26":["☀️","Internationaler Tag der sauberen Energie"],
+"02-10":["🫘","Welttag der Hülsenfrüchte"],"02-13":["📻","Welttag des Radios"],"02-14":["❤️","Valentinstag"],"02-20":["⚖️","Welttag der sozialen Gerechtigkeit"],"02-21":["🗣️","Internationaler Tag der Muttersprache"],"02-27":["🐻‍❄️","Internationaler Eisbärentag"],
+"03-01":["🌊","Welttag des Seegrases"],"03-03":["🐘","Welttag des Artenschutzes"],"03-20":["😄","Internationaler Tag des Glücks"],"03-22":["💧","Weltwassertag"],"03-23":["🌦️","Welttag der Meteorologie"],"03-30":["♻️","Internationaler Zero-Waste-Tag"],
+"04-06":["🏃","Internationaler Tag des Sports"],"04-07":["🩺","Weltgesundheitstag"],"04-12":["🚀","Tag der bemannten Raumfahrt"],"04-21":["💡","Welttag für Kreativität und Innovation"],"04-22":["🌍","Tag der Erde"],"04-23":["📚","Welttag des Buches"],"04-25":["🐧","Weltpinguintag"],"04-29":["💃","Welttag des Tanzes"],"04-30":["🎷","Internationaler Tag des Jazz"],
+"05-08":["❤️","Weltrotkreuztag"],"05-09":["🇪🇺","Europatag"],"05-12":["🌱","Internationaler Tag der Pflanzengesundheit"],"05-15":["👨‍👩‍👧","Internationaler Tag der Familie"],"05-16":["💡","Internationaler Tag des Lichts"],"05-20":["🐝","Weltbienentag"],"05-21":["🍵","Internationaler Tag des Tees"],"05-22":["🦋","Tag der biologischen Vielfalt"],"05-23":["🐢","Welt-Schildkröten-Tag"],"05-25":["⚽","Weltfußballtag"],"05-30":["🥔","Internationaler Tag der Kartoffel"],
+"06-01":["👨‍👩‍👧","Weltelterntag"],"06-03":["🚲","Weltfahrradtag"],"06-05":["🌱","Weltumwelttag"],"06-08":["🌊","Welttag der Ozeane"],"06-11":["🧸","Internationaler Tag des Spiels"],"06-14":["🩸","Weltblutspendetag"],"06-18":["🍽️","Tag der nachhaltigen Gastronomie"],"06-21":["🧘","Internationaler Yogatag"],"06-30":["☄️","Internationaler Asteroidentag"],
+"07-07":["🍫","Welttag der Schokolade"],"07-11":["🐴","Welttag des Pferdes"],"07-12":["🌈","Internationaler Tag der Hoffnung"],"07-17":["😀","Welt-Emoji-Tag"],"07-18":["❤️","Nelson-Mandela-Tag"],"07-20":["🌕","Internationaler Mondtag"],"07-29":["🐯","Internationaler Tag des Tigers"],"07-30":["🫂","Internationaler Tag der Freundschaft"],
+"08-08":["🐱","Internationaler Katzentag"],"08-10":["🦁","Weltlöwentag"],"08-12":["🐘","Weltelefantentag"],"08-19":["📸","Welttag der Fotografie"],"08-26":["🐶","Tag des Hundes"],"08-27":["🏞️","Welttag der Seen"],"08-30":["🐋","Internationaler Walhai-Tag"],
+"09-05":["❤️","Internationaler Tag der Wohltätigkeit"],"09-07":["🌤️","Internationaler Tag der sauberen Luft"],"09-08":["📖","Weltalphabetisierungstag"],"09-16":["🌎","Tag zum Schutz der Ozonschicht"],"09-20":["🧹","World Cleanup Day"],"09-21":["🕊️","Internationaler Friedenstag"],"09-22":["🚲","Autofreier Tag"],"09-23":["🤟","Internationaler Tag der Gebärdensprachen"],"09-27":["🧳","Welttourismustag"],"09-29":["🍽️","Tag gegen Lebensmittelverschwendung"],"09-30":["🌐","Internationaler Übersetzertag"],
+"10-01":["☕","Internationaler Tag des Kaffees"],"10-04":["🐾","Welttierschutztag"],"10-05":["👩‍🏫","Weltlehrertag"],"10-09":["✉️","Weltposttag"],"10-16":["🌾","Welternährungstag"],"10-23":["🐆","Tag des Schneeleoparden"],"10-25":["🍝","Weltnudeltag"],"10-27":["🎞️","Welttag des audiovisuellen Erbes"],"10-31":["🏙️","Welttag der Städte"],
+"11-01":["🌱","Weltvegantag"],"11-03":["🥪","Tag des Sandwiches"],"11-10":["🔬","Welttag der Wissenschaft"],"11-13":["❤️","Welttag der Freundlichkeit"],"11-16":["🤝","Internationaler Tag der Toleranz"],"11-17":["🍞","Tag des selbstgebackenen Brotes"],"11-20":["🧒","Weltkindertag"],"11-21":["📺","Welttag des Fernsehens"],
+"12-03":["♿","Internationaler Tag der Menschen mit Behinderungen"],"12-05":["🙋","Internationaler Tag des Ehrenamts"],"12-07":["✈️","Tag der Zivilluftfahrt"],"12-10":["❤️","Tag der Menschenrechte"],"12-11":["🏔️","Internationaler Tag der Berge"],"12-20":["🤝","Tag der menschlichen Solidarität"],"12-21":["🧘","Welttag der Meditation"]
+};
+function easterSunday(y){let a=y%19,b=Math.floor(y/100),c=y%100,d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),h=(19*a+b-d-g+15)%30,i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7,m=Math.floor((a+11*h+22*l)/451),mo=Math.floor((h+l-7*m+114)/31),da=(h+l-7*m+114)%31+1;return new Date(y,mo-1,da,12)}
+function datePlus(d,n){let x=new Date(d);x.setDate(x.getDate()+n);return x}
+function isoLocal(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`}
+function germanHolidayMap(y){let e=easterSunday(y),m={},add=(d,i,t)=>m[isoLocal(d)]=[i,t];add(new Date(y,0,1,12),"🎆","Neujahr");add(datePlus(e,-2),"✝️","Karfreitag");add(datePlus(e,1),"🌷","Ostermontag");add(new Date(y,4,1,12),"🌼","Tag der Arbeit");add(datePlus(e,39),"☁️","Christi Himmelfahrt");add(datePlus(e,50),"🕊️","Pfingstmontag");add(new Date(y,9,3,12),"🇩🇪","Tag der Deutschen Einheit");add(new Date(y,11,25,12),"🎄","1. Weihnachtstag");add(new Date(y,11,26,12),"🎄","2. Weihnachtstag");return m}
+function specialDayFor(s){let d=new Date(`${s}T12:00:00`),h=germanHolidayMap(d.getFullYear());return h[s]||SPECIAL_DAYS[s.slice(5)]||null}
+function buildDateSlide(s){let today=isoLocal(new Date()),past=s<today,d=new Date(`${s}T12:00:00`),wd=new Intl.DateTimeFormat("de-DE",{weekday:"long"}).format(d).toUpperCase(),dm=new Intl.DateTimeFormat("de-DE",{day:"2-digit",month:"long"}).format(d),sp=specialDayFor(s),sec=document.createElement("section");sec.className=`date-slide${past?" past":""}`;sec.innerHTML=`<div class="date-slide-logo-wrap"><img class="date-slide-logo" src="good-news-logo.png" alt="Good News"></div><div class="date-slide-bottom"><div class="date-slide-weekday">${esc(wd)}</div><div class="date-slide-date">${esc(dm)}</div><div class="date-slide-year">${d.getFullYear()}</div>${sp?`<div class="date-slide-special"><span>HEUTE IST</span><strong>${esc(sp[0])} ${esc(sp[1])}</strong></div>`:""}<div class="date-slide-hint">↓ Zu den Good News</div></div>`;return sec}
+
 function renderFeed({startId=null}={}) {
   const data = activeCategory === "Alle" ? allNews : allNews.filter(n => n.category === activeCategory);
   feed.innerHTML = "";
@@ -118,7 +141,7 @@ function renderFeed({startId=null}={}) {
   }
   let prevDate = null;
   data.forEach((item, index) => {
-    if (prevDate && item.published_date !== prevDate) addDayBreak(item.published_date);
+    if (item.published_date !== prevDate) feed.appendChild(buildDateSlide(item.published_date));
     feed.appendChild(buildSlide(item, index, data.length));
     prevDate = item.published_date;
   });

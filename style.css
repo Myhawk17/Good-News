@@ -328,3 +328,19 @@ input[type="range"]{padding:0}
   width:max-content;
   max-width:100%;
 }
+
+/* Good News 2.9 – Datumsfolie */
+.date-slide{position:relative;min-height:100%;height:100%;scroll-snap-align:start;overflow:hidden;background:#000;color:#fff;display:flex;flex-direction:column;justify-content:space-between;padding:clamp(22px,5vh,48px) 24px max(34px,env(safe-area-inset-bottom))}
+.date-slide.past{background:linear-gradient(160deg,#29292d 0%,#171719 100%);color:#e8e8ea}
+.date-slide-logo-wrap{flex:1 1 auto;min-height:0;display:flex;align-items:center;justify-content:center;padding:4vh 0 1vh}
+.date-slide-logo{width:min(78vw,390px);max-height:46vh;object-fit:contain;filter:drop-shadow(0 12px 30px rgba(0,0,0,.35))}
+.date-slide.past .date-slide-logo{opacity:.68;filter:grayscale(.18) drop-shadow(0 10px 24px rgba(0,0,0,.3))}
+.date-slide-bottom{flex:0 0 auto;text-align:center;padding-bottom:8px}
+.date-slide-weekday{font-size:.78rem;font-weight:800;letter-spacing:.22em;opacity:.72}
+.date-slide-date{margin-top:5px;font-size:clamp(2.15rem,10vw,4rem);font-weight:900;line-height:.98;letter-spacing:-.055em}
+.date-slide-year{margin-top:5px;font-size:1rem;font-weight:700;opacity:.55}
+.date-slide-special{margin:18px auto 0;max-width:420px;padding:13px 16px;border:1px solid rgba(255,255,255,.16);border-radius:18px;background:rgba(255,255,255,.06);backdrop-filter:blur(10px)}
+.date-slide-special span{display:block;margin-bottom:5px;font-size:.64rem;font-weight:800;letter-spacing:.18em;opacity:.58}
+.date-slide-special strong{display:block;font-size:1.02rem;line-height:1.25}
+.date-slide-hint{margin-top:17px;font-size:.72rem;font-weight:650;opacity:.42}
+.date-slide.past .date-slide-special{background:rgba(255,255,255,.035);border-color:rgba(255,255,255,.10)}
