@@ -7,7 +7,7 @@
   <meta name="description" content="Good News – Jeden Tag passiert auch Gutes.">
   <title>Good News</title>
   <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="style.css?v=23">
+  <link rel="stylesheet" href="style.css?v=24">
 </head>
 <body>
   <header class="appbar">
@@ -156,13 +156,42 @@
             </label>
             <div id="imagePreviewBox" class="image-editor" hidden>
               <div class="image-editor-head">
-                <div><strong>🖼️ Bildausschnitt</strong><div class="muted">Ziehen zum Verschieben · zwei Finger oder Regler zum Zoomen</div></div>
+                <div><strong>✂️ Bild zuschneiden</strong><div class="muted">Ziehe die weißen Ränder oder Ecken – wie in der Galerie.</div></div>
               </div>
-              <div id="imageCropper" class="image-cropper" aria-label="Bildausschnitt verschieben">
+
+              <div id="imageCropper" class="image-cropper" aria-label="Zuschneidebereich">
+                <img id="imageCropSource" class="image-crop-source" alt="Bild zum Zuschneiden">
+                <div id="cropShadeTop" class="crop-shade"></div>
+                <div id="cropShadeRight" class="crop-shade"></div>
+                <div id="cropShadeBottom" class="crop-shade"></div>
+                <div id="cropShadeLeft" class="crop-shade"></div>
+                <div id="cropSelection" class="crop-selection" aria-label="Zuschneiderahmen verschieben">
+                  <div class="crop-grid" aria-hidden="true"></div>
+                  <span class="crop-handle crop-handle-nw" data-handle="nw"></span>
+                  <span class="crop-handle crop-handle-n" data-handle="n"></span>
+                  <span class="crop-handle crop-handle-ne" data-handle="ne"></span>
+                  <span class="crop-handle crop-handle-e" data-handle="e"></span>
+                  <span class="crop-handle crop-handle-se" data-handle="se"></span>
+                  <span class="crop-handle crop-handle-s" data-handle="s"></span>
+                  <span class="crop-handle crop-handle-sw" data-handle="sw"></span>
+                  <span class="crop-handle crop-handle-w" data-handle="w"></span>
+                </div>
+              </div>
+
+              <div class="crop-actions">
+                <button class="primary crop-save-btn" type="button" id="imageCropBtn">✂️ Auswahl zuschneiden</button>
+                <button class="secondary compact" type="button" id="cropResetBtn">Rahmen zurücksetzen</button>
+                <button class="secondary compact" type="button" id="imageUndoCropBtn">Original wiederherstellen</button>
+              </div>
+              <p id="imageCropMessage" class="muted image-crop-message" aria-live="polite"></p>
+              <p class="muted image-help">Alles innerhalb des weißen Rahmens bleibt erhalten. Ziehe an einer Kante, Ecke oder am Rahmen selbst. Du kannst den Ausschnitt frei wählen.</p>
+
+              <div class="image-app-preview-label"><strong>Vorschau als Nachrichten-Hintergrund</strong></div>
+              <div class="image-app-preview" aria-label="Vorschau in der App">
                 <img id="imagePreviewBlur" class="image-editor-blur" alt="" aria-hidden="true">
                 <img id="imagePreview" class="image-editor-main" alt="Bildvorschau">
-                <div class="crop-grid" aria-hidden="true"></div>
               </div>
+
               <div class="image-controls">
                 <label>Darstellung
                   <select id="imageFit">
@@ -184,14 +213,8 @@
                 <div class="image-quick-actions">
                   <button class="secondary compact" type="button" id="imageFillBtn">Bild füllen</button>
                   <button class="secondary compact" type="button" id="imageWholeBtn">Ganzes Bild</button>
-                  <button class="secondary compact" type="button" id="imageResetBtn">Zurücksetzen</button>
+                  <button class="secondary compact" type="button" id="imageResetBtn">Darstellung zurücksetzen</button>
                 </div>
-                <div class="crop-actions">
-                  <button class="primary crop-save-btn" type="button" id="imageCropBtn">✂️ Ausschnitt zuschneiden</button>
-                  <button class="secondary compact" type="button" id="imageUndoCropBtn">Original wiederherstellen</button>
-                </div>
-                <p id="imageCropMessage" class="muted image-crop-message" aria-live="polite"></p>
-                <p class="muted image-help">Verschiebe und zoome das Foto zuerst. Mit „Ausschnitt zuschneiden“ wird genau die sichtbare 9:16-Fläche als neues Bild gespeichert. Bei „Ganzes Bild“ wird der weiche Hintergrund mit übernommen.</p>
               </div>
             </div>
           </fieldset>
@@ -354,6 +377,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="app.js?v=23"></script>
+  <script src="app.js?v=24"></script>
 </body>
 </html>

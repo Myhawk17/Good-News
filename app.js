@@ -430,13 +430,19 @@ let editorOriginalPreviewSrc=null;
 function setEditorImage(src,{preserveOriginal=true}={}){
   if(!src)return;
   if(preserveOriginal && !editorOriginalPreviewSrc) editorOriginalPreviewSrc=src;
-  const main=$("imagePreview"), blur=$("imagePreviewBlur");
-  if(!src.startsWith("blob:") && !src.startsWith("data:")){
-    main.crossOrigin="anonymous"; blur.crossOrigin="anonymous";
-  }else{
-    main.removeAttribute("crossorigin"); blur.removeAttribute("crossorigin");
-  }
-  main.src=src; blur.src=src; $("imagePreviewBox").hidden=false; applyImageEditorState();
+  const main=$("imagePreview"), blur=$("imagePreviewBlur"), cropSource=$("imageCropSource");
+  [main,blur,cropSource].forEach(el=>{
+    if(!el)return;
+    if(!src.startsWith("blob:") && !src.startsWith("data:")) el.crossOrigin="anonymous";
+    else el.removeAttribute("crossorigin");
+    el.src=src;
+  });
+  $("imagePreviewBox").hidden=false;
+  if(cropSource){
+    const ready=()=>{resetCropSelection();applyImageEditorState()};
+    if(cropSource.complete&&cropSource.naturalWidth) ready();
+    else cropSource.addEventListener("load",ready,{once:true});
+  }else applyImageEditorState();
 }
 function currentImageEditorState(){return {
   image_fit:$("imageFit")?.value||"cover", image_zoom:clampNum($("imageZoom")?.value,0.35,2.5,1),
@@ -452,12 +458,61 @@ $("imageFillBtn")?.addEventListener("click",()=>{$("imageFit").value="cover";$("
 $("imageWholeBtn")?.addEventListener("click",()=>{$("imageFit").value="contain";$("imageZoom").value="1";$("imagePosX").value="50";$("imagePosY").value="50";applyImageEditorState()});
 $("imageResetBtn")?.addEventListener("click",()=>{$("imageFit").value="cover";$("imageZoom").value="1";$("imagePosX").value="50";$("imagePosY").value="50";applyImageEditorState()});
 
-const cropper=$("imageCropper"), cropPointers=new Map(); let dragLast=null,pinchStart=null,pinchZoom=1;
-function pointerDistance(){const pts=[...cropPointers.values()];if(pts.length<2)return 0;return Math.hypot(pts[0].x-pts[1].x,pts[0].y-pts[1].y)}
-cropper?.addEventListener("pointerdown",e=>{cropper.setPointerCapture?.(e.pointerId);cropPointers.set(e.pointerId,{x:e.clientX,y:e.clientY});if(cropPointers.size===1)dragLast={x:e.clientX,y:e.clientY};if(cropPointers.size===2){pinchStart=pointerDistance();pinchZoom=currentImageEditorState().image_zoom}});
-cropper?.addEventListener("pointermove",e=>{if(!cropPointers.has(e.pointerId))return;const prev=cropPointers.get(e.pointerId);cropPointers.set(e.pointerId,{x:e.clientX,y:e.clientY});if(cropPointers.size>=2&&pinchStart){const dist=pointerDistance();$("imageZoom").value=clampNum(pinchZoom*(dist/pinchStart),0.35,2.5,1);applyImageEditorState();return}if(cropPointers.size===1&&dragLast){const r=cropper.getBoundingClientRect();$("imagePosX").value=clampNum(Number($("imagePosX").value)+((e.clientX-prev.x)/Math.max(r.width,1))*100,0,100,50);$("imagePosY").value=clampNum(Number($("imagePosY").value)+((e.clientY-prev.y)/Math.max(r.height,1))*100,0,100,50);dragLast={x:e.clientX,y:e.clientY};applyImageEditorState()}});
-function endCropPointer(e){cropPointers.delete(e.pointerId);if(cropPointers.size<2){pinchStart=null;pinchZoom=currentImageEditorState().image_zoom}if(cropPointers.size===1){const p=[...cropPointers.values()][0];dragLast={x:p.x,y:p.y}}else if(!cropPointers.size)dragLast=null}
-cropper?.addEventListener("pointerup",endCropPointer);cropper?.addEventListener("pointercancel",endCropPointer);
+// Good News 2.4: frei verschiebbarer Zuschneiderahmen wie in der Handy-Galerie.
+const cropper=$("imageCropper"), cropSelection=$("cropSelection");
+let cropState={x:0,y:0,w:1,h:1};
+let cropGesture=null;
+const MIN_CROP=.08;
+function cropImageDisplayRect(){
+  const img=$("imageCropSource"); if(!cropper||!img?.naturalWidth)return null;
+  const r=cropper.getBoundingClientRect(), ar=img.naturalWidth/img.naturalHeight, stageAr=r.width/r.height;
+  let w,h,left,top;
+  if(ar>stageAr){w=r.width;h=w/ar;left=0;top=(r.height-h)/2}
+  else{h=r.height;w=h*ar;top=0;left=(r.width-w)/2}
+  return {left,top,width:w,height:h};
+}
+function clampCropState(c){
+  c.w=Math.max(MIN_CROP,Math.min(1,c.w)); c.h=Math.max(MIN_CROP,Math.min(1,c.h));
+  c.x=Math.max(0,Math.min(1-c.w,c.x)); c.y=Math.max(0,Math.min(1-c.h,c.y)); return c;
+}
+function renderCropSelection(){
+  if(!cropSelection)return; const d=cropImageDisplayRect(); if(!d)return;
+  clampCropState(cropState);
+  const l=d.left+cropState.x*d.width,t=d.top+cropState.y*d.height,w=cropState.w*d.width,h=cropState.h*d.height;
+  Object.assign(cropSelection.style,{left:l+"px",top:t+"px",width:w+"px",height:h+"px"});
+  const stage=cropper.getBoundingClientRect();
+  const top=$("cropShadeTop"),right=$("cropShadeRight"),bottom=$("cropShadeBottom"),left=$("cropShadeLeft");
+  if(top)Object.assign(top.style,{left:d.left+"px",top:d.top+"px",width:d.width+"px",height:(t-d.top)+"px"});
+  if(bottom)Object.assign(bottom.style,{left:d.left+"px",top:(t+h)+"px",width:d.width+"px",height:Math.max(0,d.top+d.height-(t+h))+"px"});
+  if(left)Object.assign(left.style,{left:d.left+"px",top:t+"px",width:Math.max(0,l-d.left)+"px",height:h+"px"});
+  if(right)Object.assign(right.style,{left:(l+w)+"px",top:t+"px",width:Math.max(0,d.left+d.width-(l+w))+"px",height:h+"px"});
+}
+function resetCropSelection(){cropState={x:0,y:0,w:1,h:1};requestAnimationFrame(renderCropSelection)}
+window.addEventListener("resize",renderCropSelection);
+$("cropResetBtn")?.addEventListener("click",resetCropSelection);
+
+cropSelection?.addEventListener("pointerdown",e=>{
+  e.preventDefault(); cropSelection.setPointerCapture?.(e.pointerId);
+  const handle=e.target?.dataset?.handle||"move";
+  cropGesture={pointerId:e.pointerId,handle,startX:e.clientX,startY:e.clientY,start:{...cropState}};
+});
+cropSelection?.addEventListener("pointermove",e=>{
+  if(!cropGesture||cropGesture.pointerId!==e.pointerId)return;
+  const d=cropImageDisplayRect();if(!d)return;
+  const dx=(e.clientX-cropGesture.startX)/Math.max(1,d.width),dy=(e.clientY-cropGesture.startY)/Math.max(1,d.height);
+  const s=cropGesture.start,c={...s},h=cropGesture.handle;
+  if(h==="move"){
+    c.x=s.x+dx;c.y=s.y+dy;
+  }else{
+    if(h.includes("w")){const nx=Math.min(s.x+s.w-MIN_CROP,Math.max(0,s.x+dx));c.x=nx;c.w=s.x+s.w-nx}
+    if(h.includes("e")){c.w=Math.max(MIN_CROP,Math.min(1-s.x,s.w+dx))}
+    if(h.includes("n")){const ny=Math.min(s.y+s.h-MIN_CROP,Math.max(0,s.y+dy));c.y=ny;c.h=s.y+s.h-ny}
+    if(h.includes("s")){c.h=Math.max(MIN_CROP,Math.min(1-s.y,s.h+dy))}
+  }
+  cropState=clampCropState(c);renderCropSelection();
+});
+function endCropGesture(e){if(cropGesture?.pointerId===e.pointerId)cropGesture=null}
+cropSelection?.addEventListener("pointerup",endCropGesture);cropSelection?.addEventListener("pointercancel",endCropGesture);
 
 $("imageFile").onchange=()=>{
   const f=$("imageFile").files?.[0];if(!f)return; editorCroppedFile=null; editorOriginalPreviewSrc=null; setEditorImage(URL.createObjectURL(f));
@@ -467,39 +522,20 @@ $("imageUrl").oninput=()=>{
 };
 
 async function cropVisibleImage(){
-  const img=$("imagePreview");
+  const img=$("imageCropSource");
   if(!img?.src) throw new Error("Bitte zuerst ein Bild auswählen.");
   if(!img.complete) await new Promise((resolve,reject)=>{img.addEventListener("load",resolve,{once:true});img.addEventListener("error",()=>reject(new Error("Bild konnte nicht geladen werden.")),{once:true})});
-  const sw=img.naturalWidth, sh=img.naturalHeight;
-  if(!sw||!sh) throw new Error("Die Bildgröße konnte nicht gelesen werden.");
-  const W=1080,H=1920, v=currentImageEditorState();
-  const canvas=document.createElement("canvas");canvas.width=W;canvas.height=H;
-  const ctx=canvas.getContext("2d");
-  function layout(fit,zoom=1,x=v.image_pos_x,y=v.image_pos_y){
-    const scale=(fit==="contain"?Math.min(W/sw,H/sh):Math.max(W/sw,H/sh));
-    const bw=sw*scale,bh=sh*scale;
-    const ox=(W-bw)*(x/100), oy=(H-bh)*(y/100);
-    return {x:(ox-W/2)*zoom+W/2,y:(oy-H/2)*zoom+H/2,w:bw*zoom,h:bh*zoom};
-  }
-  try{
-    // Bei "Ganzes Bild" wird derselbe weiche Hintergrund wie in der App eingebrannt.
-    if(v.image_fit==="contain"){
-      const b=layout("cover",1.08,50,50);
-      ctx.save();ctx.filter="blur(34px)";ctx.globalAlpha=.82;ctx.drawImage(img,b.x,b.y,b.w,b.h);ctx.restore();
-      ctx.fillStyle="rgba(0,0,0,.12)";ctx.fillRect(0,0,W,H);
-    }else{ctx.fillStyle="#000";ctx.fillRect(0,0,W,H)}
-    const a=layout(v.image_fit,v.image_zoom,v.image_pos_x,v.image_pos_y);
-    ctx.drawImage(img,a.x,a.y,a.w,a.h);
-  }catch(err){
-    throw new Error("Dieses externe Bild darf der Browser nicht zuschneiden. Lade es bitte als Bilddatei hoch und versuche es erneut.");
-  }
-  const blob=await new Promise(resolve=>canvas.toBlob(resolve,"image/jpeg",.92));
-  if(!blob) throw new Error("Der Bildausschnitt konnte nicht erstellt werden.");
+  const nw=img.naturalWidth,nh=img.naturalHeight;if(!nw||!nh)throw new Error("Die Bildgröße konnte nicht gelesen werden.");
+  const sx=Math.round(cropState.x*nw),sy=Math.round(cropState.y*nh),sw=Math.max(1,Math.round(cropState.w*nw)),sh=Math.max(1,Math.round(cropState.h*nh));
+  const maxSide=2000,scale=Math.min(1,maxSide/Math.max(sw,sh));
+  const W=Math.max(1,Math.round(sw*scale)),H=Math.max(1,Math.round(sh*scale));
+  const canvas=document.createElement("canvas");canvas.width=W;canvas.height=H;const ctx=canvas.getContext("2d");
+  try{ctx.drawImage(img,sx,sy,sw,sh,0,0,W,H)}catch(err){throw new Error("Dieses externe Bild darf der Browser nicht zuschneiden. Lade es bitte als Bilddatei hoch und versuche es erneut.")}
+  const blob=await new Promise(resolve=>canvas.toBlob(resolve,"image/jpeg",.93));if(!blob)throw new Error("Der Bildausschnitt konnte nicht erstellt werden.");
   editorCroppedFile=new File([blob],`good-news-crop-${Date.now()}.jpg`,{type:"image/jpeg"});
-  const url=URL.createObjectURL(blob);
-  setEditorImage(url,{preserveOriginal:false});
+  const url=URL.createObjectURL(blob);setEditorImage(url,{preserveOriginal:false});
   $("imageFit").value="cover";$("imageZoom").value="1";$("imagePosX").value="50";$("imagePosY").value="50";applyImageEditorState();
-  if($("imageCropMessage")) $("imageCropMessage").textContent="Ausschnitt erstellt. Beim Speichern wird dieses zugeschnittene Bild verwendet.";
+  if($("imageCropMessage")) $("imageCropMessage").textContent="Ausschnitt erstellt. Beim Speichern wird genau dieser Bildbereich verwendet.";
 }
 
 $("imageCropBtn")?.addEventListener("click",async()=>{
@@ -509,7 +545,7 @@ $("imageCropBtn")?.addEventListener("click",async()=>{
 $("imageUndoCropBtn")?.addEventListener("click",()=>{
   if(!editorOriginalPreviewSrc)return;
   editorCroppedFile=null;setEditorImage(editorOriginalPreviewSrc,{preserveOriginal:false});
-  if($("imageCropMessage")) $("imageCropMessage").textContent="Originalansicht wiederhergestellt.";
+  if($("imageCropMessage")) $("imageCropMessage").textContent="Originalbild wiederhergestellt.";
 });
 
 async function uploadImage(file){
