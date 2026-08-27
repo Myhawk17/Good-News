@@ -69,6 +69,48 @@ async function trackDailyActive(){
   if(await trackAnalyticsEvent("active")) localStorage.setItem(key,day);
 }
 
+let analyticsSummaryCache=null;
+let analyticsOpenMetric=null;
+
+function renderAnalyticsDetails(metric){
+  const details=$("analyticsDetails");
+  document.querySelectorAll(".analytics-metric").forEach(btn=>{
+    const isOpen=btn.dataset.analytics===metric;
+    btn.classList.toggle("active",isOpen);
+    btn.setAttribute("aria-expanded",String(isOpen));
+  });
+  if(!metric || !analyticsSummaryCache){
+    details.hidden=true;
+    details.innerHTML="";
+    analyticsOpenMetric=null;
+    return;
+  }
+  analyticsOpenMetric=metric;
+  const s=analyticsSummaryCache;
+  const n=(v)=>Number(v||0).toLocaleString("de-DE");
+  const labels={
+    active:["Nutzeraktivität","Aktive Nutzer"],
+    favorite:["Favorisierungen","Favorisierungen"],
+    share:["Geteilt","Teilen-Aktionen"]
+  };
+  const prefix=metric==="active"?"active":metric==="favorite"?"favorites":"shares";
+  details.innerHTML=`
+    <div class="analytics-detail-row">
+      <div><strong>${n(s[`${prefix}_7d`])}</strong><span>letzte 7 Tage</span></div>
+      <div><strong>${n(s[`${prefix}_30d`])}</strong><span>letzte 30 Tage</span></div>
+    </div>`;
+  details.hidden=false;
+}
+
+function bindAnalyticsButtons(){
+  document.querySelectorAll(".analytics-metric").forEach(btn=>{
+    btn.onclick=()=>{
+      const metric=btn.dataset.analytics;
+      renderAnalyticsDetails(analyticsOpenMetric===metric ? null : metric);
+    };
+  });
+}
+
 async function loadAnalyticsSummary(){
   const box=$("analyticsCards");
   if(!box || !configured || !db || !currentAdminSession) return;
@@ -77,13 +119,23 @@ async function loadAnalyticsSummary(){
     const {data,error}=await db.rpc("get_analytics_summary");
     if(error) throw error;
     const s=Array.isArray(data)?(data[0]||{}):(data||{});
+    analyticsSummaryCache=s;
     const n=(v)=>Number(v||0).toLocaleString("de-DE");
-    box.innerHTML=`
-      <div class="analytics-card"><strong>${n(s.active_today)}</strong><span>Aktiv heute</span><small>7 Tage: ${n(s.active_7d)} · 30 Tage: ${n(s.active_30d)}</small></div>
-      <div class="analytics-card"><strong>${n(s.favorites_today)}</strong><span>Favorisiert heute</span><small>7 Tage: ${n(s.favorites_7d)} · 30 Tage: ${n(s.favorites_30d)}</small></div>
-      <div class="analytics-card"><strong>${n(s.shares_today)}</strong><span>Geteilt heute</span><small>7 Tage: ${n(s.shares_7d)} · 30 Tage: ${n(s.shares_30d)}</small></div>`;
+    const values={
+      active:n(s.active_today),
+      favorite:n(s.favorites_today),
+      share:n(s.shares_today)
+    };
+    document.querySelectorAll(".analytics-metric").forEach(btn=>{
+      const strong=btn.querySelector("strong");
+      if(strong) strong.textContent=values[btn.dataset.analytics] ?? "0";
+    });
+    bindAnalyticsButtons();
+    if(analyticsOpenMetric) renderAnalyticsDetails(analyticsOpenMetric);
   }catch(err){
-    box.innerHTML=`<div class="analytics-error">Statistik konnte nicht geladen werden.</div>`;
+    analyticsSummaryCache=null;
+    document.querySelectorAll(".analytics-metric strong").forEach(el=>el.textContent="–");
+    $("analyticsDetails").hidden=true;
     console.warn("Analytics:",err);
   }finally{
     box.classList.remove("is-loading");
@@ -450,7 +502,6 @@ $("loginForm").onsubmit = async (e)=>{
   if(!error) await refreshAuth();
 };
 $("logoutBtn").onclick=async()=>{await db.auth.signOut();await refreshAuth()};
-$("analyticsRefreshBtn").onclick=()=>loadAnalyticsSummary();
 
 async function loadAdminNews() {
   const {data,error}=await db.from("news").select("*").order("publish_at",{ascending:false});

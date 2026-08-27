@@ -564,3 +564,91 @@ input[type="range"]{padding:0}
   .analytics-card span{font-size:.74rem}
   .analytics-card small{font-size:.61rem}
 }
+
+
+/* Good News 3.5 – kompakte Admin-Nutzerstatistik wie die oberen Kennzahlen */
+.analytics-panel-compact{
+  margin:10px 0 16px;
+  padding:0;
+  border:0;
+  background:transparent;
+}
+.analytics-grid-compact{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:10px;
+}
+.analytics-grid-compact .analytics-metric{
+  appearance:none;
+  -webkit-appearance:none;
+  width:100%;
+  min-width:0;
+  min-height:98px;
+  margin:0;
+  padding:14px 8px;
+  border:1px solid #ffffff18;
+  border-radius:18px;
+  background:#ffffff08;
+  color:inherit;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+}
+.analytics-grid-compact .analytics-metric strong{
+  font-size:1.65rem;
+  line-height:1;
+  font-weight:850;
+}
+.analytics-grid-compact .analytics-metric span{
+  margin-top:8px;
+  font-size:.78rem;
+  line-height:1.2;
+  color:#bdbdc4;
+  font-weight:500;
+}
+.analytics-grid-compact .analytics-metric.active{
+  border-color:#ffffff38;
+  background:#ffffff10;
+}
+.analytics-details{
+  margin-top:9px;
+  border:1px solid #ffffff18;
+  border-radius:16px;
+  background:#ffffff07;
+  padding:10px 12px;
+}
+.analytics-detail-row{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+}
+.analytics-detail-row>div{
+  display:flex;
+  align-items:baseline;
+  justify-content:center;
+  gap:7px;
+  min-width:0;
+  padding:5px 4px;
+}
+.analytics-detail-row strong{
+  font-size:1.15rem;
+  line-height:1;
+}
+.analytics-detail-row span{
+  font-size:.72rem;
+  color:#bdbdc4;
+  white-space:nowrap;
+}
+.analytics-grid.is-loading{opacity:.55}
+@media(max-width:540px){
+  .analytics-grid-compact{gap:8px}
+  .analytics-grid-compact .analytics-metric{min-height:92px;padding:12px 5px;border-radius:16px}
+  .analytics-grid-compact .analytics-metric strong{font-size:1.5rem}
+  .analytics-grid-compact .analytics-metric span{font-size:.7rem}
+  .analytics-detail-row{gap:4px}
+  .analytics-detail-row>div{gap:5px}
+  .analytics-detail-row strong{font-size:1.05rem}
+  .analytics-detail-row span{font-size:.66rem}
+}
