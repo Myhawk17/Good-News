@@ -152,6 +152,12 @@ using (id = 1)
 with check (id = 1);
 
 
+
+-- Good News 3.1 – Bildquelle/Lizenz kompakt im Slide
+alter table public.news add column if not exists image_license text;
+alter table public.news add column if not exists image_source_url text;
+alter table public.news add column if not exists image_kind text not null default 'photo';
+
 -- 8) Entwürfe - Dreier (Good News 3.0)
 -- Empfangsbox für automatisch erzeugte Dreier. Anonyme Clients dürfen NUR einreichen,
 -- lesen/prüfen/übernehmen kann ausschließlich die eingeloggte Redaktion.

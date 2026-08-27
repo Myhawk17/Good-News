@@ -457,3 +457,8 @@ input[type="range"]{padding:0}
 .triple-draft-source{font-size:.78rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:#d5d5da;margin:0 0 10px}
 .triple-grid-drafts .triple-slot p{font-size:.84rem;line-height:1.45;color:#d0d0d5;white-space:pre-wrap}
 .draft-feel{margin-top:10px;padding-top:10px;border-top:1px solid #ffffff18;font-size:.8rem;line-height:1.4;color:#f0e7b7}
+
+/* Good News 3.1 – kompakte Bildrechte */
+.image-rights-help{margin:6px 0 0;line-height:1.4}
+.image-source-link{border:0;background:transparent;color:#d7d7dc;padding:2px 0;margin-top:4px;font:inherit;font-size:.78rem;text-decoration:underline;text-decoration-color:#777;text-underline-offset:3px;cursor:pointer;align-self:flex-start}
+.image-source-link:hover{color:#fff}.source-dialog{max-width:440px;width:calc(100% - 28px);border:1px solid #34343a;border-radius:22px;background:#17171a;color:#f5f5f5;padding:18px}.source-dialog::backdrop{background:#000a}.image-source-details{line-height:1.5}.image-source-details p{margin:10px 0}.source-detail-link{color:#fff;text-decoration:underline;text-underline-offset:3px}.draft-image-note{font-size:.85rem;color:#cfcfd4;margin-top:8px}

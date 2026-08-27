@@ -202,9 +202,22 @@
             <label>Alternativ Bild-URL
               <input id="imageUrl" type="url" placeholder="https://…">
             </label>
-            <label>Bildnachweis
-              <input id="imageCredit" maxlength="160" placeholder="Foto: …">
+            <label>Bildtyp
+              <select id="imageKind">
+                <option value="photo">Foto / freies Bild</option>
+                <option value="ai">KI-generierte Illustration</option>
+              </select>
             </label>
+            <label>Urheber / Bildnachweis
+              <input id="imageCredit" maxlength="160" placeholder="z. B. Max Mustermann / Wikimedia Commons">
+            </label>
+            <label>Lizenz
+              <input id="imageLicense" maxlength="120" placeholder="z. B. CC BY-SA 4.0">
+            </label>
+            <label>Originale Bildquelle
+              <input id="imageSourceUrl" type="url" placeholder="https://…">
+            </label>
+            <p class="muted image-rights-help">Auf dem Slide erscheint nur <strong>ⓘ Bildquelle</strong> bzw. <strong>ⓘ KI-Illustration</strong>. Urheber und Lizenz werden erst nach Antippen angezeigt.</p>
             <div id="imagePreviewBox" class="image-editor" hidden>
               <div class="image-editor-head">
                 <div><strong>✂️ Bild zuschneiden</strong><div class="muted">Ziehe die weißen Ränder oder Ecken – wie in der Galerie.</div></div>
@@ -276,32 +289,11 @@
             <button class="secondary compact" type="button" id="addSourceBtn">+ Quelle hinzufügen</button>
           </fieldset>
 
-          <fieldset>
-            <legend>Good-News-Dreier</legend>
-            <div class="form-grid two">
-              <label>Rolle im Dreier
-                <select id="dailySlot">
-                  <option value="none">Normaler Beitrag</option>
-                  <option value="damals">🕰️ DAMALS</option>
-                  <option value="fortschritt">🚀 FORTSCHRITT</option>
-                  <option value="heute">❤️ HEUTE</option>
-                </select>
-              </label>
-              <label>Vor X Jahren
-                <input id="yearsAgo" type="number" min="1" max="5000" placeholder="nur bei DAMALS">
-              </label>
-            </div>
-            <label>💛 Darum macht das Freude
-              <textarea id="feelGoodText" rows="3" maxlength="500" placeholder="Der emotionale Kern der Geschichte"></textarea>
-            </label>
-          </fieldset>
-
-          <fieldset>
-            <legend>Zusatz</legend>
-            <label>Kurz erklärt / Kontext
-              <textarea id="contextText" rows="4" maxlength="1400" placeholder="Optionaler Hintergrund für Leserinnen und Leser"></textarea>
-            </label>
-          </fieldset>
+          <!-- Dreier- und Zusatzdaten bleiben intern erhalten, werden aber nicht mehr manuell bearbeitet. -->
+          <input id="dailySlot" type="hidden" value="none">
+          <input id="yearsAgo" type="hidden">
+          <textarea id="feelGoodText" hidden></textarea>
+          <textarea id="contextText" hidden></textarea>
 
           <div class="sticky-actions">
             <button class="secondary" type="button" id="previewBtn">Vorschau</button>
@@ -421,6 +413,14 @@
     </section>
   </dialog>
 
+  <dialog id="imageSourceDialog" class="source-dialog">
+    <div class="dialog-head">
+      <div><div class="eyebrow">Bildangaben</div><h2 id="imageSourceTitle">ⓘ Bildquelle</h2></div>
+      <button class="icon-btn dialog-close" data-close="imageSourceDialog">✕</button>
+    </div>
+    <div id="imageSourceDetails" class="image-source-details"></div>
+  </dialog>
+
   <dialog id="previewDialog" class="preview-dialog">
     <button class="preview-close" data-close="previewDialog">✕</button>
     <div id="previewContent"></div>
@@ -428,6 +428,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="app.js?v=32"></script>
+  <script src="app.js?v=33"></script>
 </body>
 </html>

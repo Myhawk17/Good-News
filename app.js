@@ -169,6 +169,17 @@ function imageViewOf(item={}){
 }
 function imageStyleOf(item={}){const v=imageViewOf(item);return `object-fit:${v.fit};object-position:${v.x}% ${v.y}%;transform:scale(${v.zoom});transform-origin:center center;`}
 
+function openImageSource(item={}){
+  const dlg=$("imageSourceDialog"), details=$("imageSourceDetails"), title=$("imageSourceTitle");
+  if(!dlg||!details)return;
+  const isAi=item.image_kind === "ai";
+  if(title) title.textContent=isAi?"ⓘ KI-Illustration":"ⓘ Bildquelle";
+  details.innerHTML=isAi
+    ? `<p><strong>KI-generierte Illustration</strong></p><p class="muted">Dieses Bild wurde künstlich erzeugt und dient als Illustration zur Meldung.</p>${item.image_credit?`<p>${esc(item.image_credit)}</p>`:""}`
+    : `${item.image_credit?`<p><strong>Urheber:</strong> ${esc(item.image_credit)}</p>`:""}${item.image_license?`<p><strong>Lizenz:</strong> ${esc(item.image_license)}</p>`:""}${item.image_source_url?`<p><a class="source-detail-link" href="${esc(item.image_source_url)}" target="_blank" rel="noopener noreferrer">Originale Bildquelle öffnen ↗</a></p>`:""}${!item.image_credit&&!item.image_license&&!item.image_source_url?`<p class="muted">Für dieses Bild sind noch keine zusätzlichen Quellenangaben hinterlegt.</p>`:""}`;
+  dlg.showModal();
+}
+
 function buildSlide(item, index, total) {
   const article = document.createElement("article");
   article.className = `slide${item.image_url ? " has-image" : ""}`;
@@ -196,11 +207,7 @@ function buildSlide(item, index, total) {
         <button class="slide-action share-btn" data-id="${item.id}">↗ Teilen</button>
       </div>
 
-      ${item.image_credit ? (
-        primarySource?.url
-          ? `<a class="credit quiet-link" href="${esc(primarySource.url)}" target="_blank" rel="noopener noreferrer">${esc(item.image_credit)}</a>`
-          : `<div class="credit">${esc(item.image_credit)}</div>`
-      ) : ""}
+      ${item.image_url ? `<button class="image-source-link" type="button" data-image-source-id="${item.id}">${item.image_kind === "ai" ? "ⓘ KI-Illustration" : "ⓘ Bildquelle"}</button>` : ""}
       <div class="source-line source-line-simple">
         ${primarySource
           ? `<a class="quiet-link" href="${esc(primarySource.url)}" target="_blank" rel="noopener noreferrer">Quelle: ${esc(primarySource.name)}</a>`
@@ -213,6 +220,7 @@ function buildSlide(item, index, total) {
     e.currentTarget.textContent = active ? "♥ Gespeichert" : "♡ Merken";
   };
   article.querySelector(".share-btn").onclick = () => shareItem(item);
+  article.querySelector(".image-source-link")?.addEventListener("click",()=>openImageSource(item));
   return article;
 }
 
@@ -487,6 +495,9 @@ function saveEditorDraft(){
     priority:$("priority")?.value||"normal",
     imageUrl:$("imageUrl")?.value||"",
     imageCredit:$("imageCredit")?.value||"",
+    imageLicense:$("imageLicense")?.value||"",
+    imageSourceUrl:$("imageSourceUrl")?.value||"",
+    imageKind:$("imageKind")?.value||"photo",
     dailySlot:$("dailySlot")?.value||"none",
     yearsAgo:$("yearsAgo")?.value||"",
     feelGoodText:$("feelGoodText")?.value||"",
@@ -523,6 +534,9 @@ function restoreEditorDraft(){
     $("priority").value=d.priority||"normal";
     $("imageUrl").value=d.imageUrl||"";
     $("imageCredit").value=d.imageCredit||"";
+    if($("imageLicense")) $("imageLicense").value=d.imageLicense||"";
+    if($("imageSourceUrl")) $("imageSourceUrl").value=d.imageSourceUrl||"";
+    if($("imageKind")) $("imageKind").value=d.imageKind||"photo";
     if($("dailySlot")) $("dailySlot").value=d.dailySlot||"none";
     if($("yearsAgo")) $("yearsAgo").value=d.yearsAgo||"";
     if($("feelGoodText")) $("feelGoodText").value=d.feelGoodText||"";
@@ -560,6 +574,8 @@ function resetEditor(){
   if($("dailySlot")) $("dailySlot").value="none";
   if($("yearsAgo")) $("yearsAgo").value="";
   if($("feelGoodText")) $("feelGoodText").value="";
+  if($("contextText")) $("contextText").value="";
+  if($("imageKind")) $("imageKind").value="photo";
   const now=new Date();$("publishedDate").value=now.toISOString().slice(0,10);
   $("publishedTime").value=now.toTimeString().slice(0,5);
   $("status").value="draft";$("priority").value="normal";
@@ -718,7 +734,11 @@ function formToDraft(){
     feel_good_text:$("feelGoodText")?.value.trim()||null,
     image_url:$("imageUrl").value.trim()||($("imagePreview").src&&!$("imagePreview").src.startsWith("blob:")?$("imagePreview").src:null),
     ...currentImageEditorState(),
-    image_credit:$("imageCredit").value.trim()||null,sources:collectSources()
+    image_credit:$("imageCredit").value.trim()||null,
+    image_license:$("imageLicense")?.value.trim()||null,
+    image_source_url:$("imageSourceUrl")?.value.trim()||null,
+    image_kind:$("imageKind")?.value||"photo",
+    sources:collectSources()
   };
 }
 
@@ -749,6 +769,9 @@ async function editArticle(id){
   if($("yearsAgo")) $("yearsAgo").value=n.years_ago||"";
   if($("feelGoodText")) $("feelGoodText").value=n.feel_good_text||"";
   $("imageUrl").value=n.image_path?"":(n.image_url||"");$("imageCredit").value=n.image_credit||"";
+  if($("imageLicense")) $("imageLicense").value=n.image_license||"";
+  if($("imageSourceUrl")) $("imageSourceUrl").value=n.image_source_url||"";
+  if($("imageKind")) $("imageKind").value=n.image_kind||"photo";
   $("existingImagePath").value=n.image_path||"";
   const iv=imageViewOf(n); if($("imageFit")) $("imageFit").value=iv.fit; if($("imageZoom")) $("imageZoom").value=iv.zoom; if($("imagePosX")) $("imagePosX").value=iv.x; if($("imagePosY")) $("imagePosY").value=iv.y;
   $("sourcesEditor").innerHTML="";
@@ -776,6 +799,7 @@ $("newsForm").onsubmit=async(e)=>{
       title:d.title,summary:d.summary,status:d.status,priority:d.priority,priority_rank:d.priority==="top"?1:0,
       context_text:d.context_text,daily_slot:d.daily_slot,years_ago:d.years_ago,feel_good_text:d.feel_good_text,
       image_url:imageUrl,image_path:imagePath,image_credit:d.image_credit,
+      image_license:d.image_license,image_source_url:d.image_source_url,image_kind:d.image_kind,
       image_fit:d.image_fit,image_zoom:d.image_zoom,image_x:d.image_pos_x,image_y:d.image_pos_y,
       sources:d.sources,publish_at:publishAt,updated_at:new Date().toISOString()
     };
@@ -1102,6 +1126,11 @@ function normalizeTripleItem(item,slot){
     feel_good_text:item.feel_good_text||item.feel_good||"",
     context_text:item.context_text||null,
     years_ago:slot==="damals"?(Number(item.years_ago)||null):null,
+    image_url:item.image_url||null,
+    image_credit:item.image_credit||item.image_author||null,
+    image_license:item.image_license||null,
+    image_source_url:item.image_source_url||item.image_page_url||null,
+    image_kind:item.image_kind==="ai"?"ai":"photo",
     sources:src.filter(x=>x&&x.url).map(x=>({name:x.name||"Quelle",url:x.url}))
   };
 }
@@ -1116,9 +1145,9 @@ function renderTripleDrafts(){
       <div class="submission-meta">${esc(tripleDraftStatusLabel(x.status))} · ${esc(new Date(x.created_at).toLocaleString("de-DE"))} · für ${esc(fmtDateShort(x.draft_date))}</div>
       <div class="triple-draft-source">${esc(x.source_label||"Automatischer Entwurf")}</div>
       <div class="triple-grid triple-grid-drafts">
-        <div class="triple-slot"><div class="slot-label">🕰️ DAMALS</div><h4>${esc(d.title||"Ohne Überschrift")}</h4><p>${esc(d.summary)}</p>${d.feel_good_text?`<div class="draft-feel">💛 ${esc(d.feel_good_text)}</div>`:""}</div>
-        <div class="triple-slot"><div class="slot-label">🚀 FORTSCHRITT</div><h4>${esc(f.title||"Ohne Überschrift")}</h4><p>${esc(f.summary)}</p>${f.feel_good_text?`<div class="draft-feel">💛 ${esc(f.feel_good_text)}</div>`:""}</div>
-        <div class="triple-slot"><div class="slot-label">❤️ HEUTE</div><h4>${esc(h.title||"Ohne Überschrift")}</h4><p>${esc(h.summary)}</p>${h.feel_good_text?`<div class="draft-feel">💛 ${esc(h.feel_good_text)}</div>`:""}</div>
+        <div class="triple-slot"><div class="slot-label">🕰️ DAMALS</div><h4>${esc(d.title||"Ohne Überschrift")}</h4><p>${esc(d.summary)}</p>${d.image_url?`<div class="draft-image-note">🖼️ ${d.image_kind==="ai"?"KI-Illustration":"Bildvorschlag"}</div>`:""}${d.feel_good_text?`<div class="draft-feel">💛 ${esc(d.feel_good_text)}</div>`:""}</div>
+        <div class="triple-slot"><div class="slot-label">🚀 FORTSCHRITT</div><h4>${esc(f.title||"Ohne Überschrift")}</h4><p>${esc(f.summary)}</p>${f.image_url?`<div class="draft-image-note">🖼️ ${f.image_kind==="ai"?"KI-Illustration":"Bildvorschlag"}</div>`:""}${f.feel_good_text?`<div class="draft-feel">💛 ${esc(f.feel_good_text)}</div>`:""}</div>
+        <div class="triple-slot"><div class="slot-label">❤️ HEUTE</div><h4>${esc(h.title||"Ohne Überschrift")}</h4><p>${esc(h.summary)}</p>${h.image_url?`<div class="draft-image-note">🖼️ ${h.image_kind==="ai"?"KI-Illustration":"Bildvorschlag"}</div>`:""}${h.feel_good_text?`<div class="draft-feel">💛 ${esc(h.feel_good_text)}</div>`:""}</div>
       </div>
       <div class="submission-actions">
         ${x.status!=="imported"?`<button class="primary import-triple" data-id="${x.id}">Als 3 Entwürfe übernehmen</button>`:""}
@@ -1146,7 +1175,8 @@ async function importTripleDraft(id){
     return {
       published_date:x.draft_date,published_time:times[slot],publish_at:new Date(localDateTime).toISOString(),
       category:n.category,story_key:null,title:n.title,summary:n.summary,context_text:n.context_text,
-      status:"draft",priority:"normal",priority_rank:0,image_url:null,image_path:null,image_credit:null,
+      status:"draft",priority:"normal",priority_rank:0,image_url:n.image_url,image_path:null,image_credit:n.image_credit,
+      image_license:n.image_license,image_source_url:n.image_source_url,image_kind:n.image_kind,
       sources:n.sources,daily_slot:slot,years_ago:n.years_ago,feel_good_text:n.feel_good_text||null,
       updated_at:new Date().toISOString()
     };
