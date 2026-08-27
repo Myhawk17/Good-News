@@ -7,7 +7,7 @@
   <meta name="description" content="Good News – Jeden Tag passiert auch Gutes.">
   <title>Good News</title>
   <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="style.css?v=33">
+  <link rel="stylesheet" href="style.css?v=34">
 </head>
 <body>
   <header class="appbar">
@@ -17,11 +17,14 @@
       <span class="brand-name">Good News</span>
     </button>
     <div class="appbar-actions">
-      <button class="icon-btn" id="searchBtn" aria-label="Suche">⌕</button>
-      <button class="icon-btn" id="archiveBtn" aria-label="Archiv">▦</button>
-      <button class="icon-btn" id="favoritesBtn" aria-label="Favoriten">♡</button>
-      <button class="icon-btn" id="submitNewsBtn" aria-label="Gute Nachricht einreichen">＋</button>
-      <button class="icon-btn" id="adminBtn" aria-label="Redaktion">⚙</button>
+      <button class="icon-btn menu-toggle-btn" id="menuBtn" aria-label="Menü öffnen" aria-expanded="false" aria-controls="mainMenu">☰</button>
+      <div class="main-menu" id="mainMenu" hidden>
+        <button id="searchBtn" type="button"><span>⌕</span>Suche</button>
+        <button id="archiveBtn" type="button"><span>▦</span>Archiv</button>
+        <button id="favoritesBtn" type="button"><span>♡</span>Favoriten</button>
+        <button id="submitNewsBtn" type="button"><span>＋</span>Nachricht einreichen</button>
+      </div>
+      <button class="icon-btn admin-quick-btn" id="adminBtn" aria-label="Redaktion" hidden>⚙</button>
     </div>
   </header>
 

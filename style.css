@@ -488,3 +488,38 @@ input[type="range"]{padding:0}
   .date-slide-bottom{padding-left:34px;padding-right:34px}
   .slide-source-row{font-size:.72rem;gap:10px}
 }
+
+
+/* Good News 3.2 – kompaktes Dropdown-Menü */
+.appbar-actions{align-items:flex-end}
+.menu-toggle-btn,.admin-quick-btn{flex:0 0 auto}
+.main-menu{
+  position:absolute;
+  right:0;
+  top:43px;
+  min-width:210px;
+  padding:7px;
+  border:1px solid #ffffff24;
+  border-radius:15px;
+  background:#151518f2;
+  box-shadow:0 12px 34px #0008;
+  backdrop-filter:blur(14px);
+  -webkit-backdrop-filter:blur(14px);
+}
+.main-menu[hidden]{display:none}
+.main-menu button{
+  width:100%;
+  border:0;
+  background:transparent;
+  color:#fff;
+  display:flex;
+  align-items:center;
+  gap:11px;
+  padding:11px 12px;
+  border-radius:10px;
+  text-align:left;
+  white-space:nowrap;
+}
+.main-menu button:hover,.main-menu button:focus-visible{background:#ffffff14}
+.main-menu button span{width:22px;text-align:center;font-size:1.08rem}
+.admin-quick-btn{margin-top:5px}

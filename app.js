@@ -333,10 +333,27 @@ function openFavorites() {
   $("readerContent").querySelectorAll("[data-jump]").forEach(b=>b.onclick=()=>scrollToNews(b.dataset.jump));
 }
 
-$("searchBtn").onclick = openSearch;
-$("archiveBtn").onclick = openArchive;
-$("favoritesBtn").onclick = openFavorites;
-$("homeBtn").onclick = () => feed.scrollTo({top:0,behavior:"smooth"});
+const mainMenu=$("mainMenu");
+const menuBtn=$("menuBtn");
+function closeMainMenu(){
+  mainMenu.hidden=true;
+  menuBtn.setAttribute("aria-expanded","false");
+}
+menuBtn.onclick=(e)=>{
+  e.stopPropagation();
+  const willOpen=mainMenu.hidden;
+  mainMenu.hidden=!willOpen;
+  menuBtn.setAttribute("aria-expanded",String(willOpen));
+};
+function runMenuAction(fn){return (...args)=>{closeMainMenu();return fn(...args)}}
+$("searchBtn").onclick = runMenuAction(openSearch);
+$("archiveBtn").onclick = runMenuAction(openArchive);
+$("favoritesBtn").onclick = runMenuAction(openFavorites);
+document.addEventListener("click",(e)=>{
+  if(!mainMenu.hidden && !mainMenu.contains(e.target) && e.target!==menuBtn) closeMainMenu();
+});
+document.addEventListener("keydown",(e)=>{if(e.key==="Escape")closeMainMenu()});
+$("homeBtn").onclick = () => {closeMainMenu();feed.scrollTo({top:0,behavior:"smooth"});}
 document.querySelectorAll("[data-close]").forEach(b=>b.onclick=()=>$(b.dataset.close).close());
 feed.addEventListener("scroll",()=>{if(feed.scrollTop>100)$("swipeHint").style.display="none"},{passive:true});
 
@@ -363,6 +380,7 @@ async function refreshAuth() {
   }
   const {data:{session}} = await db.auth.getSession();
   currentAdminSession=session;
+  $("adminBtn").hidden=!session;
   $("loginView").hidden=!!session;
   $("adminView").hidden=!session;
   if(session){
@@ -814,7 +832,19 @@ $("newsForm").onsubmit=async(e)=>{
   }catch(err){$("editorMessage").textContent=err.message||String(err)}
 };
 
-if(db) db.auth.onAuthStateChange(()=>{if(adminDialog.open)setTimeout(refreshAuth,0)});
+if(db){
+  db.auth.getSession().then(({data:{session}})=>{
+    currentAdminSession=session;
+    $("adminBtn").hidden=!session;
+  }).catch(()=>{$("adminBtn").hidden=true});
+  db.auth.onAuthStateChange((_event,session)=>{
+    currentAdminSession=session;
+    $("adminBtn").hidden=!session;
+    if(adminDialog.open)setTimeout(refreshAuth,0);
+  });
+}else{
+  $("adminBtn").hidden=true;
+}
 resetEditor();
 setupEditorAutosave();
 if(localStorage.getItem("goodNewsAdminTab")==="editor"){
@@ -1021,6 +1051,7 @@ let readerSubmissions=[];
 const submissionDialog=$("submissionDialog");
 
 $("submitNewsBtn").onclick=()=>{
+  closeMainMenu();
   $("submissionForm").reset();
   $("submissionMessage").textContent="";
   submissionDialog.showModal();
