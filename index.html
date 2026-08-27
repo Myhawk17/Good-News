@@ -7,7 +7,7 @@
   <meta name="description" content="Good News – Jeden Tag passiert auch Gutes.">
   <title>Good News</title>
   <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="style.css?v=31">
+  <link rel="stylesheet" href="style.css?v=32">
 </head>
 <body>
   <header class="appbar">
@@ -95,6 +95,14 @@
           </span>
         </button>
 
+        <button class="tab admin-menu-item" data-tab="triple-drafts">
+          <span class="admin-menu-icon">📝</span>
+          <span class="admin-menu-copy">
+            <strong>Entwürfe - Dreier <span id="tripleDraftBadge" class="badge" hidden></span></strong>
+            <small>Automatisch empfangene Good-News-Dreier prüfen</small>
+          </span>
+        </button>
+
         <button class="tab admin-menu-item" data-tab="editor">
           <span class="admin-menu-icon">✏️</span>
           <span class="admin-menu-copy">
@@ -131,6 +139,12 @@
       <section id="tab-dashboard" class="tab-panel">
         <h3>Heute</h3>
         <div id="todayList"></div>
+      </section>
+
+      <section id="tab-triple-drafts" class="tab-panel" hidden>
+        <div class="section-head"><div><h3>📝 Entwürfe - Dreier</h3><p class="muted">Hier landen automatisch zugesandte Dreier. Sie werden niemals automatisch veröffentlicht.</p></div></div>
+        <div class="filters"><select id="tripleDraftStatus"><option value="new">Neu</option><option value="imported">Übernommen</option><option value="rejected">Abgelehnt</option><option value="all">Alle</option></select></div>
+        <div id="tripleDraftList"></div>
       </section>
 
       <section id="tab-editor" class="tab-panel" hidden>
@@ -414,6 +428,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="app.js?v=31"></script>
+  <script src="app.js?v=32"></script>
 </body>
 </html>

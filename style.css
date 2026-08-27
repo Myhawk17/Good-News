@@ -450,3 +450,10 @@ input[type="range"]{padding:0}
     margin-top:10px;
   }
 }
+
+
+/* Good News 3.0 – Entwürfe - Dreier */
+.triple-draft-card{background:#19191c;border:1px solid #303035;border-radius:16px;padding:16px;margin:10px 0}
+.triple-draft-source{font-size:.78rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:#d5d5da;margin:0 0 10px}
+.triple-grid-drafts .triple-slot p{font-size:.84rem;line-height:1.45;color:#d0d0d5;white-space:pre-wrap}
+.draft-feel{margin-top:10px;padding-top:10px;border-top:1px solid #ffffff18;font-size:.8rem;line-height:1.4;color:#f0e7b7}

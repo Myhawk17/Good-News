@@ -86,3 +86,10 @@ Dort kannst du ohne Code ändern:
 - Slide-Zähler ein-/ausblenden
 
 Die Einstellungen werden zentral in Supabase gespeichert und gelten danach für alle Leser.
+
+
+GOOD NEWS 3.0 – ENTWÜRFE - DREIER
+----------------------------------
+Neu in der Redaktion: „Entwürfe - Dreier“. Automatisch eingehende Dreier werden dort nur als Vorschläge gespeichert. Mit „Als 3 Entwürfe übernehmen“ entstehen drei redaktionelle Beiträge mit Status ENTWURF. Es erfolgt keine automatische Veröffentlichung.
+
+WICHTIG: Nach dem Update den neuen Abschnitt aus SUPABASE_SETUP.sql im Supabase SQL Editor ausführen, damit die Tabelle triple_drafts existiert.

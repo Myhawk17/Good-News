@@ -360,6 +360,7 @@ async function refreshAuth() {
     $("whoAmI").textContent=session.user.email||"Redaktion";
     await loadAdminNews();
     await loadSubmissions();
+    await loadTripleDrafts();
     await loadAppSettings();
     const lastTab = localStorage.getItem("goodNewsAdminTab") || "dashboard";
     switchAdminTab(lastTab);
@@ -1073,4 +1074,94 @@ switchAdminTab=function(name){
   _switchAdminTab(name);
   if(name==="submissions")loadSubmissions();
   if(name==="editor" && !$("newsId").value && !$("title").value.trim()) restoreEditorDraft();
+};
+
+
+// ---------------- GOOD NEWS 3.0: ENTWÜRFE - DREIER ----------------
+let tripleDrafts=[];
+
+async function loadTripleDrafts(){
+  if(!currentAdminSession || !configured)return;
+  const {data,error}=await db.from("triple_drafts").select("*").order("created_at",{ascending:false});
+  if(error){console.warn("Entwürfe - Dreier:",error.message);return}
+  tripleDrafts=data||[];
+  const count=tripleDrafts.filter(x=>x.status==="new").length;
+  const badge=$("tripleDraftBadge");
+  if(badge){badge.textContent=count;badge.hidden=!count}
+  renderTripleDrafts();
+}
+function tripleDraftStatusLabel(s){return ({new:"Neu",imported:"Übernommen",rejected:"Abgelehnt"})[s]||s}
+function normalizeTripleItem(item,slot){
+  item=item||{};
+  const defaults={damals:"Damals",fortschritt:"Fortschritt",heute:"Heute"};
+  const src=Array.isArray(item.sources)?item.sources:(item.source_url?[{name:item.source_name||"Quelle",url:item.source_url}]:[]);
+  return {
+    category:item.category||defaults[slot],
+    title:item.title||"",
+    summary:item.summary||item.text||"",
+    feel_good_text:item.feel_good_text||item.feel_good||"",
+    context_text:item.context_text||null,
+    years_ago:slot==="damals"?(Number(item.years_ago)||null):null,
+    sources:src.filter(x=>x&&x.url).map(x=>({name:x.name||"Quelle",url:x.url}))
+  };
+}
+function renderTripleDrafts(){
+  const root=$("tripleDraftList");if(!root)return;
+  const filter=$("tripleDraftStatus")?.value||"new";
+  const rows=tripleDrafts.filter(x=>filter==="all"||x.status===filter);
+  root.innerHTML=rows.map(x=>{
+    const p=x.payload||{};
+    const d=normalizeTripleItem(p.damals,"damals"),f=normalizeTripleItem(p.fortschritt,"fortschritt"),h=normalizeTripleItem(p.heute,"heute");
+    return `<article class="triple-draft-card">
+      <div class="submission-meta">${esc(tripleDraftStatusLabel(x.status))} · ${esc(new Date(x.created_at).toLocaleString("de-DE"))} · für ${esc(fmtDateShort(x.draft_date))}</div>
+      <div class="triple-draft-source">${esc(x.source_label||"Automatischer Entwurf")}</div>
+      <div class="triple-grid triple-grid-drafts">
+        <div class="triple-slot"><div class="slot-label">🕰️ DAMALS</div><h4>${esc(d.title||"Ohne Überschrift")}</h4><p>${esc(d.summary)}</p>${d.feel_good_text?`<div class="draft-feel">💛 ${esc(d.feel_good_text)}</div>`:""}</div>
+        <div class="triple-slot"><div class="slot-label">🚀 FORTSCHRITT</div><h4>${esc(f.title||"Ohne Überschrift")}</h4><p>${esc(f.summary)}</p>${f.feel_good_text?`<div class="draft-feel">💛 ${esc(f.feel_good_text)}</div>`:""}</div>
+        <div class="triple-slot"><div class="slot-label">❤️ HEUTE</div><h4>${esc(h.title||"Ohne Überschrift")}</h4><p>${esc(h.summary)}</p>${h.feel_good_text?`<div class="draft-feel">💛 ${esc(h.feel_good_text)}</div>`:""}</div>
+      </div>
+      <div class="submission-actions">
+        ${x.status!=="imported"?`<button class="primary import-triple" data-id="${x.id}">Als 3 Entwürfe übernehmen</button>`:""}
+        ${x.status==="new"?`<button class="secondary reject-triple" data-id="${x.id}">Ablehnen</button>`:""}
+      </div>
+    </article>`;
+  }).join("")||'<p class="muted">Hier gibt es aktuell keine Dreier-Entwürfe.</p>';
+  root.querySelectorAll(".import-triple").forEach(b=>b.onclick=()=>importTripleDraft(b.dataset.id));
+  root.querySelectorAll(".reject-triple").forEach(b=>b.onclick=()=>setTripleDraftStatus(b.dataset.id,"rejected"));
+}
+$("tripleDraftStatus")?.addEventListener("change",renderTripleDrafts);
+async function setTripleDraftStatus(id,status){
+  const {error}=await db.from("triple_drafts").update({status,reviewed_at:new Date().toISOString()}).eq("id",id);
+  if(error)return alert(error.message);
+  await loadTripleDrafts();
+}
+async function importTripleDraft(id){
+  const x=tripleDrafts.find(v=>String(v.id)===String(id));if(!x)return;
+  const p=x.payload||{};
+  const slots=[["damals",p.damals],["fortschritt",p.fortschritt],["heute",p.heute]];
+  const times={damals:"07:00",fortschritt:"07:01",heute:"07:02"};
+  const rows=slots.map(([slot,raw])=>{
+    const n=normalizeTripleItem(raw,slot);
+    const localDateTime=`${x.draft_date}T${times[slot]}:00`;
+    return {
+      published_date:x.draft_date,published_time:times[slot],publish_at:new Date(localDateTime).toISOString(),
+      category:n.category,story_key:null,title:n.title,summary:n.summary,context_text:n.context_text,
+      status:"draft",priority:"normal",priority_rank:0,image_url:null,image_path:null,image_credit:null,
+      sources:n.sources,daily_slot:slot,years_ago:n.years_ago,feel_good_text:n.feel_good_text||null,
+      updated_at:new Date().toISOString()
+    };
+  });
+  if(rows.some(r=>!r.title||!r.summary||!r.sources.length))return alert("Dieser Dreier ist unvollständig. Jede Meldung braucht Überschrift, Text und mindestens eine Quelle.");
+  const {error}=await db.from("news").insert(rows);
+  if(error)return alert("Dreier konnte nicht übernommen werden: "+error.message);
+  await db.from("triple_drafts").update({status:"imported",reviewed_at:new Date().toISOString()}).eq("id",id);
+  await Promise.all([loadTripleDrafts(),loadAdminNews()]);
+  switchAdminTab("dashboard");
+}
+
+// Letzten Tab-Wrapper um den Dreier-Bereich erweitern.
+const __switchAdminTabTriple=switchAdminTab;
+switchAdminTab=function(name){
+  __switchAdminTabTriple(name);
+  if(name==="triple-drafts")loadTripleDrafts();
 };
