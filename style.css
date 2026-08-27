@@ -523,3 +523,7 @@ input[type="range"]{padding:0}
 .main-menu button:hover,.main-menu button:focus-visible{background:#ffffff14}
 .main-menu button span{width:22px;text-align:center;font-size:1.08rem}
 .admin-quick-btn{margin-top:5px}
+
+/* Good News 3.3 – App-Logo statt altem Daylie-"D" */
+.brand-mark{display:none!important}
+.brand-logo{display:block!important;opacity:1!important;visibility:visible!important;object-fit:cover}

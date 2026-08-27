@@ -907,13 +907,15 @@ function applyAppSettings(s){
 
   const logo=$("brandLogo");
   if(logo){
-    if(s.logo_url){
-      logo.src=s.logo_url;
-      logo.classList.add("visible");
-    }else{
-      logo.classList.remove("visible");
-      logo.removeAttribute("src");
-    }
+    // Das Good-News-Appsymbol ist immer der Fallback. Ein in der Redaktion
+    // hinterlegtes Logo darf es weiterhin überschreiben.
+    logo.src=s.logo_url || "icon-192.png";
+    logo.classList.add("visible");
+    logo.onerror=()=>{
+      if(!logo.src.endsWith("/icon-192.png") && !logo.src.endsWith("icon-192.png")){
+        logo.src="icon-192.png";
+      }
+    };
   }
 }
 
