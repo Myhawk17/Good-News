@@ -1,4 +1,4 @@
-DAILY SLIDES 1.0
+GOOD NEWS 1.0
 ================
 
 Enthalten:

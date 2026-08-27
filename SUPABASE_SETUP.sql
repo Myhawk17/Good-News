@@ -1,4 +1,4 @@
--- DAILY SLIDES 1.0 – SUPABASE SETUP
+-- GOOD NEWS 1.0 – SUPABASE SETUP
 -- Einmal komplett in Supabase → SQL Editor ausführen.
 
 -- 1) Tabelle
@@ -112,7 +112,7 @@ using (bucket_id = 'news-images');
 create table if not exists public.app_settings (
   id int primary key default 1 check (id = 1),
   updated_at timestamptz not null default now(),
-  app_name text not null default 'Daily Slides',
+  app_name text not null default 'Good News',
   logo_url text,
   logo_path text,
   background_color text not null default '#0e0e10',
