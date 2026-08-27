@@ -1,3 +1,12 @@
+const launchSplash=document.getElementById("launchSplash");
+if(launchSplash){
+  const removeLaunchSplash=()=>launchSplash.remove();
+  launchSplash.addEventListener("animationend",(e)=>{
+    if(e.animationName==="launchSplashOut") removeLaunchSplash();
+  });
+  setTimeout(removeLaunchSplash,1800);
+}
+
 const cfg = window.APP_CONFIG || {};
 const configured = Boolean(
   cfg.SUPABASE_URL && cfg.SUPABASE_ANON_KEY &&
