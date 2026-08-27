@@ -49,6 +49,46 @@ const getDeviceId = () => {
   if (!id) { id = (crypto.randomUUID ? crypto.randomUUID() : `dev-${Date.now()}-${Math.random().toString(36).slice(2)}`); localStorage.setItem("goodNewsDeviceId", id); }
   return id;
 };
+
+// ---------------- PRIVATE ADMIN ANALYTICS ----------------
+// Pseudonymous local device ID only; no name/e-mail is attached to public usage events.
+async function trackAnalyticsEvent(eventType, newsId=null){
+  if(!configured || !db) return false;
+  try{
+    const row={event_type:eventType,visitor_id:getDeviceId()};
+    if(newsId!==null && newsId!==undefined) row.news_id=newsId;
+    const {error}=await db.from("analytics_events").insert(row);
+    return !error;
+  }catch{return false}
+}
+
+async function trackDailyActive(){
+  const day=new Intl.DateTimeFormat("en-CA",{timeZone:"Europe/Berlin",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date());
+  const key="goodNewsAnalyticsActiveDay";
+  if(localStorage.getItem(key)===day) return;
+  if(await trackAnalyticsEvent("active")) localStorage.setItem(key,day);
+}
+
+async function loadAnalyticsSummary(){
+  const box=$("analyticsCards");
+  if(!box || !configured || !db || !currentAdminSession) return;
+  box.classList.add("is-loading");
+  try{
+    const {data,error}=await db.rpc("get_analytics_summary");
+    if(error) throw error;
+    const s=Array.isArray(data)?(data[0]||{}):(data||{});
+    const n=(v)=>Number(v||0).toLocaleString("de-DE");
+    box.innerHTML=`
+      <div class="analytics-card"><strong>${n(s.active_today)}</strong><span>Aktiv heute</span><small>7 Tage: ${n(s.active_7d)} · 30 Tage: ${n(s.active_30d)}</small></div>
+      <div class="analytics-card"><strong>${n(s.favorites_today)}</strong><span>Favorisiert heute</span><small>7 Tage: ${n(s.favorites_7d)} · 30 Tage: ${n(s.favorites_30d)}</small></div>
+      <div class="analytics-card"><strong>${n(s.shares_today)}</strong><span>Geteilt heute</span><small>7 Tage: ${n(s.shares_7d)} · 30 Tage: ${n(s.shares_30d)}</small></div>`;
+  }catch(err){
+    box.innerHTML=`<div class="analytics-error">Statistik konnte nicht geladen werden.</div>`;
+    console.warn("Analytics:",err);
+  }finally{
+    box.classList.remove("is-loading");
+  }
+}
 let reactionCounts = {};
 let myReactions = {};
 async function loadReactions(){
@@ -219,6 +259,7 @@ function buildSlide(item, index, total) {
     const active = toggleFavorite(item.id);
     e.currentTarget.classList.toggle("active",active);
     e.currentTarget.textContent = active ? "♥ Gespeichert" : "♡ Merken";
+    if(active) trackAnalyticsEvent("favorite",item.id);
   };
   article.querySelector(".share-btn").onclick = () => shareItem(item);
   article.querySelector(".image-source-link")?.addEventListener("click",()=>openImageSource(item));
@@ -237,9 +278,12 @@ async function shareItem(item) {
   const url = new URL(location.href); url.search=""; url.hash=""; url.searchParams.set("news",item.id);
   const text = `${item.title}\n\n${item.summary}`;
   try {
-    if (navigator.share) await navigator.share({title:item.title,text,url:url.toString()});
-    else {
+    if (navigator.share) {
+      await navigator.share({title:item.title,text,url:url.toString()});
+      trackAnalyticsEvent("share",item.id);
+    } else {
       await navigator.clipboard.writeText(`${text}\n\n${url}`);
+      trackAnalyticsEvent("share",item.id);
       alert("Good News und Direktlink wurden kopiert.");
     }
   } catch {}
@@ -362,7 +406,7 @@ function switchAdminTab(name) {
   localStorage.setItem("goodNewsAdminTab", name);
   document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("active",t.dataset.tab===name));
   document.querySelectorAll(".tab-panel").forEach(p=>p.hidden = p.id !== `tab-${name}`);
-  if(name==="dashboard") renderDashboard();
+  if(name==="dashboard"){renderDashboard();loadAnalyticsSummary();}
   if(name==="manage") renderAdminList();
 }
 document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>switchAdminTab(t.dataset.tab));
@@ -389,6 +433,7 @@ async function refreshAuth() {
     await loadSubmissions();
     await loadTripleDrafts();
     await loadAppSettings();
+    await loadAnalyticsSummary();
     const lastTab = localStorage.getItem("goodNewsAdminTab") || "dashboard";
     switchAdminTab(lastTab);
   }
@@ -405,6 +450,7 @@ $("loginForm").onsubmit = async (e)=>{
   if(!error) await refreshAuth();
 };
 $("logoutBtn").onclick=async()=>{await db.auth.signOut();await refreshAuth()};
+$("analyticsRefreshBtn").onclick=()=>loadAnalyticsSummary();
 
 async function loadAdminNews() {
   const {data,error}=await db.from("news").select("*").order("publish_at",{ascending:false});
@@ -850,6 +896,7 @@ setupEditorAutosave();
 if(localStorage.getItem("goodNewsAdminTab")==="editor"){
   restoreEditorDraft();
 }
+trackDailyActive();
 fetchPublicNews();
 
 if("serviceWorker" in navigator){

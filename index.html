@@ -7,7 +7,7 @@
   <meta name="description" content="Good News – Jeden Tag passiert auch Gutes.">
   <title>Good News</title>
   <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="style.css?v=35">
+  <link rel="stylesheet" href="style.css?v=36">
 </head>
 <body>
   <header class="appbar">
@@ -86,6 +86,22 @@
 
       <!-- Kompakte Statistik direkt unter dem Login -->
       <div id="dashboardCards" class="metric-grid metric-grid-compact"></div>
+
+      <section class="analytics-panel" aria-label="Nutzerstatistik">
+        <div class="analytics-head">
+          <div>
+            <div class="eyebrow">Nur Administrator</div>
+            <h3>Nutzerstatistik</h3>
+          </div>
+          <button class="secondary analytics-refresh" id="analyticsRefreshBtn" type="button" aria-label="Statistik aktualisieren">↻</button>
+        </div>
+        <div id="analyticsCards" class="analytics-grid">
+          <div class="analytics-card"><strong>–</strong><span>Aktiv heute</span><small>7 Tage: – · 30 Tage: –</small></div>
+          <div class="analytics-card"><strong>–</strong><span>Favorisiert heute</span><small>7 Tage: – · 30 Tage: –</small></div>
+          <div class="analytics-card"><strong>–</strong><span>Geteilt heute</span><small>7 Tage: – · 30 Tage: –</small></div>
+        </div>
+        <p class="analytics-note">Gezählt werden anonyme App-Nutzungen, Favorisierungen und erfolgreiche Teilen-Aktionen. Es werden dafür keine Namen oder E-Mail-Adressen gespeichert.</p>
+      </section>
 
       <!-- Funktionen der Redaktion untereinander -->
       <nav class="tabs admin-menu" aria-label="Redaktion">

@@ -527,3 +527,40 @@ input[type="range"]{padding:0}
 /* Good News 3.3 – App-Logo statt altem Daylie-"D" */
 .brand-mark{display:none!important}
 .brand-logo{display:block!important;opacity:1!important;visibility:visible!important;object-fit:cover}
+
+
+/* Good News 3.4 – private Nutzerstatistik im Adminbereich */
+.analytics-panel{
+  margin:14px 0 18px;
+  padding:14px;
+  border:1px solid #ffffff18;
+  border-radius:18px;
+  background:#ffffff08;
+}
+.analytics-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}
+.analytics-head h3{margin:2px 0 0}
+.analytics-refresh{min-width:40px;padding:8px 11px}
+.analytics-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.analytics-card{
+  min-width:0;
+  padding:12px 10px;
+  border-radius:14px;
+  background:#ffffff0c;
+  border:1px solid #ffffff12;
+  display:flex;
+  flex-direction:column;
+}
+.analytics-card strong{font-size:1.65rem;line-height:1;font-weight:850}
+.analytics-card span{margin-top:7px;font-size:.82rem;font-weight:700}
+.analytics-card small{margin-top:5px;font-size:.68rem;line-height:1.35;color:#bdbdc4}
+.analytics-note{margin:10px 2px 0;font-size:.7rem;line-height:1.4;color:#a9a9b0}
+.analytics-grid.is-loading{opacity:.6}
+.analytics-error{grid-column:1/-1;padding:12px;color:#d6d6da}
+@media(max-width:540px){
+  .analytics-panel{padding:11px}
+  .analytics-grid{gap:6px}
+  .analytics-card{padding:10px 8px}
+  .analytics-card strong{font-size:1.4rem}
+  .analytics-card span{font-size:.74rem}
+  .analytics-card small{font-size:.61rem}
+}
