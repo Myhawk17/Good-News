@@ -206,11 +206,13 @@ function buildSlide(item, index, total) {
         <button class="slide-action share-btn" data-id="${item.id}">↗ Teilen</button>
       </div>
 
-      ${item.image_url ? `<button class="image-source-link" type="button" data-image-source-id="${item.id}">${item.image_kind === "ai" ? "ⓘ KI-Illustration" : "ⓘ Bildquelle"}</button>` : ""}
-      <div class="source-line source-line-simple">
-        ${primarySource
-          ? `<a class="quiet-link" href="${esc(primarySource.url)}" target="_blank" rel="noopener noreferrer">Quelle: ${esc(primarySource.name)}</a>`
-          : `<span>Good News</span>`}
+      <div class="slide-source-row">
+        <div class="source-line source-line-simple">
+          ${primarySource
+            ? `<a class="quiet-link" href="${esc(primarySource.url)}" target="_blank" rel="noopener noreferrer">Quelle: ${esc(primarySource.name)}</a>`
+            : `<span>Good News</span>`}
+        </div>
+        ${item.image_url ? `<button class="image-source-link" type="button" data-image-source-id="${item.id}">${item.image_kind === "ai" ? "ⓘ KI-Illustration" : "ⓘ Bildquelle"}</button>` : ""}
       </div>
     </div>`;
   article.querySelector(".fav-btn").onclick = (e) => {
