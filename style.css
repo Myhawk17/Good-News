@@ -766,6 +766,10 @@ input[type="range"]{padding:0}
 .image-fieldset-slim{padding-bottom:14px}
 .image-input-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .image-source-fields{margin-top:10px}
+.image-choice-box,.image-rights-box{padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--panel-soft,rgba(127,127,127,.06))}
+.image-choice-box .image-input-row{margin-top:10px}
+.image-rights-box>label{display:block;margin-top:10px}
+.image-rights-box .form-grid{margin-top:10px}
 .image-editor-slim{padding:12px;margin-top:12px}
 .image-editor-slim .image-editor-head{margin-bottom:10px}
 .image-editor-slim .image-editor-head .muted{font-size:.78rem;line-height:1.4;margin-top:4px}
