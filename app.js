@@ -4,7 +4,7 @@ if(launchSplash){
   launchSplash.addEventListener("animationend",(e)=>{
     if(e.animationName==="launchSplashOut") removeLaunchSplash();
   });
-      setTimeout(removeLaunchSplash,3200);
+        setTimeout(removeLaunchSplash,2900);
 }
 
 const cfg = window.APP_CONFIG || {};
