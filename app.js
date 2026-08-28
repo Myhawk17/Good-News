@@ -505,8 +505,6 @@ function buildSlide(item, index, total) {
       <h1>${esc(displayTitle(item))}</h1>
       <p class="summary">${esc(item.summary)}</p>
 
-      ${item.context_text ? `<div class="context-box"><strong>Kurz erklärt</strong>${esc(item.context_text)}</div>` : ""}
-      
       <div class="slide-actions">
         <button class="slide-action fav-btn ${fav ? "active":""}" data-id="${item.id}">${fav ? "♥ Gespeichert" : "♡ Merken"}</button>
         <button class="slide-action share-btn" data-id="${item.id}">↗ Teilen</button>
@@ -1016,12 +1014,19 @@ function setEditorImage(src,{preserveOriginal=true}={}){
   if(!src)return;
   if(preserveOriginal && !editorOriginalPreviewSrc) editorOriginalPreviewSrc=src;
   const main=$("imagePreview"), blur=$("imagePreviewBlur"), cropSource=$("imageCropSource");
-  [main,blur,cropSource].forEach(el=>{
+  [main,blur].forEach(el=>{
     if(!el)return;
-    if(!src.startsWith("blob:") && !src.startsWith("data:")) el.crossOrigin="anonymous";
-    else el.removeAttribute("crossorigin");
+    // Sichtbare Vorschau nie durch CORS blockieren: externe Bilder dürfen normal angezeigt werden.
+    el.removeAttribute("crossorigin");
     el.src=src;
   });
+  if(cropSource){
+    // Nur die unsichtbare Zuschneidequelle braucht CORS für canvas.toBlob().
+    // Wenn ein Anbieter CORS verweigert, bleibt die normale Vorschau trotzdem sichtbar.
+    if(!src.startsWith("blob:") && !src.startsWith("data:")) cropSource.crossOrigin="anonymous";
+    else cropSource.removeAttribute("crossorigin");
+    cropSource.src=src;
+  }
   $("imagePreviewBox").hidden=false;
   if(cropSource){
     const ready=()=>{resetCropSelection();applyImageEditorState()};
@@ -1272,7 +1277,6 @@ function openPreview(n){
         ${n.byline_visible&&n.byline_name?`<div class="news-byline">von ${esc(n.byline_name)}</div>`:""}
         <h1>${esc(n.title||"Deine Überschrift")}</h1>
         <p class="summary">${esc(n.summary||"Hier erscheint deine Nachricht.")}</p>
-        ${n.context_text?`<div class="context-box"><strong>Kurz erklärt</strong>${esc(n.context_text)}</div>`:""}
               </div>
     </article>`;
   previewDialog.showModal();
@@ -1313,6 +1317,8 @@ $("newsForm").onsubmit=async(e)=>{
     const file=editorCroppedFile || $("imageFile").files?.[0];
     if(file){
       const uploaded=await uploadImage(file);imageUrl=uploaded.url;imagePath=uploaded.path;
+    }else{
+      imageUrl=await resolveDisplayImageUrl(imageUrl);
     }
     const localDateTime=`${d.published_date}T${d.published_time}:00`;
     const publishAt=new Date(localDateTime).toISOString();
@@ -1683,6 +1689,39 @@ async function loadTripleDrafts(){
 }
 function tripleDraftStatusLabel(s){return ({new:"Neu",imported:"Übernommen",rejected:"Abgelehnt"})[s]||s}
 
+function wikimediaFileNameFromUrl(raw){
+  if(!raw)return null;
+  try{
+    const u=new URL(String(raw).trim());
+    if(u.hostname!=="commons.wikimedia.org" && u.hostname!=="www.commons.wikimedia.org")return null;
+    const path=decodeURIComponent(u.pathname);
+    const redirectMarker="/wiki/Special:Redirect/file/";
+    if(path.includes(redirectMarker))return path.split(redirectMarker)[1]||null;
+    const fileMarker="/wiki/File:";
+    if(path.includes(fileMarker))return path.split(fileMarker)[1]||null;
+  }catch(_e){}
+  return null;
+}
+
+async function resolveDisplayImageUrl(raw){
+  const value=String(raw||"").trim();
+  if(!value)return null;
+  const fileName=wikimediaFileNameFromUrl(value);
+  if(!fileName)return value;
+  try{
+    const api="https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*&prop=imageinfo&iiprop=url&iiurlwidth=1600&titles="+encodeURIComponent("File:"+fileName);
+    const response=await fetch(api,{cache:"no-store"});
+    if(!response.ok)throw new Error("Wikimedia HTTP "+response.status);
+    const json=await response.json();
+    const page=Object.values(json?.query?.pages||{})[0];
+    const info=page?.imageinfo?.[0];
+    return info?.thumburl||info?.url||value;
+  }catch(err){
+    console.warn("Bilddatei konnte nicht automatisch aufgelöst werden:",err);
+    return value;
+  }
+}
+
 function normalizeCandidateItem(item,category){
   item=item||{};
   const src=Array.isArray(item.sources)?item.sources:(item.source_url?[{name:item.source_name||"Quelle",url:item.source_url}]:[]);
@@ -1856,6 +1895,7 @@ async function importCandidateBatch(id){
   }
   const rows=selected.map(([group,raw],index)=>rowFromCandidate(x,group,raw,index));
   if(rows.some(r=>!r.title||!r.summary||!r.sources.length))return alert("Mindestens ein ausgewählter Vorschlag ist unvollständig. Überschrift, Text und mindestens eine Quelle sind erforderlich.");
+  for(const row of rows) row.image_url=await resolveDisplayImageUrl(row.image_url);
   const {error}=await db.from("news").insert(rows);
   if(error)return alert("Auswahl konnte nicht übernommen werden: "+error.message);
   await db.from("triple_drafts").update({status:"imported",reviewed_at:new Date().toISOString()}).eq("id",id);
@@ -1882,6 +1922,7 @@ async function importTripleDraft(id){
     };
   });
   if(rows.some(r=>!r.title||!r.summary||!r.sources.length))return alert("Dieser Dreier ist unvollständig. Jede Meldung braucht Überschrift, Text und mindestens eine Quelle.");
+  for(const row of rows) row.image_url=await resolveDisplayImageUrl(row.image_url);
   const {error}=await db.from("news").insert(rows);
   if(error)return alert("Dreier konnte nicht übernommen werden: "+error.message);
   await db.from("triple_drafts").update({status:"imported",reviewed_at:new Date().toISOString()}).eq("id",id);
