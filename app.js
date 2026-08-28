@@ -740,107 +740,203 @@ function setEditorImage(src,{preserveOriginal=true}={}){
   }else applyImageEditorState();
 }
 function currentImageEditorState(){return {
-  image_fit:$("imageFit")?.value||"cover", image_zoom:clampNum($("imageZoom")?.value,0.35,2.5,1),
-  image_pos_x:clampNum($("imagePosX")?.value,0,100,50), image_pos_y:clampNum($("imagePosY")?.value,0,100,50)
+  image_fit:"cover",image_zoom:1,image_pos_x:50,image_pos_y:50
 }}
 function applyImageEditorState(){
-  if(!$("imagePreview"))return; const v=currentImageEditorState();
-  $("imagePreview").style.objectFit=v.image_fit; $("imagePreview").style.objectPosition=`${v.image_pos_x}% ${v.image_pos_y}%`; $("imagePreview").style.transform=`scale(${v.image_zoom})`;
-  if($("imageZoomValue")) $("imageZoomValue").textContent=v.image_zoom.toFixed(2).replace(".",",")+"×";
+  const preview=$("imagePreview");
+  if(!preview)return;
+  preview.style.objectFit="cover";
+  preview.style.objectPosition="50% 50%";
+  preview.style.transform="scale(1)";
 }
-["imageFit","imageZoom","imagePosX","imagePosY"].forEach(id=>$(id)?.addEventListener("input",applyImageEditorState));
-$("imageFillBtn")?.addEventListener("click",()=>{$("imageFit").value="cover";$("imageZoom").value="1";applyImageEditorState()});
-$("imageWholeBtn")?.addEventListener("click",()=>{$("imageFit").value="contain";$("imageZoom").value="1";$("imagePosX").value="50";$("imagePosY").value="50";applyImageEditorState()});
-$("imageResetBtn")?.addEventListener("click",()=>{$("imageFit").value="cover";$("imageZoom").value="1";$("imagePosX").value="50";$("imagePosY").value="50";applyImageEditorState()});
 
-// Good News 2.4: frei verschiebbarer Zuschneiderahmen wie in der Handy-Galerie.
+// Schlanker Bildeditor: ein verschieb- und skalierbarer Handy-Ausschnitt im festen Format 9:16.
 const cropper=$("imageCropper"), cropSelection=$("cropSelection");
+const PHONE_CROP_AR=9/16;
 let cropState={x:0,y:0,w:1,h:1};
 let cropGesture=null;
-const MIN_CROP=.08;
+const MIN_CROP_PX=90;
+
 function cropImageDisplayRect(){
-  const img=$("imageCropSource"); if(!cropper||!img?.naturalWidth)return null;
-  const r=cropper.getBoundingClientRect(), ar=img.naturalWidth/img.naturalHeight, stageAr=r.width/r.height;
+  const img=$("imageCropSource");
+  if(!cropper||!img?.naturalWidth||!img?.naturalHeight)return null;
+  const r=cropper.getBoundingClientRect();
+  const ar=img.naturalWidth/img.naturalHeight;
+  const stageAr=r.width/r.height;
   let w,h,left,top;
   if(ar>stageAr){w=r.width;h=w/ar;left=0;top=(r.height-h)/2}
   else{h=r.height;w=h*ar;top=0;left=(r.width-w)/2}
-  return {left,top,width:w,height:h};
+  return {left,top,width:w,height:h,imageAr:ar};
 }
-function clampCropState(c){
-  c.w=Math.max(MIN_CROP,Math.min(1,c.w)); c.h=Math.max(MIN_CROP,Math.min(1,c.h));
-  c.x=Math.max(0,Math.min(1-c.w,c.x)); c.y=Math.max(0,Math.min(1-c.h,c.y)); return c;
+
+function cropNormalizedRatio(){
+  const img=$("imageCropSource");
+  const imageAr=(img?.naturalWidth&&img?.naturalHeight)?img.naturalWidth/img.naturalHeight:1;
+  return PHONE_CROP_AR/imageAr; // normalized width / normalized height
 }
+
+function largestPhoneCrop(){
+  const img=$("imageCropSource");
+  if(!img?.naturalWidth||!img?.naturalHeight)return {x:0,y:0,w:1,h:1};
+  const imageAr=img.naturalWidth/img.naturalHeight;
+  let w,h;
+  if(imageAr>=PHONE_CROP_AR){
+    h=1;
+    w=PHONE_CROP_AR/imageAr;
+  }else{
+    w=1;
+    h=imageAr/PHONE_CROP_AR;
+  }
+  return {x:(1-w)/2,y:(1-h)/2,w,h};
+}
+
+function clampPhoneCrop(c){
+  const d=cropImageDisplayRect();
+  const ratio=cropNormalizedRatio();
+  if(!d||!Number.isFinite(ratio)||ratio<=0)return c;
+
+  const minW=Math.min(.9, Math.max(.05, MIN_CROP_PX/Math.max(1,d.width)));
+  const maxW=Math.min(1, ratio); // h=w/ratio must stay <=1
+  c.w=Math.max(Math.min(minW,maxW),Math.min(maxW,c.w));
+  c.h=c.w/ratio;
+
+  c.x=Math.max(0,Math.min(1-c.w,c.x));
+  c.y=Math.max(0,Math.min(1-c.h,c.y));
+  return c;
+}
+
 function renderCropSelection(){
-  if(!cropSelection)return; const d=cropImageDisplayRect(); if(!d)return;
-  clampCropState(cropState);
-  const l=d.left+cropState.x*d.width,t=d.top+cropState.y*d.height,w=cropState.w*d.width,h=cropState.h*d.height;
+  if(!cropSelection)return;
+  const d=cropImageDisplayRect();
+  if(!d)return;
+  cropState=clampPhoneCrop({...cropState});
+  const l=d.left+cropState.x*d.width;
+  const t=d.top+cropState.y*d.height;
+  const w=cropState.w*d.width;
+  const h=cropState.h*d.height;
   Object.assign(cropSelection.style,{left:l+"px",top:t+"px",width:w+"px",height:h+"px"});
-  const stage=cropper.getBoundingClientRect();
+
   const top=$("cropShadeTop"),right=$("cropShadeRight"),bottom=$("cropShadeBottom"),left=$("cropShadeLeft");
-  if(top)Object.assign(top.style,{left:d.left+"px",top:d.top+"px",width:d.width+"px",height:(t-d.top)+"px"});
+  if(top)Object.assign(top.style,{left:d.left+"px",top:d.top+"px",width:d.width+"px",height:Math.max(0,t-d.top)+"px"});
   if(bottom)Object.assign(bottom.style,{left:d.left+"px",top:(t+h)+"px",width:d.width+"px",height:Math.max(0,d.top+d.height-(t+h))+"px"});
   if(left)Object.assign(left.style,{left:d.left+"px",top:t+"px",width:Math.max(0,l-d.left)+"px",height:h+"px"});
   if(right)Object.assign(right.style,{left:(l+w)+"px",top:t+"px",width:Math.max(0,d.left+d.width-(l+w))+"px",height:h+"px"});
 }
-function resetCropSelection(){cropState={x:0,y:0,w:1,h:1};requestAnimationFrame(renderCropSelection)}
+
+function resetCropSelection(){
+  cropState=largestPhoneCrop();
+  requestAnimationFrame(renderCropSelection);
+}
 window.addEventListener("resize",renderCropSelection);
 $("cropResetBtn")?.addEventListener("click",resetCropSelection);
 
 cropSelection?.addEventListener("pointerdown",e=>{
-  e.preventDefault(); cropSelection.setPointerCapture?.(e.pointerId);
+  e.preventDefault();
+  cropSelection.setPointerCapture?.(e.pointerId);
   const handle=e.target?.dataset?.handle||"move";
   cropGesture={pointerId:e.pointerId,handle,startX:e.clientX,startY:e.clientY,start:{...cropState}};
 });
 cropSelection?.addEventListener("pointermove",e=>{
   if(!cropGesture||cropGesture.pointerId!==e.pointerId)return;
-  const d=cropImageDisplayRect();if(!d)return;
-  const dx=(e.clientX-cropGesture.startX)/Math.max(1,d.width),dy=(e.clientY-cropGesture.startY)/Math.max(1,d.height);
-  const s=cropGesture.start,c={...s},h=cropGesture.handle;
-  if(h==="move"){
-    c.x=s.x+dx;c.y=s.y+dy;
-  }else{
-    if(h.includes("w")){const nx=Math.min(s.x+s.w-MIN_CROP,Math.max(0,s.x+dx));c.x=nx;c.w=s.x+s.w-nx}
-    if(h.includes("e")){c.w=Math.max(MIN_CROP,Math.min(1-s.x,s.w+dx))}
-    if(h.includes("n")){const ny=Math.min(s.y+s.h-MIN_CROP,Math.max(0,s.y+dy));c.y=ny;c.h=s.y+s.h-ny}
-    if(h.includes("s")){c.h=Math.max(MIN_CROP,Math.min(1-s.y,s.h+dy))}
+  const d=cropImageDisplayRect();
+  if(!d)return;
+  const dx=(e.clientX-cropGesture.startX)/Math.max(1,d.width);
+  const dy=(e.clientY-cropGesture.startY)/Math.max(1,d.height);
+  const s=cropGesture.start;
+  let c={...s};
+
+  if(cropGesture.handle==="move"){
+    c.x=s.x+dx;
+    c.y=s.y+dy;
+  }else if(cropGesture.handle==="resize"){
+    const ratio=cropNormalizedRatio();
+    const byX=s.w+dx;
+    const byY=(s.h+dy)*ratio;
+    const desired=Math.abs(dx) >= Math.abs(dy) ? byX : byY;
+    const maxW=Math.min(1-s.x,(1-s.y)*ratio,1,ratio);
+    const minW=Math.min(maxW,Math.max(.05,MIN_CROP_PX/Math.max(1,d.width)));
+    c.w=Math.max(minW,Math.min(maxW,desired));
+    c.h=c.w/ratio;
   }
-  cropState=clampCropState(c);renderCropSelection();
+  cropState=clampPhoneCrop(c);
+  renderCropSelection();
 });
-function endCropGesture(e){if(cropGesture?.pointerId===e.pointerId)cropGesture=null}
-cropSelection?.addEventListener("pointerup",endCropGesture);cropSelection?.addEventListener("pointercancel",endCropGesture);
+function endCropGesture(e){
+  if(cropGesture?.pointerId===e.pointerId)cropGesture=null;
+}
+cropSelection?.addEventListener("pointerup",endCropGesture);
+cropSelection?.addEventListener("pointercancel",endCropGesture);
 
 $("imageFile").onchange=()=>{
-  const f=$("imageFile").files?.[0];if(!f)return; editorCroppedFile=null; editorOriginalPreviewSrc=null; setEditorImage(URL.createObjectURL(f));
+  const f=$("imageFile").files?.[0];
+  if(!f)return;
+  editorCroppedFile=null;
+  editorOriginalPreviewSrc=null;
+  setEditorImage(URL.createObjectURL(f));
 };
 $("imageUrl").oninput=()=>{
-  if($("imageFile").files?.[0])return; const url=$("imageUrl").value.trim(); if(url)setEditorImage(url);
+  if($("imageFile").files?.[0])return;
+  const url=$("imageUrl").value.trim();
+  if(url)setEditorImage(url);
 };
 
 async function cropVisibleImage(){
   const img=$("imageCropSource");
-  if(!img?.src) throw new Error("Bitte zuerst ein Bild auswählen.");
-  if(!img.complete) await new Promise((resolve,reject)=>{img.addEventListener("load",resolve,{once:true});img.addEventListener("error",()=>reject(new Error("Bild konnte nicht geladen werden.")),{once:true})});
-  const nw=img.naturalWidth,nh=img.naturalHeight;if(!nw||!nh)throw new Error("Die Bildgröße konnte nicht gelesen werden.");
-  const sx=Math.round(cropState.x*nw),sy=Math.round(cropState.y*nh),sw=Math.max(1,Math.round(cropState.w*nw)),sh=Math.max(1,Math.round(cropState.h*nh));
-  const maxSide=2000,scale=Math.min(1,maxSide/Math.max(sw,sh));
-  const W=Math.max(1,Math.round(sw*scale)),H=Math.max(1,Math.round(sh*scale));
-  const canvas=document.createElement("canvas");canvas.width=W;canvas.height=H;const ctx=canvas.getContext("2d");
-  try{ctx.drawImage(img,sx,sy,sw,sh,0,0,W,H)}catch(err){throw new Error("Dieses externe Bild darf der Browser nicht zuschneiden. Lade es bitte als Bilddatei hoch und versuche es erneut.")}
-  const blob=await new Promise(resolve=>canvas.toBlob(resolve,"image/jpeg",.93));if(!blob)throw new Error("Der Bildausschnitt konnte nicht erstellt werden.");
-  editorCroppedFile=new File([blob],`good-news-crop-${Date.now()}.jpg`,{type:"image/jpeg"});
-  const url=URL.createObjectURL(blob);setEditorImage(url,{preserveOriginal:false});
-  $("imageFit").value="cover";$("imageZoom").value="1";$("imagePosX").value="50";$("imagePosY").value="50";applyImageEditorState();
-  if($("imageCropMessage")) $("imageCropMessage").textContent="Ausschnitt erstellt. Beim Speichern wird genau dieser Bildbereich verwendet.";
+  if(!img?.src)throw new Error("Bitte zuerst ein Bild auswählen.");
+  if(!img.complete)await new Promise((resolve,reject)=>{
+    img.addEventListener("load",resolve,{once:true});
+    img.addEventListener("error",()=>reject(new Error("Bild konnte nicht geladen werden.")),{once:true});
+  });
+  const nw=img.naturalWidth,nh=img.naturalHeight;
+  if(!nw||!nh)throw new Error("Die Bildgröße konnte nicht gelesen werden.");
+
+  cropState=clampPhoneCrop({...cropState});
+  const sx=Math.round(cropState.x*nw);
+  const sy=Math.round(cropState.y*nh);
+  const sw=Math.max(1,Math.round(cropState.w*nw));
+  const sh=Math.max(1,Math.round(cropState.h*nh));
+
+  // Ausgabe immer exakt 9:16; ausreichend groß für mobile Vollbild-Slides.
+  const targetW=1080,targetH=1920;
+  const canvas=document.createElement("canvas");
+  canvas.width=targetW;
+  canvas.height=targetH;
+  const ctx=canvas.getContext("2d");
+  try{
+    ctx.drawImage(img,sx,sy,sw,sh,0,0,targetW,targetH);
+  }catch(err){
+    throw new Error("Dieses externe Bild darf der Browser nicht zuschneiden. Lade es bitte als Bilddatei hoch und versuche es erneut.");
+  }
+  const blob=await new Promise(resolve=>canvas.toBlob(resolve,"image/jpeg",.90));
+  if(!blob)throw new Error("Der Bildausschnitt konnte nicht erstellt werden.");
+
+  editorCroppedFile=new File([blob],`good-news-9x16-${Date.now()}.jpg`,{type:"image/jpeg"});
+  const url=URL.createObjectURL(blob);
+  setEditorImage(url,{preserveOriginal:false});
+  $("imageFit").value="cover";
+  $("imageZoom").value="1";
+  $("imagePosX").value="50";
+  $("imagePosY").value="50";
+  applyImageEditorState();
+  if($("imageCropMessage"))$("imageCropMessage").textContent="Handy-Ausschnitt übernommen. Beim Speichern wird genau dieses 9:16-Bild verwendet.";
 }
 
 $("imageCropBtn")?.addEventListener("click",async()=>{
-  const btn=$("imageCropBtn");btn.disabled=true;
-  try{await cropVisibleImage()}catch(err){if($("imageCropMessage")) $("imageCropMessage").textContent=err.message||String(err)}finally{btn.disabled=false}
+  const btn=$("imageCropBtn");
+  btn.disabled=true;
+  try{
+    await cropVisibleImage();
+  }catch(err){
+    if($("imageCropMessage"))$("imageCropMessage").textContent=err.message||String(err);
+  }finally{
+    btn.disabled=false;
+  }
 });
 $("imageUndoCropBtn")?.addEventListener("click",()=>{
   if(!editorOriginalPreviewSrc)return;
-  editorCroppedFile=null;setEditorImage(editorOriginalPreviewSrc,{preserveOriginal:false});
-  if($("imageCropMessage")) $("imageCropMessage").textContent="Originalbild wiederhergestellt.";
+  editorCroppedFile=null;
+  setEditorImage(editorOriginalPreviewSrc,{preserveOriginal:false});
+  if($("imageCropMessage"))$("imageCropMessage").textContent="";
 });
 
 async function uploadImage(file){

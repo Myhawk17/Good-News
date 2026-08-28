@@ -760,3 +760,62 @@ input[type="range"]{padding:0}
   line-height:1.35;
   color:#e7e7ea;
 }
+
+
+/* Good News – schlanker Bildeditor mit festem Handy-Ausschnitt */
+.image-fieldset-slim{padding-bottom:14px}
+.image-input-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.image-source-fields{margin-top:10px}
+.image-editor-slim{padding:12px;margin-top:12px}
+.image-editor-slim .image-editor-head{margin-bottom:10px}
+.image-editor-slim .image-editor-head .muted{font-size:.78rem;line-height:1.4;margin-top:4px}
+.image-cropper-phone{
+  width:100%;
+  height:min(52vh,430px);
+  min-height:310px;
+  border-radius:14px;
+  background:#09090b;
+}
+.crop-selection-phone{
+  border:2px solid #fff;
+  border-radius:10px;
+  box-shadow:0 0 0 1px #0008,0 6px 22px #0005;
+  min-width:0;
+  min-height:0;
+}
+.crop-selection-phone .crop-grid{
+  border-radius:8px;
+}
+.crop-selection-phone .crop-handle{
+  display:none;
+}
+.crop-selection-phone .crop-handle-resize{
+  display:block;
+  right:-12px;
+  bottom:-12px;
+  left:auto;
+  top:auto;
+  width:24px;
+  height:24px;
+  border-radius:50%;
+  background:#fff;
+  border:3px solid #111;
+  transform:none;
+  cursor:nwse-resize;
+}
+.crop-actions-slim{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-top:12px;
+}
+.crop-actions-slim .crop-save-btn{flex:1 1 180px}
+.image-crop-message{margin:9px 2px 0;min-height:1.1em}
+.image-editor-slim .image-app-preview,
+.image-editor-slim .image-controls,
+.image-editor-slim .image-app-preview-label,
+.image-editor-slim .image-help{display:none!important}
+@media(max-width:600px){
+  .image-input-row{grid-template-columns:1fr}
+  .image-cropper-phone{height:390px;min-height:300px}
+}

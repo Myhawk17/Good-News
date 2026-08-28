@@ -7,7 +7,7 @@
   <meta name="description" content="Good News – Jeden Tag passiert auch Gutes.">
   <title>Good News</title>
   <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="style.css?v=45">
+  <link rel="stylesheet" href="style.css?v=46">
 </head>
 <body>
 <header class="appbar">
@@ -222,92 +222,71 @@
             </label>
           </div>
 
-          <fieldset>
+          <fieldset class="image-fieldset-slim">
             <legend>Bild</legend>
-            <label>Bild hochladen
-              <input id="imageFile" type="file" accept="image/*">
-            </label>
-            <label>Alternativ Bild-URL
-              <input id="imageUrl" type="url" placeholder="https://…">
-            </label>
-            <label>Bildtyp
-              <select id="imageKind">
-                <option value="photo">Foto / freies Bild</option>
-                <option value="ai">KI-generierte Illustration</option>
-              </select>
-            </label>
-            <label>Urheber / Bildnachweis
-              <input id="imageCredit" maxlength="160" placeholder="z. B. Max Mustermann / Wikimedia Commons">
-            </label>
-            <label>Lizenz
-              <input id="imageLicense" maxlength="120" placeholder="z. B. CC BY-SA 4.0">
-            </label>
-            <label>Originale Bildquelle
-              <input id="imageSourceUrl" type="url" placeholder="https://…">
-            </label>
-            <p class="muted image-rights-help">Auf dem Slide erscheint nur <strong>ⓘ Bildquelle</strong> bzw. <strong>ⓘ KI-Illustration</strong>. Urheber und Lizenz werden erst nach Antippen angezeigt.</p>
-            <div id="imagePreviewBox" class="image-editor" hidden>
+
+            <div class="image-input-row">
+              <label>Bild hochladen
+                <input id="imageFile" type="file" accept="image/*">
+              </label>
+              <label>Alternativ Bild-URL
+                <input id="imageUrl" type="url" placeholder="https://…">
+              </label>
+            </div>
+
+            <div class="image-source-fields">
+              <label>Bildquelle
+                <input id="imageSourceUrl" type="url" placeholder="Link zur Original-/Quellseite">
+              </label>
+              <div class="form-grid two">
+                <label>Urheber / Bildnachweis
+                  <input id="imageCredit" maxlength="160" placeholder="z. B. Wikimedia Commons">
+                </label>
+                <label>Lizenz
+                  <input id="imageLicense" maxlength="120" placeholder="z. B. CC BY-SA 4.0">
+                </label>
+              </div>
+              <input id="imageKind" type="hidden" value="photo">
+            </div>
+
+            <div id="imagePreviewBox" class="image-editor image-editor-slim" hidden>
               <div class="image-editor-head">
-                <div><strong>✂️ Bild zuschneiden</strong><div class="muted">Ziehe die weißen Ränder oder Ecken – wie in der Galerie.</div></div>
+                <div>
+                  <strong>Handy-Ausschnitt</strong>
+                  <div class="muted">Der Rahmen bleibt immer im Handyformat 9:16. Verschiebe ihn auf dem Bild und ziehe am Punkt unten rechts, um ihn größer oder kleiner zu machen.</div>
+                </div>
               </div>
 
-              <div id="imageCropper" class="image-cropper" aria-label="Zuschneidebereich">
+              <div id="imageCropper" class="image-cropper image-cropper-phone" aria-label="Handy-Ausschnitt festlegen">
                 <img id="imageCropSource" class="image-crop-source" alt="Bild zum Zuschneiden">
                 <div id="cropShadeTop" class="crop-shade"></div>
                 <div id="cropShadeRight" class="crop-shade"></div>
                 <div id="cropShadeBottom" class="crop-shade"></div>
                 <div id="cropShadeLeft" class="crop-shade"></div>
-                <div id="cropSelection" class="crop-selection" aria-label="Zuschneiderahmen verschieben">
+                <div id="cropSelection" class="crop-selection crop-selection-phone" aria-label="Handy-Ausschnitt verschieben">
                   <div class="crop-grid" aria-hidden="true"></div>
-                  <span class="crop-handle crop-handle-nw" data-handle="nw"></span>
-                  <span class="crop-handle crop-handle-n" data-handle="n"></span>
-                  <span class="crop-handle crop-handle-ne" data-handle="ne"></span>
-                  <span class="crop-handle crop-handle-e" data-handle="e"></span>
-                  <span class="crop-handle crop-handle-se" data-handle="se"></span>
-                  <span class="crop-handle crop-handle-s" data-handle="s"></span>
-                  <span class="crop-handle crop-handle-sw" data-handle="sw"></span>
-                  <span class="crop-handle crop-handle-w" data-handle="w"></span>
+                  <span class="crop-handle crop-handle-resize" data-handle="resize" aria-label="Ausschnitt größer oder kleiner machen"></span>
                 </div>
               </div>
 
-              <div class="crop-actions">
-                <button class="primary crop-save-btn" type="button" id="imageCropBtn">✂️ Auswahl zuschneiden</button>
+              <div class="crop-actions crop-actions-slim">
+                <button class="primary crop-save-btn" type="button" id="imageCropBtn">Ausschnitt übernehmen</button>
                 <button class="secondary compact" type="button" id="cropResetBtn">Rahmen zurücksetzen</button>
-                <button class="secondary compact" type="button" id="imageUndoCropBtn">Original wiederherstellen</button>
               </div>
               <p id="imageCropMessage" class="muted image-crop-message" aria-live="polite"></p>
-              <p class="muted image-help">Alles innerhalb des weißen Rahmens bleibt erhalten. Ziehe an einer Kante, Ecke oder am Rahmen selbst. Du kannst den Ausschnitt frei wählen.</p>
 
-              <div class="image-app-preview-label"><strong>Vorschau als Nachrichten-Hintergrund</strong></div>
-              <div class="image-app-preview" aria-label="Vorschau in der App">
-                <img id="imagePreviewBlur" class="image-editor-blur" alt="" aria-hidden="true">
-                <img id="imagePreview" class="image-editor-main" alt="Bildvorschau">
-              </div>
-
-              <div class="image-controls">
-                <label>Darstellung
-                  <select id="imageFit">
-                    <option value="cover">Bild füllen</option>
-                    <option value="contain">Ganzes Bild</option>
-                  </select>
-                </label>
-                <label>Zoom <span id="imageZoomValue" class="range-value">1,00×</span>
-                  <input id="imageZoom" type="range" min="0.35" max="2.5" step="0.05" value="1">
-                </label>
-                <div class="form-grid two">
-                  <label>Links / rechts
-                    <input id="imagePosX" type="range" min="0" max="100" step="1" value="50">
-                  </label>
-                  <label>Oben / unten
-                    <input id="imagePosY" type="range" min="0" max="100" step="1" value="50">
-                  </label>
-                </div>
-                <div class="image-quick-actions">
-                  <button class="secondary compact" type="button" id="imageFillBtn">Bild füllen</button>
-                  <button class="secondary compact" type="button" id="imageWholeBtn">Ganzes Bild</button>
-                  <button class="secondary compact" type="button" id="imageResetBtn">Darstellung zurücksetzen</button>
-                </div>
-              </div>
+              <!-- intern weiterhin benötigt; im schlanken Editor nicht sichtbar -->
+              <img id="imagePreview" hidden alt="">
+              <img id="imagePreviewBlur" hidden alt="">
+              <input id="imageFit" type="hidden" value="cover">
+              <input id="imageZoom" type="hidden" value="1">
+              <input id="imagePosX" type="hidden" value="50">
+              <input id="imagePosY" type="hidden" value="50">
+              <span id="imageZoomValue" hidden></span>
+              <button type="button" id="imageUndoCropBtn" hidden></button>
+              <button type="button" id="imageFillBtn" hidden></button>
+              <button type="button" id="imageWholeBtn" hidden></button>
+              <button type="button" id="imageResetBtn" hidden></button>
             </div>
           </fieldset>
 
