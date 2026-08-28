@@ -1098,3 +1098,31 @@ html.slide-text-hidden .slide.has-image::before{
 .slide.has-image::before{
   transition:opacity .16s ease;
 }
+
+
+/* Good News – rechte Steuerleiste stabil und immer sichtbar */
+.appbar-actions{
+  position:fixed;
+  right:16px;
+  top:max(10px,env(safe-area-inset-top));
+  z-index:40;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:4px;
+  pointer-events:auto;
+}
+.appbar-actions .main-menu{
+  right:46px;
+  top:0;
+  z-index:41;
+}
+.slide-focus-btn{
+  display:grid!important;
+  place-items:center;
+  visibility:visible!important;
+  opacity:1!important;
+  position:relative;
+  z-index:42;
+}
+.menu-toggle-btn,.admin-quick-btn{position:relative;z-index:42}

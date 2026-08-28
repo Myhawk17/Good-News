@@ -7,7 +7,7 @@
   <meta name="description" content="Good News – Jeden Tag passiert auch Gutes.">
   <title>Good News</title>
   <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="style.css?v=52">
+  <link rel="stylesheet" href="style.css?v=53">
 </head>
 <body>
 <header class="appbar">
@@ -69,12 +69,12 @@
       <label>Quelle / Link<input id="submissionUrl" type="url" required placeholder="https://…"></label>
       <div class="form-grid two"><label>Kategorie<select id="submissionCategory" required>
                 <option value="" selected disabled>Kategorie wählen</option>
-                <option>Was war...</option>
-                <option>Tiere &amp; Natur</option>
+                <option>Was war....</option>
+                <option>Tiere</option>
                 <option>Sport</option>
-                <option>Wirtschaft &amp; Technologie</option>
-                <option>Politik, Fortschritt &amp; Medizin</option>
-                <option>Kultur &amp; Menschen</option>
+                <option>Wirtschaft &amp; Politik</option>
+                <option>Fortschritt, Medizin &amp; Technologie</option>
+                <option>Kultur/Natur</option>
               </select></label><label>Ort (optional)<input id="submissionLocation" maxlength="120" placeholder="z. B. Bremen"></label></div>
       <label>Dein Name oder Pseudonym (optional)<input id="submissionName" maxlength="80" placeholder="z. B. Anna oder Sonnenkind"></label>
       <div class="submission-name-choice">
@@ -155,12 +155,12 @@
 
           <div class="notification-category-title">Benachrichtigungskategorien</div>
           <div class="notification-category-grid">
-            <label><input type="checkbox" data-notify-category="Was war..."> Was war...</label>
-            <label><input type="checkbox" data-notify-category="Tiere & Natur"> Tiere &amp; Natur</label>
+            <label><input type="checkbox" data-notify-category="Was war...."> Was war....</label>
+            <label><input type="checkbox" data-notify-category="Tiere"> Tiere</label>
             <label><input type="checkbox" data-notify-category="Sport"> Sport</label>
-            <label><input type="checkbox" data-notify-category="Wirtschaft & Technologie"> Wirtschaft &amp; Technologie</label>
-            <label><input type="checkbox" data-notify-category="Politik, Fortschritt & Medizin"> Politik, Fortschritt &amp; Medizin</label>
-            <label><input type="checkbox" data-notify-category="Kultur & Menschen"> Kultur &amp; Menschen</label>
+            <label><input type="checkbox" data-notify-category="Wirtschaft & Politik"> Wirtschaft &amp; Politik</label>
+            <label><input type="checkbox" data-notify-category="Fortschritt, Medizin & Technologie"> Fortschritt, Medizin &amp; Technologie</label>
+            <label><input type="checkbox" data-notify-category="Kultur/Natur"> Kultur/Natur</label>
           </div>
         </div>
       </section>
@@ -335,12 +335,12 @@
             <label>Kategorie
               <select id="category" required>
                 <option value="" selected disabled>Kategorie wählen</option>
-                <option value="Was war...">Was war...</option>
-                <option value="Tiere & Natur">Tiere & Natur</option>
+                <option value="Was war....">Was war....</option>
+                <option value="Tiere">Tiere</option>
                 <option value="Sport">Sport</option>
-                <option value="Wirtschaft & Technologie">Wirtschaft & Technologie</option>
-                <option value="Politik, Fortschritt & Medizin">Politik, Fortschritt & Medizin</option>
-                <option value="Kultur & Menschen">Kultur & Menschen</option>
+                <option value="Wirtschaft & Politik">Wirtschaft & Politik</option>
+                <option value="Fortschritt, Medizin & Technologie">Fortschritt, Medizin & Technologie</option>
+                <option value="Kultur/Natur">Kultur/Natur</option>
               </select>
             </label>
             <label>Thema / Serie
@@ -584,6 +584,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="app.js?v=36"></script>
+  <script src="app.js?v=37"></script>
 </body>
 </html>

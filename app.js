@@ -30,23 +30,35 @@ const USER_PREF_DEFAULTS={
   notifyMorning:true,
   notifyEvening:true,
   notifyCategories:[
-    "Was war...",
-    "Tiere & Natur",
+    "Was war....",
+    "Tiere",
     "Sport",
-    "Wirtschaft & Technologie",
-    "Politik, Fortschritt & Medizin",
-    "Kultur & Menschen"
+    "Wirtschaft & Politik",
+    "Fortschritt, Medizin & Technologie",
+    "Kultur/Natur"
   ]
 };
 let userPrefs={...USER_PREF_DEFAULTS};
 
+function migrateNotifyCategoryLabel(value){
+  const c=String(value||"").trim();
+  if(["Was war....","Was war...","Damals"].includes(c))return "Was war....";
+  if(["Tiere","Tiere & Natur"].includes(c))return "Tiere";
+  if(c==="Sport")return "Sport";
+  if(["Wirtschaft & Politik","Wirtschaft","Politik"].includes(c))return "Wirtschaft & Politik";
+  if(["Fortschritt, Medizin & Technologie","Fortschritt","Medizin","Technologie","Wissenschaft","Wirtschaft & Technologie","Politik, Fortschritt & Medizin"].includes(c))return "Fortschritt, Medizin & Technologie";
+  if(["Kultur/Natur","Kultur","Natur","Menschen","Kultur & Menschen"].includes(c))return "Kultur/Natur";
+  return c;
+}
 function readUserPreferences(){
   try{
     const saved=JSON.parse(localStorage.getItem(USER_PREFS_KEY)||"{}");
     const normalized={
       ...USER_PREF_DEFAULTS,
       ...saved,
-      notifyCategories:Array.isArray(saved.notifyCategories)?saved.notifyCategories:[...USER_PREF_DEFAULTS.notifyCategories]
+      notifyCategories:Array.isArray(saved.notifyCategories)
+        ? [...new Set(saved.notifyCategories.map(migrateNotifyCategoryLabel).filter(x=>GOOD_NEWS_CATEGORIES.includes(x)))]
+        : [...USER_PREF_DEFAULTS.notifyCategories]
     };
     if(!["dark","light"].includes(normalized.appearance))normalized.appearance="dark";
     if(!["small","normal","large"].includes(normalized.textSize))normalized.textSize="normal";
@@ -142,28 +154,28 @@ function historicalTitle(title, yearsAgo){
   return years ? `Vor ${years} Jahren: ${event}` : event;
 }
 function displayCategory(item){
-  return item?.daily_slot==="damals" ? "Was war..." : (item?.category||"Kategorie");
+  return item?.daily_slot==="damals" ? "Was war...." : categoryBucket(item);
 }
 function displayTitle(item){
   return item?.daily_slot==="damals" ? historicalTitle(item?.title,item?.years_ago) : (item?.title||"");
 }
 
 const GOOD_NEWS_CATEGORIES=[
-  "Was war...",
-  "Tiere & Natur",
+  "Was war....",
+  "Tiere",
   "Sport",
-  "Wirtschaft & Technologie",
-  "Politik, Fortschritt & Medizin",
-  "Kultur & Menschen"
+  "Wirtschaft & Politik",
+  "Fortschritt, Medizin & Technologie",
+  "Kultur/Natur"
 ];
 function categoryBucket(item={}){
   const c=String(item.category||"").trim();
-  if(item.daily_slot==="damals"||c==="Was war..."||c==="Damals")return "Was war...";
-  if(["Tiere","Natur","Tiere & Natur"].includes(c))return "Tiere & Natur";
+  if(item.daily_slot==="damals"||["Was war....","Was war...","Damals"].includes(c))return "Was war....";
+  if(["Tiere","Tiere & Natur"].includes(c))return "Tiere";
   if(c==="Sport")return "Sport";
-  if(["Wirtschaft","Technologie","Wirtschaft & Technologie"].includes(c))return "Wirtschaft & Technologie";
-  if(["Politik","Fortschritt","Medizin","Wissenschaft","Politik, Fortschritt & Medizin"].includes(c))return "Politik, Fortschritt & Medizin";
-  if(["Kultur","Menschen","Kultur & Menschen"].includes(c))return "Kultur & Menschen";
+  if(["Wirtschaft & Politik","Wirtschaft","Politik"].includes(c))return "Wirtschaft & Politik";
+  if(["Fortschritt, Medizin & Technologie","Fortschritt","Medizin","Technologie","Wissenschaft","Wirtschaft & Technologie","Politik, Fortschritt & Medizin"].includes(c))return "Fortschritt, Medizin & Technologie";
+  if(["Kultur/Natur","Kultur","Natur","Menschen","Kultur & Menschen"].includes(c))return "Kultur/Natur";
   return c;
 }
 
@@ -813,7 +825,7 @@ function renderDashboard() {
     <div class="metric"><strong>${todayItems.length}</strong><span>heute</span></div>
     <div class="metric"><strong>${published}</strong><span>veröffentlicht</span></div>
     <div class="metric"><strong>${drafts}</strong><span>Entwürfe</span></div>`;
-  const slots=[['damals','🕰️ WAS WAR...'],['fortschritt','🚀 FORTSCHRITT'],['heute','❤️ HEUTE']];
+  const slots=[['damals','🕰️ WAS WAR....'],['fortschritt','🚀 FORTSCHRITT'],['heute','❤️ HEUTE']];
   const triple=slots.map(([key,label])=>{const n=todayItems.find(x=>x.daily_slot===key);return `<div class="triple-slot ${n?'':'missing'}"><div class="slot-label">${label}</div>${n?`<h4>${esc(n.title)}</h4><div class="muted">${n.status==='published'?'Veröffentlicht':'Entwurf'}</div>`:`<div class="muted">Noch nicht besetzt</div>`}</div>`}).join('');
   $("todayList").innerHTML=`<div class="triple-grid">${triple}</div>`+(todayItems.length?todayItems.map(adminItemHtml).join(""):`<p class="muted">Für heute gibt es noch keine Beiträge.</p>`);
   bindAdminItemButtons($("todayList"));
@@ -1270,7 +1282,7 @@ function previewSaved(id){const n=adminNews.find(x=>String(x.id)===String(id));i
 async function editArticle(id){
   const n=adminNews.find(x=>String(x.id)===String(id));if(!n)return;
   $("newsId").value=n.id;$("publishedDate").value=n.published_date;
-  $("publishedTime").value=n.published_time?.slice(0,5)||"00:00";$("category").value=categoryBucket(n)||"Kultur & Menschen";
+  $("publishedTime").value=n.published_time?.slice(0,5)||"00:00";$("category").value=categoryBucket(n)||"Kultur/Natur";
   $("storyKey").value=n.story_key||"";$("title").value=n.title;$("summary").value=n.summary;
   if($("bylineName")) $("bylineName").value=n.byline_name||"";
   if($("bylineVisible")) $("bylineVisible").value=n.byline_visible?"true":"false";
@@ -1632,7 +1644,7 @@ async function setSubmissionStatus(id,status){
 async function acceptSubmission(id){
   const x=readerSubmissions.find(v=>String(v.id)===String(id));if(!x)return;
   resetEditor();
-  $("category").value=categoryBucket(x)||"Kultur & Menschen";
+  $("category").value=categoryBucket(x)||"Kultur/Natur";
   $("title").value=x.title;
   $("summary").value=x.story_text;
   $("sourcesEditor").innerHTML="";addSourceRow("Leserhinweis / Originalquelle",x.source_url);
@@ -1674,9 +1686,10 @@ function tripleDraftStatusLabel(s){return ({new:"Neu",imported:"Übernommen",rej
 function normalizeCandidateItem(item,category){
   item=item||{};
   const src=Array.isArray(item.sources)?item.sources:(item.source_url?[{name:item.source_name||"Quelle",url:item.source_url}]:[]);
-  const isHistory=category==="Was war...";
+  const canonicalCategory=categoryBucket({category});
+  const isHistory=canonicalCategory==="Was war....";
   return {
-    category,
+    category:canonicalCategory,
     title:isHistory?historicalTitle(item.title,Number(item.years_ago)||null):(item.title||""),
     summary:item.summary||item.text||"",
     context_text:item.context_text||null,
@@ -1692,8 +1705,8 @@ function normalizeCandidateItem(item,category){
 
 // Kompatibilität mit älteren Dreier-Entwürfen.
 function normalizeTripleItem(item,slot){
-  const defaults={damals:"Was war...",fortschritt:"Politik, Fortschritt & Medizin",heute:"Kultur & Menschen"};
-  return normalizeCandidateItem(item,slot==="damals"?"Was war...":(item?.category||defaults[slot]));
+  const defaults={damals:"Was war....",fortschritt:"Fortschritt, Medizin & Technologie",heute:"Kultur/Natur"};
+  return normalizeCandidateItem(item,slot==="damals"?"Was war....":(item?.category||defaults[slot]));
 }
 
 function isCandidateBatch(payload){
@@ -1729,7 +1742,7 @@ function batchDraftHtml(x){
     </div>
     <div class="candidate-groups">
       ${groups.map(group=>`<section class="candidate-group">
-        <div class="candidate-group-head"><strong>${esc(group.label||group.category)}</strong><span>1 von 2 wählen</span></div>
+        <div class="candidate-group-head"><strong>${esc(categoryBucket({category:group.category}))}</strong><span>1 von 2 wählen</span></div>
         <div class="candidate-pair">
           ${candidateCardHtml(x,group,0)}
           ${candidateCardHtml(x,group,1)}
@@ -1794,7 +1807,8 @@ async function setTripleDraftStatus(id,status){
 }
 
 function rowFromCandidate(x,group,raw,index){
-  const n=normalizeCandidateItem(raw,group.category);
+  const canonicalCategory=categoryBucket({category:group.category});
+  const n=normalizeCandidateItem(raw,canonicalCategory);
   const isMorning=x.payload?.batch_type!=="evening";
   const baseHour=isMorning?8:19;
   const time=`${String(baseHour).padStart(2,"0")}:0${index}`;
@@ -1803,7 +1817,7 @@ function rowFromCandidate(x,group,raw,index){
     published_date:x.draft_date,
     published_time:time,
     publish_at:new Date(localDateTime).toISOString(),
-    category:group.category,
+    category:canonicalCategory,
     story_key:null,
     title:n.title,
     summary:n.summary,
@@ -1822,7 +1836,7 @@ function rowFromCandidate(x,group,raw,index){
     image_x:50,
     image_y:50,
     sources:n.sources,
-    daily_slot:group.category==="Was war..."?"damals":"none",
+    daily_slot:canonicalCategory==="Was war...."?"damals":"none",
     years_ago:n.years_ago,
     feel_good_text:null,
     updated_at:new Date().toISOString()
