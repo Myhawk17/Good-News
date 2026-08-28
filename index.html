@@ -7,7 +7,7 @@
   <meta name="description" content="Good News – Jeden Tag passiert auch Gutes.">
   <title>Good News</title>
   <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="style.css?v=47">
+  <link rel="stylesheet" href="style.css?v=48">
 </head>
 <body>
 <header class="appbar">
@@ -23,7 +23,7 @@
         <button id="favoritesBtn" type="button"><span>♡</span>Favoriten</button>
         <button id="submitNewsBtn" type="button"><span>＋</span>Nachricht einreichen</button>
       </div>
-      <button class="icon-btn admin-quick-btn" id="adminBtn" aria-label="Redaktion" hidden>⚙</button>
+      <button class="icon-btn admin-quick-btn" id="adminBtn" aria-label="Einstellungen">⚙</button>
     </div>
   </header>
 
@@ -71,6 +71,55 @@
       <label class="consent-row"><input id="submissionConsent" type="checkbox" required> <span>Ich bestätige, dass ich keine vertraulichen oder personenbezogenen Daten Dritter einsende und dass die Redaktion den Hinweis prüfen und redaktionell bearbeiten darf.</span></label>
       <button class="primary" type="submit">💛 Nachricht einsenden</button><div id="submissionMessage" class="message" aria-live="polite"></div>
     </form>
+  </dialog>
+
+  <dialog id="settingsDialog" class="sheet settings-dialog">
+    <div class="dialog-head">
+      <div>
+        <div class="eyebrow">Good News</div>
+        <h2>Einstellungen</h2>
+      </div>
+      <button class="icon-btn dialog-close" data-close="settingsDialog">✕</button>
+    </div>
+
+    <section class="settings-section">
+      <h3>Nutzereinstellungen</h3>
+      <div class="settings-placeholder-card">
+        <strong>Mehr Einstellungen folgen später.</strong>
+        <p class="muted">Hier können später persönliche App-Einstellungen wie Darstellung, Benachrichtigungen oder weitere Nutzerfunktionen eingebaut werden.</p>
+      </div>
+    </section>
+
+    <section class="settings-section account-settings">
+      <h3>Konto</h3>
+
+      <div id="settingsLoggedOut">
+        <p class="muted">Melde dich mit deinem Good-News-Konto an.</p>
+        <form id="settingsLoginForm" class="stack">
+          <label>E-Mail
+            <input id="settingsLoginEmail" type="email" autocomplete="email" required>
+          </label>
+          <label>Passwort
+            <input id="settingsLoginPassword" type="password" autocomplete="current-password" required>
+          </label>
+          <button class="primary" type="submit">Anmelden</button>
+          <div id="settingsLoginMessage" class="message" aria-live="polite"></div>
+        </form>
+      </div>
+
+      <div id="settingsLoggedIn" hidden>
+        <div class="account-card">
+          <div>
+            <div class="muted">Angemeldet als</div>
+            <strong id="settingsWhoAmI"></strong>
+          </div>
+        </div>
+        <div class="settings-account-actions">
+          <button class="primary" id="settingsOpenAdminBtn" type="button">Redaktion öffnen</button>
+          <button class="secondary" id="settingsLogoutBtn" type="button">Abmelden</button>
+        </div>
+      </div>
+    </section>
   </dialog>
 
   <dialog id="adminDialog" class="admin-dialog">

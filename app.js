@@ -9,6 +9,7 @@ const db = configured ? window.supabase.createClient(cfg.SUPABASE_URL, cfg.SUPAB
 const $ = (id) => document.getElementById(id);
 const feed = $("feed");
 const readerDialog = $("readerDialog");
+const settingsDialog = $("settingsDialog");
 const adminDialog = $("adminDialog");
 const previewDialog = $("previewDialog");
 
@@ -499,6 +500,53 @@ function switchAdminTab(name) {
 document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>switchAdminTab(t.dataset.tab));
 
 $("adminBtn").onclick = async () => {
+  closeMainMenu();
+  settingsDialog.showModal();
+  await refreshSettingsAccount();
+};
+
+async function refreshSettingsAccount(){
+  const loggedOut=$("settingsLoggedOut");
+  const loggedIn=$("settingsLoggedIn");
+  const message=$("settingsLoginMessage");
+  if(!configured){
+    loggedOut.hidden=false;
+    loggedIn.hidden=true;
+    if(message)message.textContent="Die Anmeldung ist noch nicht mit Supabase verbunden.";
+    return;
+  }
+  const {data:{session}}=await db.auth.getSession();
+  currentAdminSession=session;
+  loggedOut.hidden=!!session;
+  loggedIn.hidden=!session;
+  if(message&&!session)message.textContent="";
+  if(session){
+    $("settingsWhoAmI").textContent=session.user.email||"Good-News-Konto";
+  }
+}
+
+$("settingsLoginForm").onsubmit=async(e)=>{
+  e.preventDefault();
+  const msg=$("settingsLoginMessage");
+  msg.textContent="Anmeldung …";
+  if(!configured){msg.textContent="Die Anmeldung ist noch nicht verbunden.";return}
+  const {error}=await db.auth.signInWithPassword({
+    email:$("settingsLoginEmail").value.trim(),
+    password:$("settingsLoginPassword").value
+  });
+  if(error){msg.textContent=error.message;return}
+  msg.textContent="";
+  $("settingsLoginPassword").value="";
+  await refreshSettingsAccount();
+};
+
+$("settingsLogoutBtn").onclick=async()=>{
+  if(db)await db.auth.signOut();
+  await refreshSettingsAccount();
+};
+
+$("settingsOpenAdminBtn").onclick=async()=>{
+  if(settingsDialog.open)settingsDialog.close();
   adminDialog.showModal();
   await refreshAuth();
 };
@@ -511,7 +559,6 @@ async function refreshAuth() {
   }
   const {data:{session}} = await db.auth.getSession();
   currentAdminSession=session;
-  $("adminBtn").hidden=!session;
   $("loginView").hidden=!!session;
   $("adminView").hidden=!session;
   if(session){
@@ -1069,15 +1116,14 @@ $("newsForm").onsubmit=async(e)=>{
 if(db){
   db.auth.getSession().then(({data:{session}})=>{
     currentAdminSession=session;
-    $("adminBtn").hidden=!session;
-  }).catch(()=>{$("adminBtn").hidden=true});
+  }).catch(()=>{currentAdminSession=null});
   db.auth.onAuthStateChange((_event,session)=>{
     currentAdminSession=session;
-    $("adminBtn").hidden=!session;
     if(adminDialog.open)setTimeout(refreshAuth,0);
+    if(settingsDialog.open)setTimeout(refreshSettingsAccount,0);
   });
 }else{
-  $("adminBtn").hidden=true;
+  currentAdminSession=null;
 }
 resetEditor();
 setupEditorAutosave();

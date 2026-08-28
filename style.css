@@ -868,3 +868,23 @@ input[type="range"]{padding:0}
   .candidate-pair{grid-template-columns:1fr}
   .batch-draft-head{flex-direction:column}
 }
+
+
+/* Good News – dauerhaftes Einstellungsmenü mit Konto-Anmeldung */
+.settings-dialog{max-width:620px}
+.settings-section{padding:4px 0 18px}
+.settings-section + .settings-section{border-top:1px solid #ffffff18;padding-top:18px}
+.settings-section h3{margin:0 0 10px;font-size:1rem}
+.settings-placeholder-card,
+.account-card{
+  border:1px solid #303036;
+  border-radius:15px;
+  background:#19191c;
+  padding:14px;
+}
+.settings-placeholder-card strong{display:block;margin-bottom:5px}
+.settings-placeholder-card p{margin:0;line-height:1.45}
+.account-card{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.settings-account-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.settings-account-actions .primary{flex:1 1 180px}
+.admin-quick-btn{margin-top:0}
