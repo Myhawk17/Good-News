@@ -501,6 +501,12 @@ document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>switchAdminTab(t.data
 
 $("adminBtn").onclick = async () => {
   closeMainMenu();
+  adminDialog.showModal();
+  await refreshAuth();
+};
+
+$("accountBtn").onclick = async () => {
+  closeMainMenu();
   settingsDialog.showModal();
   await refreshSettingsAccount();
 };
@@ -519,6 +525,9 @@ async function refreshSettingsAccount(){
   currentAdminSession=session;
   loggedOut.hidden=!!session;
   loggedIn.hidden=!session;
+  $("adminBtn").hidden=!session;
+  if($("accountBtnLabel")) $("accountBtnLabel").textContent=session?"Konto":"Anmelden";
+  if($("accountDialogTitle")) $("accountDialogTitle").textContent=session?"Konto":"Anmelden";
   if(message&&!session)message.textContent="";
   if(session){
     $("settingsWhoAmI").textContent=session.user.email||"Good-News-Konto";
@@ -538,18 +547,15 @@ $("settingsLoginForm").onsubmit=async(e)=>{
   msg.textContent="";
   $("settingsLoginPassword").value="";
   await refreshSettingsAccount();
+  await fetchPublicNews();
 };
 
 $("settingsLogoutBtn").onclick=async()=>{
   if(db)await db.auth.signOut();
   await refreshSettingsAccount();
+  await fetchPublicNews();
 };
 
-$("settingsOpenAdminBtn").onclick=async()=>{
-  if(settingsDialog.open)settingsDialog.close();
-  adminDialog.showModal();
-  await refreshAuth();
-};
 
 async function refreshAuth() {
   if (!configured) {
@@ -559,6 +565,8 @@ async function refreshAuth() {
   }
   const {data:{session}} = await db.auth.getSession();
   currentAdminSession=session;
+  $("adminBtn").hidden=!session;
+  if($("accountBtnLabel")) $("accountBtnLabel").textContent=session?"Konto":"Anmelden";
   $("loginView").hidden=!!session;
   $("adminView").hidden=!session;
   if(session){
@@ -1116,14 +1124,24 @@ $("newsForm").onsubmit=async(e)=>{
 if(db){
   db.auth.getSession().then(({data:{session}})=>{
     currentAdminSession=session;
-  }).catch(()=>{currentAdminSession=null});
+    $("adminBtn").hidden=!session;
+    if($("accountBtnLabel")) $("accountBtnLabel").textContent=session?"Konto":"Anmelden";
+  }).catch(()=>{
+    currentAdminSession=null;
+    $("adminBtn").hidden=true;
+    if($("accountBtnLabel")) $("accountBtnLabel").textContent="Anmelden";
+  });
   db.auth.onAuthStateChange((_event,session)=>{
     currentAdminSession=session;
+    $("adminBtn").hidden=!session;
+    if($("accountBtnLabel")) $("accountBtnLabel").textContent=session?"Konto":"Anmelden";
     if(adminDialog.open)setTimeout(refreshAuth,0);
     if(settingsDialog.open)setTimeout(refreshSettingsAccount,0);
+    setTimeout(fetchPublicNews,0);
   });
 }else{
   currentAdminSession=null;
+  $("adminBtn").hidden=true;
 }
 resetEditor();
 setupEditorAutosave();
