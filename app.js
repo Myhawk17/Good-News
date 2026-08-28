@@ -11,6 +11,7 @@ const db = configured ? window.supabase.createClient(cfg.SUPABASE_URL, cfg.SUPAB
 const $ = (id) => document.getElementById(id);
 const feed = $("feed");
 const readerDialog = $("readerDialog");
+const userPreferencesDialog = $("userPreferencesDialog");
 const settingsDialog = $("settingsDialog");
 const adminDialog = $("adminDialog");
 const previewDialog = $("previewDialog");
@@ -19,6 +20,115 @@ let allNews = [];
 let adminNews = [];
 let activeCategory = "Alle";
 let currentAdminSession = null;
+
+const USER_PREFS_KEY="goodNewsUserPreferencesV1";
+const USER_PREF_DEFAULTS={
+  appearance:"system",
+  textSize:"normal",
+  reduceMotion:false,
+  dataSaver:false,
+  notifications:false,
+  notifyMorning:true,
+  notifyEvening:true,
+  notifyCategories:[
+    "Was war...",
+    "Tiere & Natur",
+    "Sport",
+    "Wirtschaft & Technologie",
+    "Politik, Fortschritt & Medizin",
+    "Kultur & Menschen"
+  ]
+};
+let userPrefs={...USER_PREF_DEFAULTS};
+
+function readUserPreferences(){
+  try{
+    const saved=JSON.parse(localStorage.getItem(USER_PREFS_KEY)||"{}");
+    return {
+      ...USER_PREF_DEFAULTS,
+      ...saved,
+      notifyCategories:Array.isArray(saved.notifyCategories)?saved.notifyCategories:[...USER_PREF_DEFAULTS.notifyCategories]
+    };
+  }catch{
+    return {...USER_PREF_DEFAULTS,notifyCategories:[...USER_PREF_DEFAULTS.notifyCategories]};
+  }
+}
+function saveUserPreferences(next=userPrefs){
+  userPrefs={
+    ...USER_PREF_DEFAULTS,
+    ...next,
+    notifyCategories:Array.isArray(next.notifyCategories)?next.notifyCategories:[...USER_PREF_DEFAULTS.notifyCategories]
+  };
+  try{localStorage.setItem(USER_PREFS_KEY,JSON.stringify(userPrefs))}catch{}
+  applyUserPreferences();
+}
+function resolvedAppearance(){
+  if(userPrefs.appearance==="light")return "light";
+  if(userPrefs.appearance==="dark")return "dark";
+  return window.matchMedia?.("(prefers-color-scheme: light)")?.matches?"light":"dark";
+}
+function applyUserPreferences(){
+  const root=document.documentElement;
+  root.classList.toggle("user-theme-light",resolvedAppearance()==="light");
+  root.classList.toggle("user-theme-dark",resolvedAppearance()==="dark");
+  root.classList.toggle("user-text-small",userPrefs.textSize==="small");
+  root.classList.toggle("user-text-large",userPrefs.textSize==="large");
+  root.classList.toggle("user-reduce-motion",Boolean(userPrefs.reduceMotion));
+  root.classList.toggle("user-data-saver",Boolean(userPrefs.dataSaver));
+  root.dataset.dataSaver=userPrefs.dataSaver?"true":"false";
+}
+function prefersReducedAppMotion(){
+  return Boolean(userPrefs.reduceMotion || window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches);
+}
+function populateUserPreferences(){
+  if($("prefAppearance"))$("prefAppearance").value=userPrefs.appearance;
+  if($("prefTextSize"))$("prefTextSize").value=userPrefs.textSize;
+  if($("prefReduceMotion"))$("prefReduceMotion").checked=Boolean(userPrefs.reduceMotion);
+  if($("prefDataSaver"))$("prefDataSaver").checked=Boolean(userPrefs.dataSaver);
+  if($("prefNotifications"))$("prefNotifications").checked=Boolean(userPrefs.notifications);
+  if($("prefNotifyMorning"))$("prefNotifyMorning").checked=Boolean(userPrefs.notifyMorning);
+  if($("prefNotifyEvening"))$("prefNotifyEvening").checked=Boolean(userPrefs.notifyEvening);
+  document.querySelectorAll("[data-notify-category]").forEach(input=>{
+    input.checked=userPrefs.notifyCategories.includes(input.dataset.notifyCategory);
+  });
+  updateNotificationPreferencesVisibility();
+}
+function collectUserPreferences(){
+  return {
+    appearance:$("prefAppearance")?.value||"system",
+    textSize:$("prefTextSize")?.value||"normal",
+    reduceMotion:Boolean($("prefReduceMotion")?.checked),
+    dataSaver:Boolean($("prefDataSaver")?.checked),
+    notifications:Boolean($("prefNotifications")?.checked),
+    notifyMorning:Boolean($("prefNotifyMorning")?.checked),
+    notifyEvening:Boolean($("prefNotifyEvening")?.checked),
+    notifyCategories:[...document.querySelectorAll("[data-notify-category]:checked")].map(x=>x.dataset.notifyCategory)
+  };
+}
+function updateNotificationPreferencesVisibility(){
+  const details=$("notificationPreferenceDetails");
+  if(!details)return;
+  const enabled=Boolean($("prefNotifications")?.checked);
+  details.classList.toggle("disabled",!enabled);
+  details.querySelectorAll("input").forEach(input=>input.disabled=!enabled);
+}
+function commitUserPreferences({rerender=false}={}){
+  saveUserPreferences(collectUserPreferences());
+  updateNotificationPreferencesVisibility();
+  const msg=$("userPreferencesMessage");
+  if(msg){
+    msg.textContent="Gespeichert";
+    clearTimeout(commitUserPreferences._timer);
+    commitUserPreferences._timer=setTimeout(()=>{if(msg)msg.textContent=""},1200);
+  }
+  if(rerender && allNews.length)renderFeed();
+}
+
+userPrefs=readUserPreferences();
+applyUserPreferences();
+window.matchMedia?.("(prefers-color-scheme: light)")?.addEventListener?.("change",()=>{
+  if(userPrefs.appearance==="system")applyUserPreferences();
+});
 
 const esc = (value="") => String(value).replace(/[&<>"']/g, c => ({
   "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
@@ -377,8 +487,10 @@ function buildSlide(item, index, total) {
   const primarySource = sourcesOf(item)[0];
   const fav = isFavorite(item.id);
 
+  const imageLoading=(userPrefs.dataSaver || index>1)?"lazy":"eager";
+  const imagePriority=index===0?"high":"low";
   article.innerHTML = `
-    ${item.image_url ? `<img class="slide-bg-blur" src="${esc(item.image_url)}" alt="" aria-hidden="true"><img class="slide-bg" src="${esc(item.image_url)}" alt="" style="${imageStyleOf(item)}">` : ""}
+    ${item.image_url ? `${userPrefs.dataSaver?"":`<img class="slide-bg-blur" src="${esc(item.image_url)}" alt="" aria-hidden="true" loading="${imageLoading}" decoding="async" fetchpriority="${imagePriority}">`}<img class="slide-bg" src="${esc(item.image_url)}" alt="" style="${imageStyleOf(item)}" loading="${imageLoading}" decoding="async" fetchpriority="${imagePriority}">` : ""}
     <div class="slide-inner">
       <div class="topline">
         <span class="pill">${esc(displayCategory(item))}</span>
@@ -420,7 +532,7 @@ function scrollToNews(id) {
   const target = feed.querySelector(`[data-id="${CSS.escape(String(id))}"]`);
   if (target) {
     readerDialog.open && readerDialog.close();
-    target.scrollIntoView({behavior:"smooth",block:"start"});
+    target.scrollIntoView({behavior:prefersReducedAppMotion()?"auto":"smooth",block:"start"});
   }
 }
 
@@ -543,13 +655,35 @@ function runMenuAction(fn){return (...args)=>{closeMainMenu();return fn(...args)
 $("searchBtn").onclick = runMenuAction(openSearch);
 $("archiveBtn").onclick = runMenuAction(openArchive);
 $("favoritesBtn").onclick = runMenuAction(openFavorites);
+$("userPreferencesBtn").onclick = runMenuAction(()=>{
+  populateUserPreferences();
+  userPreferencesDialog.showModal();
+});
 document.addEventListener("click",(e)=>{
   if(!mainMenu.hidden && !mainMenu.contains(e.target) && e.target!==menuBtn) closeMainMenu();
 });
 document.addEventListener("keydown",(e)=>{if(e.key==="Escape")closeMainMenu()});
-$("homeBtn").onclick = () => {closeMainMenu();feed.scrollTo({top:0,behavior:"smooth"});}
+$("homeBtn").onclick = () => {closeMainMenu();feed.scrollTo({top:0,behavior:prefersReducedAppMotion()?"auto":"smooth"});}
 document.querySelectorAll("[data-close]").forEach(b=>b.onclick=()=>$(b.dataset.close).close());
 feed.addEventListener("scroll",()=>{if(feed.scrollTop>100)$("swipeHint").style.display="none"},{passive:true});
+
+
+["prefAppearance","prefTextSize"].forEach(id=>$(id)?.addEventListener("change",()=>commitUserPreferences({rerender:id==="prefTextSize"})));
+$("prefReduceMotion")?.addEventListener("change",()=>commitUserPreferences());
+$("prefDataSaver")?.addEventListener("change",()=>commitUserPreferences({rerender:true}));
+$("prefNotifications")?.addEventListener("change",()=>commitUserPreferences());
+$("prefNotifyMorning")?.addEventListener("change",()=>commitUserPreferences());
+$("prefNotifyEvening")?.addEventListener("change",()=>commitUserPreferences());
+document.querySelectorAll("[data-notify-category]").forEach(input=>input.addEventListener("change",()=>commitUserPreferences()));
+$("resetUserPreferencesBtn")?.addEventListener("click",()=>{
+  userPrefs={...USER_PREF_DEFAULTS,notifyCategories:[...USER_PREF_DEFAULTS.notifyCategories]};
+  try{localStorage.removeItem(USER_PREFS_KEY)}catch{}
+  applyUserPreferences();
+  populateUserPreferences();
+  if(allNews.length)renderFeed();
+  const msg=$("userPreferencesMessage");
+  if(msg)msg.textContent="Standard wiederhergestellt";
+});
 
 // ---------------- ADMIN ----------------
 function switchAdminTab(name) {

@@ -7,7 +7,7 @@
   <meta name="description" content="Good News – Jeden Tag passiert auch Gutes.">
   <title>Good News</title>
   <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="style.css?v=50">
+  <link rel="stylesheet" href="style.css?v=51">
 </head>
 <body>
 <header class="appbar">
@@ -23,6 +23,7 @@
         <button id="favoritesBtn" type="button"><span>♡</span>Favoriten</button>
         <button id="submitNewsBtn" type="button"><span>＋</span>Nachricht einreichen</button>
         <div class="menu-separator" aria-hidden="true"></div>
+        <button id="userPreferencesBtn" type="button"><span>⚙</span>Einstellungen</button>
         <button id="accountBtn" type="button"><span>↪</span><span id="accountBtnLabel">Anmelden</span></button>
       </div>
       <button class="icon-btn admin-quick-btn" id="adminBtn" aria-label="Redaktion öffnen" hidden>⚙</button>
@@ -82,6 +83,99 @@
       <label class="consent-row"><input id="submissionConsent" type="checkbox" required> <span>Ich bestätige, dass ich keine vertraulichen oder personenbezogenen Daten Dritter einsende und dass die Redaktion den Hinweis prüfen und redaktionell bearbeiten darf.</span></label>
       <button class="primary" type="submit">💛 Nachricht einsenden</button><div id="submissionMessage" class="message" aria-live="polite"></div>
     </form>
+  </dialog>
+
+  <dialog id="userPreferencesDialog" class="admin-dialog user-preferences-dialog">
+    <div class="dialog-head">
+      <div>
+        <div class="eyebrow">Good News</div>
+        <h2>Einstellungen</h2>
+      </div>
+      <button class="icon-btn dialog-close" data-close="userPreferencesDialog">✕</button>
+    </div>
+
+    <div class="user-settings-list">
+      <section class="user-setting-card">
+        <div class="user-setting-copy">
+          <strong>Darstellung</strong>
+          <span>Gilt für Menüs, Suche, Archiv und Fenster. Die Nachrichtenbilder bleiben unverändert.</span>
+        </div>
+        <select id="prefAppearance" aria-label="Darstellung">
+          <option value="system">System</option>
+          <option value="dark">Dunkel</option>
+          <option value="light">Hell</option>
+        </select>
+      </section>
+
+      <section class="user-setting-card">
+        <div class="user-setting-copy">
+          <strong>Textgröße</strong>
+          <span>Passt Überschriften, Nachrichtentext und Bedienoberfläche an.</span>
+        </div>
+        <select id="prefTextSize" aria-label="Textgröße">
+          <option value="small">Klein</option>
+          <option value="normal">Standard</option>
+          <option value="large">Groß</option>
+        </select>
+      </section>
+
+      <section class="user-setting-card user-setting-toggle-row">
+        <div class="user-setting-copy">
+          <strong>Animationen reduzieren</strong>
+          <span>Weniger weiche Übergänge und Scroll-Animationen.</span>
+        </div>
+        <label class="switch-control" aria-label="Animationen reduzieren">
+          <input id="prefReduceMotion" type="checkbox">
+          <span class="switch-slider" aria-hidden="true"></span>
+        </label>
+      </section>
+
+      <section class="user-setting-card user-setting-toggle-row">
+        <div class="user-setting-copy">
+          <strong>Datensparmodus</strong>
+          <span>Lädt Bilder zurückhaltender und verzichtet auf zusätzliche Hintergrund-Unschärfe.</span>
+        </div>
+        <label class="switch-control" aria-label="Datensparmodus">
+          <input id="prefDataSaver" type="checkbox">
+          <span class="switch-slider" aria-hidden="true"></span>
+        </label>
+      </section>
+
+      <section class="user-setting-card user-notification-card">
+        <div class="user-setting-toggle-row">
+          <div class="user-setting-copy">
+            <strong>Benachrichtigungen</strong>
+            <span>Die Auswahl wird schon gespeichert. Push-Benachrichtigungen werden später technisch angeschlossen.</span>
+          </div>
+          <label class="switch-control" aria-label="Benachrichtigungen vormerken">
+            <input id="prefNotifications" type="checkbox">
+            <span class="switch-slider" aria-hidden="true"></span>
+          </label>
+        </div>
+
+        <div id="notificationPreferenceDetails" class="notification-preference-details">
+          <div class="notification-times">
+            <label><input id="prefNotifyMorning" type="checkbox"> Morgens</label>
+            <label><input id="prefNotifyEvening" type="checkbox"> Abends</label>
+          </div>
+
+          <div class="notification-category-title">Benachrichtigungskategorien</div>
+          <div class="notification-category-grid">
+            <label><input type="checkbox" data-notify-category="Was war..."> Was war...</label>
+            <label><input type="checkbox" data-notify-category="Tiere & Natur"> Tiere &amp; Natur</label>
+            <label><input type="checkbox" data-notify-category="Sport"> Sport</label>
+            <label><input type="checkbox" data-notify-category="Wirtschaft & Technologie"> Wirtschaft &amp; Technologie</label>
+            <label><input type="checkbox" data-notify-category="Politik, Fortschritt & Medizin"> Politik, Fortschritt &amp; Medizin</label>
+            <label><input type="checkbox" data-notify-category="Kultur & Menschen"> Kultur &amp; Menschen</label>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div class="user-settings-footer">
+      <button class="secondary" id="resetUserPreferencesBtn" type="button">Standard wiederherstellen</button>
+      <div id="userPreferencesMessage" class="message" aria-live="polite"></div>
+    </div>
   </dialog>
 
   <dialog id="settingsDialog" class="sheet settings-dialog">
@@ -496,6 +590,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="app.js?v=34"></script>
+  <script src="app.js?v=35"></script>
 </body>
 </html>
