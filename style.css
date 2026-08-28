@@ -742,3 +742,21 @@ input[type="range"]{padding:0}
   .submission-name-choice{padding:12px;gap:12px}
   .submission-name-choice-copy small{font-size:.73rem}
 }
+
+
+/* Good News – Autorenzeile in veröffentlichten Slides */
+.slide .news-byline,
+.preview-card .news-byline{
+  margin:0 0 9px;
+  font-size:.82rem;
+  line-height:1.2;
+  font-weight:700;
+  letter-spacing:.025em;
+  color:#f0f0f2;
+  text-transform:none;
+}
+.submission-name-choice-copy span{
+  font-size:.86rem;
+  line-height:1.35;
+  color:#e7e7ea;
+}
