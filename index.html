@@ -7,7 +7,7 @@
   <meta name="description" content="Good News – Jeden Tag passiert auch Gutes.">
   <title>Good News</title>
   <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="style.css?v=46">
+  <link rel="stylesheet" href="style.css?v=47">
 </head>
 <body>
 <header class="appbar">
@@ -49,7 +49,15 @@
       <label>Überschrift / worum geht es?<input id="submissionTitle" maxlength="180" required placeholder="z. B. Nachbarschaft rettet altes Freibad"></label>
       <label>Erzähl uns die Geschichte<textarea id="submissionText" rows="6" maxlength="2000" required placeholder="Was ist passiert und warum ist das eine gute Nachricht?"></textarea></label>
       <label>Quelle / Link<input id="submissionUrl" type="url" required placeholder="https://…"></label>
-      <div class="form-grid two"><label>Kategorie<select id="submissionCategory"><option>Menschen</option><option>Wissenschaft</option><option>Medizin</option><option>Natur</option><option>Tiere</option><option>Technologie</option><option>Kultur</option><option>Sonstiges</option></select></label><label>Ort (optional)<input id="submissionLocation" maxlength="120" placeholder="z. B. Bremen"></label></div>
+      <div class="form-grid two"><label>Kategorie<select id="submissionCategory" required>
+                <option value="" selected disabled>Kategorie wählen</option>
+                <option>Was war...</option>
+                <option>Tiere &amp; Natur</option>
+                <option>Sport</option>
+                <option>Wirtschaft &amp; Technologie</option>
+                <option>Politik, Fortschritt &amp; Medizin</option>
+                <option>Kultur &amp; Menschen</option>
+              </select></label><label>Ort (optional)<input id="submissionLocation" maxlength="120" placeholder="z. B. Bremen"></label></div>
       <label>Dein Name oder Pseudonym (optional)<input id="submissionName" maxlength="80" placeholder="z. B. Anna oder Sonnenkind"></label>
       <div class="submission-name-choice">
         <div class="submission-name-choice-copy">
@@ -124,8 +132,8 @@
         <button class="tab admin-menu-item" data-tab="triple-drafts">
           <span class="admin-menu-icon">📝</span>
           <span class="admin-menu-copy">
-            <strong>Entwürfe - Dreier <span id="tripleDraftBadge" class="badge" hidden></span></strong>
-            <small>Automatisch empfangene Good-News-Dreier prüfen</small>
+            <strong>Entwürfe – Auswahl <span id="tripleDraftBadge" class="badge" hidden></span></strong>
+            <small>Morgen- und Abendvorschläge prüfen</small>
           </span>
         </button>
 
@@ -168,7 +176,7 @@
       </section>
 
       <section id="tab-triple-drafts" class="tab-panel" hidden>
-        <div class="section-head"><div><h3>📝 Entwürfe - Dreier</h3><p class="muted">Hier landen automatisch zugesandte Dreier. Sie werden niemals automatisch veröffentlicht.</p></div></div>
+        <div class="section-head"><div><h3>📝 Entwürfe – Auswahl</h3><p class="muted">Morgens und abends kommen je sechs Vorschläge: zwei pro Rubrik. Wähle aus jeder Rubrik genau einen Beitrag aus und übernimm anschließend deine drei Favoriten als Entwürfe.</p></div></div>
         <div class="filters"><select id="tripleDraftStatus"><option value="new">Neu</option><option value="imported">Übernommen</option><option value="rejected">Abgelehnt</option><option value="all">Alle</option></select></div>
         <div id="tripleDraftList"></div>
       </section>
@@ -187,12 +195,15 @@
 
           <div class="form-grid two">
             <label>Kategorie
-              <input id="category" list="categoryOptions" maxlength="40" placeholder="Politik" required>
-              <datalist id="categoryOptions">
-                <option value="Was war..."><option value="Fortschritt"><option value="Heute">
-                <option value="Menschen"><option value="Wissenschaft"><option value="Medizin">
-                <option value="Natur"><option value="Tiere"><option value="Technologie"><option value="Kultur">
-              </datalist>
+              <select id="category" required>
+                <option value="" selected disabled>Kategorie wählen</option>
+                <option value="Was war...">Was war...</option>
+                <option value="Tiere & Natur">Tiere & Natur</option>
+                <option value="Sport">Sport</option>
+                <option value="Wirtschaft & Technologie">Wirtschaft & Technologie</option>
+                <option value="Politik, Fortschritt & Medizin">Politik, Fortschritt & Medizin</option>
+                <option value="Kultur & Menschen">Kultur & Menschen</option>
+              </select>
             </label>
             <label>Thema / Serie
               <input id="storyKey" maxlength="80" placeholder="z. B. Ukraine-Krieg">

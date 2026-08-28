@@ -43,6 +43,25 @@ function displayTitle(item){
   return item?.daily_slot==="damals" ? historicalTitle(item?.title,item?.years_ago) : (item?.title||"");
 }
 
+const GOOD_NEWS_CATEGORIES=[
+  "Was war...",
+  "Tiere & Natur",
+  "Sport",
+  "Wirtschaft & Technologie",
+  "Politik, Fortschritt & Medizin",
+  "Kultur & Menschen"
+];
+function categoryBucket(item={}){
+  const c=String(item.category||"").trim();
+  if(item.daily_slot==="damals"||c==="Was war..."||c==="Damals")return "Was war...";
+  if(["Tiere","Natur","Tiere & Natur"].includes(c))return "Tiere & Natur";
+  if(c==="Sport")return "Sport";
+  if(["Wirtschaft","Technologie","Wirtschaft & Technologie"].includes(c))return "Wirtschaft & Technologie";
+  if(["Politik","Fortschritt","Medizin","Wissenschaft","Politik, Fortschritt & Medizin"].includes(c))return "Politik, Fortschritt & Medizin";
+  if(["Kultur","Menschen","Kultur & Menschen"].includes(c))return "Kultur & Menschen";
+  return c;
+}
+
 
 const getFavorites = () => {
   try { return JSON.parse(localStorage.getItem("goodNewsFavorites") || "[]"); }
@@ -240,7 +259,7 @@ function specialDayFor(s){let d=new Date(`${s}T12:00:00`),h=germanHolidayMap(d.g
 function buildDateSlide(s){let today=isoLocal(new Date()),past=s<today,d=new Date(`${s}T12:00:00`),wd=new Intl.DateTimeFormat("de-DE",{weekday:"long"}).format(d).toUpperCase(),dm=new Intl.DateTimeFormat("de-DE",{day:"2-digit",month:"long"}).format(d),sp=specialDayFor(s),sec=document.createElement("section");sec.className=`date-slide${past?" past":""}`;sec.innerHTML=`<img class="date-slide-art" src="date-slide-background-v2.png" alt="" aria-hidden="true"><div class="date-slide-overlay"></div><div class="date-slide-bottom"><div class="date-slide-weekday">${esc(wd)}</div><div class="date-slide-date">${esc(dm)}</div><div class="date-slide-year">${d.getFullYear()}</div>${sp?`<div class="date-slide-special"><span>HEUTE IST</span><strong>${esc(sp[0])} ${esc(sp[1])}</strong></div>`:""}<div class="date-slide-hint">↓ Zu den Good News</div></div>`;return sec}
 
 function renderFeed({startId=null}={}) {
-  const data = activeCategory === "Alle" ? allNews : allNews.filter(n => n.category === activeCategory);
+  const data = activeCategory === "Alle" ? allNews : allNews.filter(n => categoryBucket(n) === activeCategory);
   feed.innerHTML = "";
   if (!data.length) {
     feed.innerHTML = `<section class="empty-state"><div><h1>Keine Beiträge</h1><p>Für diese Auswahl gibt es noch keine veröffentlichten Nachrichten.</p></div></section>`;
@@ -385,7 +404,7 @@ function openStory(storyKey) {
 }
 
 function openSearch() {
-  const categories = ["Alle",...new Set(allNews.map(n=>n.category))];
+  const categories = ["Alle",...GOOD_NEWS_CATEGORIES];
   openReader("Suche","Nachrichten finden",`
     <input id="readerSearchInput" class="search-input" type="search" placeholder="Suchbegriff eingeben">
     <div class="category-chips">${categories.map(c=>`<button class="chip ${c===activeCategory?"active":""}" data-cat="${esc(c)}">${esc(c)}</button>`).join("")}</div>
@@ -396,7 +415,7 @@ function openSearch() {
   const run = () => {
     const q = input.value.trim().toLowerCase();
     const filtered = allNews.filter(n => {
-      const catOk = activeCategory === "Alle" || n.category === activeCategory;
+      const catOk = activeCategory === "Alle" || categoryBucket(n) === activeCategory;
       const text = `${n.title} ${n.summary} ${n.context_text||""} ${n.story_key||""}`.toLowerCase();
       return catOk && (!q || text.includes(q));
     });
@@ -992,7 +1011,7 @@ function previewSaved(id){const n=adminNews.find(x=>String(x.id)===String(id));i
 async function editArticle(id){
   const n=adminNews.find(x=>String(x.id)===String(id));if(!n)return;
   $("newsId").value=n.id;$("publishedDate").value=n.published_date;
-  $("publishedTime").value=n.published_time?.slice(0,5)||"00:00";$("category").value=n.category;
+  $("publishedTime").value=n.published_time?.slice(0,5)||"00:00";$("category").value=categoryBucket(n)||"Kultur & Menschen";
   $("storyKey").value=n.story_key||"";$("title").value=n.title;$("summary").value=n.summary;
   if($("bylineName")) $("bylineName").value=n.byline_name||"";
   if($("bylineVisible")) $("bylineVisible").value=n.byline_visible?"true":"false";
@@ -1343,7 +1362,7 @@ async function setSubmissionStatus(id,status){
 async function acceptSubmission(id){
   const x=readerSubmissions.find(v=>String(v.id)===String(id));if(!x)return;
   resetEditor();
-  $("category").value=x.category||"Menschen";
+  $("category").value=categoryBucket(x)||"Kultur & Menschen";
   $("title").value=x.title;
   $("summary").value=x.story_text;
   $("sourcesEditor").innerHTML="";addSourceRow("Leserhinweis / Originalquelle",x.source_url);
@@ -1367,13 +1386,13 @@ switchAdminTab=function(name){
 };
 
 
-// ---------------- GOOD NEWS 3.0: ENTWÜRFE - DREIER ----------------
+// ---------------- GOOD NEWS: MORGEN-/ABEND-AUSWAHL ----------------
 let tripleDrafts=[];
 
 async function loadTripleDrafts(){
   if(!currentAdminSession || !configured)return;
   const {data,error}=await db.from("triple_drafts").select("*").order("created_at",{ascending:false});
-  if(error){console.warn("Entwürfe - Dreier:",error.message);return}
+  if(error){console.warn("Entwürfe – Auswahl:",error.message);return}
   tripleDrafts=data||[];
   const count=tripleDrafts.filter(x=>x.status==="new").length;
   const badge=$("tripleDraftBadge");
@@ -1381,17 +1400,17 @@ async function loadTripleDrafts(){
   renderTripleDrafts();
 }
 function tripleDraftStatusLabel(s){return ({new:"Neu",imported:"Übernommen",rejected:"Abgelehnt"})[s]||s}
-function normalizeTripleItem(item,slot){
+
+function normalizeCandidateItem(item,category){
   item=item||{};
-  const defaults={damals:"Was war...",fortschritt:"Fortschritt",heute:"Heute"};
   const src=Array.isArray(item.sources)?item.sources:(item.source_url?[{name:item.source_name||"Quelle",url:item.source_url}]:[]);
+  const isHistory=category==="Was war...";
   return {
-    category:slot==="damals"?"Was war...":(item.category||defaults[slot]),
-    title:slot==="damals"?historicalTitle(item.title,Number(item.years_ago)||null):(item.title||""),
+    category,
+    title:isHistory?historicalTitle(item.title,Number(item.years_ago)||null):(item.title||""),
     summary:item.summary||item.text||"",
-    feel_good_text:item.feel_good_text||item.feel_good||"",
     context_text:item.context_text||null,
-    years_ago:slot==="damals"?(Number(item.years_ago)||null):null,
+    years_ago:isHistory?(Number(item.years_ago)||null):null,
     image_url:item.image_url||null,
     image_credit:item.image_credit||item.image_author||null,
     image_license:item.image_license||null,
@@ -1400,50 +1419,181 @@ function normalizeTripleItem(item,slot){
     sources:src.filter(x=>x&&x.url).map(x=>({name:x.name||"Quelle",url:x.url}))
   };
 }
+
+// Kompatibilität mit älteren Dreier-Entwürfen.
+function normalizeTripleItem(item,slot){
+  const defaults={damals:"Was war...",fortschritt:"Politik, Fortschritt & Medizin",heute:"Kultur & Menschen"};
+  return normalizeCandidateItem(item,slot==="damals"?"Was war...":(item?.category||defaults[slot]));
+}
+
+function isCandidateBatch(payload){
+  return payload?.schema==="candidate_batch_v1" && Array.isArray(payload?.groups) && payload.groups.length===3;
+}
+function batchHeading(payload){
+  return payload?.batch_type==="evening"?"🌙 Abend-Auswahl":"☀️ Morgen-Auswahl";
+}
+function candidateCardHtml(x,group,index){
+  const n=normalizeCandidateItem(group.candidates?.[index],group.category);
+  const inputName=`batch-${x.id}-${group.key}`;
+  return `<label class="candidate-card" data-candidate-card>
+    <input type="radio" name="${esc(inputName)}" value="${index}" data-batch-id="${x.id}" data-group-key="${esc(group.key)}">
+    <span class="candidate-choice-mark" aria-hidden="true"></span>
+    <span class="candidate-copy">
+      <span class="candidate-kicker">Vorschlag ${index===0?"A":"B"}</span>
+      <strong>${esc(n.title||"Ohne Überschrift")}</strong>
+      <span class="candidate-summary">${esc(n.summary)}</span>
+      <span class="candidate-meta">${n.image_url?(n.image_kind==="ai"?"🖼️ KI-Illustration":"🖼️ Bild vorhanden"):"Kein Bild"} · ${n.sources.length} ${n.sources.length===1?"Quelle":"Quellen"}</span>
+    </span>
+  </label>`;
+}
+function batchDraftHtml(x){
+  const p=x.payload||{};
+  const groups=p.groups||[];
+  return `<article class="triple-draft-card candidate-batch-card" data-batch-card="${x.id}">
+    <div class="batch-draft-head">
+      <div>
+        <div class="batch-title">${batchHeading(p)}</div>
+        <div class="submission-meta">${esc(tripleDraftStatusLabel(x.status))} · ${esc(new Date(x.created_at).toLocaleString("de-DE"))} · für ${esc(fmtDateShort(x.draft_date))}</div>
+      </div>
+      <div class="triple-draft-source">${esc(x.source_label||"ChatGPT")}</div>
+    </div>
+    <div class="candidate-groups">
+      ${groups.map(group=>`<section class="candidate-group">
+        <div class="candidate-group-head"><strong>${esc(group.label||group.category)}</strong><span>1 von 2 wählen</span></div>
+        <div class="candidate-pair">
+          ${candidateCardHtml(x,group,0)}
+          ${candidateCardHtml(x,group,1)}
+        </div>
+      </section>`).join("")}
+    </div>
+    <div class="submission-actions">
+      ${x.status!=="imported"?`<button class="primary import-selected-batch" data-id="${x.id}" disabled>3 ausgewählte Entwürfe übernehmen</button>`:""}
+      ${x.status==="new"?`<button class="secondary reject-triple" data-id="${x.id}">Ablehnen</button>`:""}
+    </div>
+    ${x.status==="new"?`<div class="batch-selection-note" data-selection-note>Bitte aus jeder Rubrik einen Vorschlag auswählen.</div>`:""}
+  </article>`;
+}
+function legacyTripleHtml(x){
+  const p=x.payload||{};
+  const d=normalizeTripleItem(p.damals,"damals"),f=normalizeTripleItem(p.fortschritt,"fortschritt"),h=normalizeTripleItem(p.heute,"heute");
+  return `<article class="triple-draft-card">
+    <div class="submission-meta">${esc(tripleDraftStatusLabel(x.status))} · ${esc(new Date(x.created_at).toLocaleString("de-DE"))} · für ${esc(fmtDateShort(x.draft_date))}</div>
+    <div class="triple-draft-source">${esc(x.source_label||"Automatischer Entwurf")}</div>
+    <div class="triple-grid triple-grid-drafts">
+      <div class="triple-slot"><div class="slot-label">🕰️ WAS WAR...</div><h4>${esc(d.title||"Ohne Überschrift")}</h4><p>${esc(d.summary)}</p></div>
+      <div class="triple-slot"><div class="slot-label">🚀 ${esc(f.category)}</div><h4>${esc(f.title||"Ohne Überschrift")}</h4><p>${esc(f.summary)}</p></div>
+      <div class="triple-slot"><div class="slot-label">❤️ ${esc(h.category)}</div><h4>${esc(h.title||"Ohne Überschrift")}</h4><p>${esc(h.summary)}</p></div>
+    </div>
+    <div class="submission-actions">
+      ${x.status!=="imported"?`<button class="primary import-triple" data-id="${x.id}">Als 3 Entwürfe übernehmen</button>`:""}
+      ${x.status==="new"?`<button class="secondary reject-triple" data-id="${x.id}">Ablehnen</button>`:""}
+    </div>
+  </article>`;
+}
 function renderTripleDrafts(){
   const root=$("tripleDraftList");if(!root)return;
   const filter=$("tripleDraftStatus")?.value||"new";
   const rows=tripleDrafts.filter(x=>filter==="all"||x.status===filter);
-  root.innerHTML=rows.map(x=>{
-    const p=x.payload||{};
-    const d=normalizeTripleItem(p.damals,"damals"),f=normalizeTripleItem(p.fortschritt,"fortschritt"),h=normalizeTripleItem(p.heute,"heute");
-    return `<article class="triple-draft-card">
-      <div class="submission-meta">${esc(tripleDraftStatusLabel(x.status))} · ${esc(new Date(x.created_at).toLocaleString("de-DE"))} · für ${esc(fmtDateShort(x.draft_date))}</div>
-      <div class="triple-draft-source">${esc(x.source_label||"Automatischer Entwurf")}</div>
-      <div class="triple-grid triple-grid-drafts">
-        <div class="triple-slot"><div class="slot-label">🕰️ WAS WAR...</div><h4>${esc(d.title||"Ohne Überschrift")}</h4><p>${esc(d.summary)}</p>${d.image_url?`<div class="draft-image-note">🖼️ ${d.image_kind==="ai"?"KI-Illustration":"Bildvorschlag"}</div>`:""}${d.feel_good_text?`<div class="draft-feel">💛 ${esc(d.feel_good_text)}</div>`:""}</div>
-        <div class="triple-slot"><div class="slot-label">🚀 FORTSCHRITT</div><h4>${esc(f.title||"Ohne Überschrift")}</h4><p>${esc(f.summary)}</p>${f.image_url?`<div class="draft-image-note">🖼️ ${f.image_kind==="ai"?"KI-Illustration":"Bildvorschlag"}</div>`:""}${f.feel_good_text?`<div class="draft-feel">💛 ${esc(f.feel_good_text)}</div>`:""}</div>
-        <div class="triple-slot"><div class="slot-label">❤️ HEUTE</div><h4>${esc(h.title||"Ohne Überschrift")}</h4><p>${esc(h.summary)}</p>${h.image_url?`<div class="draft-image-note">🖼️ ${h.image_kind==="ai"?"KI-Illustration":"Bildvorschlag"}</div>`:""}${h.feel_good_text?`<div class="draft-feel">💛 ${esc(h.feel_good_text)}</div>`:""}</div>
-      </div>
-      <div class="submission-actions">
-        ${x.status!=="imported"?`<button class="primary import-triple" data-id="${x.id}">Als 3 Entwürfe übernehmen</button>`:""}
-        ${x.status==="new"?`<button class="secondary reject-triple" data-id="${x.id}">Ablehnen</button>`:""}
-      </div>
-    </article>`;
-  }).join("")||'<p class="muted">Hier gibt es aktuell keine Dreier-Entwürfe.</p>';
+  root.innerHTML=rows.map(x=>isCandidateBatch(x.payload)?batchDraftHtml(x):legacyTripleHtml(x)).join("")||'<p class="muted">Hier gibt es aktuell keine Entwürfe.</p>';
+
+  root.querySelectorAll('.candidate-card input[type="radio"]').forEach(input=>input.addEventListener("change",()=>{
+    const card=input.closest(".candidate-batch-card");
+    card?.querySelectorAll("[data-candidate-card]").forEach(c=>c.classList.toggle("selected",Boolean(c.querySelector("input:checked"))));
+    updateBatchSelectionState(input.dataset.batchId);
+  }));
+  root.querySelectorAll(".import-selected-batch").forEach(b=>b.onclick=()=>importCandidateBatch(b.dataset.id));
   root.querySelectorAll(".import-triple").forEach(b=>b.onclick=()=>importTripleDraft(b.dataset.id));
   root.querySelectorAll(".reject-triple").forEach(b=>b.onclick=()=>setTripleDraftStatus(b.dataset.id,"rejected"));
 }
+function updateBatchSelectionState(id){
+  const x=tripleDrafts.find(v=>String(v.id)===String(id));if(!x||!isCandidateBatch(x.payload))return;
+  const card=document.querySelector(`[data-batch-card="${CSS.escape(String(id))}"]`);if(!card)return;
+  const groups=x.payload.groups||[];
+  const complete=groups.every(g=>card.querySelector(`input[name="batch-${CSS.escape(String(id))}-${CSS.escape(g.key)}"]:checked`));
+  const btn=card.querySelector(".import-selected-batch");
+  if(btn)btn.disabled=!complete;
+  const note=card.querySelector("[data-selection-note]");
+  if(note)note.textContent=complete?"Auswahl komplett – diese drei Beiträge können übernommen werden.":"Bitte aus jeder Rubrik einen Vorschlag auswählen.";
+}
 $("tripleDraftStatus")?.addEventListener("change",renderTripleDrafts);
+
 async function setTripleDraftStatus(id,status){
   const {error}=await db.from("triple_drafts").update({status,reviewed_at:new Date().toISOString()}).eq("id",id);
   if(error)return alert(error.message);
   await loadTripleDrafts();
 }
+
+function rowFromCandidate(x,group,raw,index){
+  const n=normalizeCandidateItem(raw,group.category);
+  const isMorning=x.payload?.batch_type!=="evening";
+  const baseHour=isMorning?8:19;
+  const time=`${String(baseHour).padStart(2,"0")}:0${index}`;
+  const localDateTime=`${x.draft_date}T${time}:00`;
+  return {
+    published_date:x.draft_date,
+    published_time:time,
+    publish_at:new Date(localDateTime).toISOString(),
+    category:group.category,
+    story_key:null,
+    title:n.title,
+    summary:n.summary,
+    context_text:n.context_text,
+    status:"draft",
+    priority:"normal",
+    priority_rank:0,
+    image_url:n.image_url,
+    image_path:null,
+    image_credit:n.image_credit,
+    image_license:n.image_license,
+    image_source_url:n.image_source_url,
+    image_kind:n.image_kind,
+    image_fit:"cover",
+    image_zoom:1,
+    image_x:50,
+    image_y:50,
+    sources:n.sources,
+    daily_slot:group.category==="Was war..."?"damals":"none",
+    years_ago:n.years_ago,
+    feel_good_text:null,
+    updated_at:new Date().toISOString()
+  };
+}
+
+async function importCandidateBatch(id){
+  const x=tripleDrafts.find(v=>String(v.id)===String(id));if(!x||!isCandidateBatch(x.payload))return;
+  const card=document.querySelector(`[data-batch-card="${CSS.escape(String(id))}"]`);
+  if(!card)return;
+  const selected=[];
+  for(const group of x.payload.groups){
+    const checked=card.querySelector(`input[name="batch-${CSS.escape(String(id))}-${CSS.escape(group.key)}"]:checked`);
+    if(!checked)return alert("Bitte aus jeder Rubrik genau einen Vorschlag auswählen.");
+    const raw=group.candidates?.[Number(checked.value)];
+    selected.push([group,raw]);
+  }
+  const rows=selected.map(([group,raw],index)=>rowFromCandidate(x,group,raw,index));
+  if(rows.some(r=>!r.title||!r.summary||!r.sources.length))return alert("Mindestens ein ausgewählter Vorschlag ist unvollständig. Überschrift, Text und mindestens eine Quelle sind erforderlich.");
+  const {error}=await db.from("news").insert(rows);
+  if(error)return alert("Auswahl konnte nicht übernommen werden: "+error.message);
+  await db.from("triple_drafts").update({status:"imported",reviewed_at:new Date().toISOString()}).eq("id",id);
+  await Promise.all([loadTripleDrafts(),loadAdminNews()]);
+  switchAdminTab("manage");
+}
+
 async function importTripleDraft(id){
   const x=tripleDrafts.find(v=>String(v.id)===String(id));if(!x)return;
   const p=x.payload||{};
   const slots=[["damals",p.damals],["fortschritt",p.fortschritt],["heute",p.heute]];
-  const times={damals:"07:00",fortschritt:"07:01",heute:"07:02"};
+  const times={damals:"08:00",fortschritt:"08:01",heute:"08:02"};
   const rows=slots.map(([slot,raw])=>{
     const n=normalizeTripleItem(raw,slot);
     const localDateTime=`${x.draft_date}T${times[slot]}:00`;
     return {
       published_date:x.draft_date,published_time:times[slot],publish_at:new Date(localDateTime).toISOString(),
-      category:slot==="damals"?"Was war...":n.category,story_key:null,title:slot==="damals"?historicalTitle(n.title,n.years_ago):n.title,summary:n.summary,context_text:n.context_text,
+      category:n.category,story_key:null,title:n.title,summary:n.summary,context_text:n.context_text,
       status:"draft",priority:"normal",priority_rank:0,image_url:n.image_url,image_path:null,image_credit:n.image_credit,
       image_license:n.image_license,image_source_url:n.image_source_url,image_kind:n.image_kind,
-      sources:n.sources,daily_slot:slot,years_ago:n.years_ago,feel_good_text:n.feel_good_text||null,
+      image_fit:"cover",image_zoom:1,image_x:50,image_y:50,
+      sources:n.sources,daily_slot:slot==="damals"?"damals":"none",years_ago:n.years_ago,feel_good_text:null,
       updated_at:new Date().toISOString()
     };
   });
@@ -1452,7 +1602,7 @@ async function importTripleDraft(id){
   if(error)return alert("Dreier konnte nicht übernommen werden: "+error.message);
   await db.from("triple_drafts").update({status:"imported",reviewed_at:new Date().toISOString()}).eq("id",id);
   await Promise.all([loadTripleDrafts(),loadAdminNews()]);
-  switchAdminTab("dashboard");
+  switchAdminTab("manage");
 }
 
 // Letzten Tab-Wrapper um den Dreier-Bereich erweitern.
