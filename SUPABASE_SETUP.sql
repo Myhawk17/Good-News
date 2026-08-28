@@ -268,3 +268,21 @@ $$;
 
 revoke all on function public.get_analytics_summary() from public;
 grant execute on function public.get_analytics_summary() to authenticated;
+
+-- Good News: freiwillige Namensnennung bei Leser-Einsendungen
+alter table if exists public.submissions
+  add column if not exists publish_submitter_name boolean not null default false;
+
+alter table if exists public.news
+  add column if not exists byline_name text,
+  add column if not exists byline_visible boolean not null default false;
+
+do $$
+begin
+  if to_regclass('public.news') is not null
+     and not exists (select 1 from pg_constraint where conname='news_byline_name_length') then
+    alter table public.news
+      add constraint news_byline_name_length
+      check (byline_name is null or char_length(byline_name) <= 80);
+  end if;
+end $$;

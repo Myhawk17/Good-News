@@ -50,7 +50,17 @@
       <label>Erzähl uns die Geschichte<textarea id="submissionText" rows="6" maxlength="2000" required placeholder="Was ist passiert und warum ist das eine gute Nachricht?"></textarea></label>
       <label>Quelle / Link<input id="submissionUrl" type="url" required placeholder="https://…"></label>
       <div class="form-grid two"><label>Kategorie<select id="submissionCategory"><option>Menschen</option><option>Wissenschaft</option><option>Medizin</option><option>Natur</option><option>Tiere</option><option>Technologie</option><option>Kultur</option><option>Sonstiges</option></select></label><label>Ort (optional)<input id="submissionLocation" maxlength="120" placeholder="z. B. Bremen"></label></div>
-      <label>Dein Name oder Pseudonym (optional)<input id="submissionName" maxlength="80"></label>
+      <label>Dein Name oder Pseudonym (optional)<input id="submissionName" maxlength="80" placeholder="z. B. Anna oder Sonnenkind"></label>
+      <div class="submission-name-choice">
+        <div class="submission-name-choice-copy">
+          <strong>Name bei Veröffentlichung anzeigen?</strong>
+          <small>Wenn du den Schalter aktivierst, darf bei einer Veröffentlichung klein „von deinem Namen/Pseudonym“ über der Überschrift stehen. Ausgeschaltet bleibst du in der veröffentlichten Nachricht anonym.</small>
+        </div>
+        <label class="switch-control" aria-label="Name oder Pseudonym bei Veröffentlichung anzeigen">
+          <input id="submissionPublishName" type="checkbox">
+          <span class="switch-slider" aria-hidden="true"></span>
+        </label>
+      </div>
       <label class="consent-row"><input id="submissionConsent" type="checkbox" required> <span>Ich bestätige, dass ich keine vertraulichen oder personenbezogenen Daten Dritter einsende und dass die Redaktion den Hinweis prüfen und redaktionell bearbeiten darf.</span></label>
       <button class="primary" type="submit">💛 Nachricht einsenden</button><div id="submissionMessage" class="message" aria-live="polite"></div>
     </form>
@@ -168,6 +178,8 @@
         <form id="newsForm" class="stack">
           <input id="newsId" type="hidden">
           <input id="existingImagePath" type="hidden">
+          <input id="bylineName" type="hidden">
+          <input id="bylineVisible" type="hidden" value="false">
 
           <div class="form-grid two">
             <label>Datum<input id="publishedDate" type="date" required></label>

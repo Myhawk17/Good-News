@@ -303,6 +303,7 @@ function buildSlide(item, index, total) {
         ${item.priority === "top" ? `<span class="pill top-pill">Topmeldung</span>` : ""}
         <span class="pill">${esc(fmtDateShort(item.published_date))} · ${esc(item.published_time?.slice(0,5) || "")}</span>
       </div>
+      ${item.byline_visible&&item.byline_name?`<div class="news-byline">von ${esc(item.byline_name)}</div>`:""}
       <h1>${esc(displayTitle(item))}</h1>
       <p class="summary">${esc(item.summary)}</p>
 
@@ -700,7 +701,7 @@ function setupEditorAutosave(){
 
 function resetEditor(){
   $("newsForm").reset();
-  $("newsId").value="";$("existingImagePath").value="";
+  $("newsId").value="";$("existingImagePath").value=""; if($("bylineName")) $("bylineName").value=""; if($("bylineVisible")) $("bylineVisible").value="false";
   $("sourcesEditor").innerHTML="";addSourceRow();
   if($("dailySlot")) $("dailySlot").value="none";
   if($("yearsAgo")) $("yearsAgo").value="";
@@ -859,6 +860,8 @@ function formToDraft(){
     category:$("category").value.trim(),story_key:$("storyKey").value.trim()||null,
     title:$("title").value.trim(),summary:$("summary").value.trim(),
     status:$("status").value,priority:$("priority").value,
+    byline_name:$("bylineName")?.value.trim()||null,
+    byline_visible:$("bylineVisible")?.value==="true",
     context_text:$("contextText").value.trim()||null,
     daily_slot:$("dailySlot")?.value||"none",
     years_ago:$("yearsAgo")?.value?Number($("yearsAgo").value):null,
@@ -880,6 +883,7 @@ function openPreview(n){
       ${n.image_url?`<img class="slide-bg-blur" src="${esc(n.image_url)}" alt="" aria-hidden="true"><img class="slide-bg" src="${esc(n.image_url)}" alt="" style="${imageStyleOf(n)}">`:""}
       <div class="slide-inner">
         <div class="topline"><span class="pill">${esc(displayCategory(n))}</span>${n.priority==="top"?'<span class="pill top-pill">Topmeldung</span>':""}</div>
+        ${n.byline_visible&&n.byline_name?`<div class="news-byline">von ${esc(n.byline_name)}</div>`:""}
         <h1>${esc(n.title||"Deine Überschrift")}</h1>
         <p class="summary">${esc(n.summary||"Hier erscheint deine Nachricht.")}</p>
         ${n.context_text?`<div class="context-box"><strong>Kurz erklärt</strong>${esc(n.context_text)}</div>`:""}
@@ -894,6 +898,8 @@ async function editArticle(id){
   $("newsId").value=n.id;$("publishedDate").value=n.published_date;
   $("publishedTime").value=n.published_time?.slice(0,5)||"00:00";$("category").value=n.category;
   $("storyKey").value=n.story_key||"";$("title").value=n.title;$("summary").value=n.summary;
+  if($("bylineName")) $("bylineName").value=n.byline_name||"";
+  if($("bylineVisible")) $("bylineVisible").value=n.byline_visible?"true":"false";
   $("status").value=n.status;$("priority").value=n.priority||"normal";$("contextText").value=n.context_text||"";
   if($("dailySlot")) $("dailySlot").value=n.daily_slot||"none";
   if($("yearsAgo")) $("yearsAgo").value=n.years_ago||"";
@@ -927,6 +933,7 @@ $("newsForm").onsubmit=async(e)=>{
     const row={
       published_date:d.published_date,published_time:d.published_time,category:d.category,story_key:d.story_key,
       title:d.title,summary:d.summary,status:d.status,priority:d.priority,priority_rank:d.priority==="top"?1:0,
+      byline_name:d.byline_visible?d.byline_name:null,byline_visible:Boolean(d.byline_visible&&d.byline_name),
       context_text:d.context_text,daily_slot:d.daily_slot,years_ago:d.years_ago,feel_good_text:d.feel_good_text,
       image_url:imageUrl,image_path:imagePath,image_credit:d.image_credit,
       image_license:d.image_license,image_source_url:d.image_source_url,image_kind:d.image_kind,
@@ -1172,10 +1179,21 @@ $("submitNewsBtn").onclick=()=>{
   submissionDialog.showModal();
 };
 
+$("submissionName").addEventListener("input",()=>{
+  if(!$("submissionName").value.trim()) $("submissionPublishName").checked=false;
+});
+
 $("submissionForm").onsubmit=async(e)=>{
   e.preventDefault();
   const msg=$("submissionMessage");
   if(!configured){msg.textContent="Die Einsendefunktion ist noch nicht verbunden.";return}
+  const submitterName=$("submissionName").value.trim();
+  const publishSubmitterName=$("submissionPublishName").checked;
+  if(publishSubmitterName && !submitterName){
+    msg.textContent="Bitte trage einen Namen oder ein Pseudonym ein, wenn er veröffentlicht werden soll.";
+    $("submissionName").focus();
+    return;
+  }
   msg.textContent="Wird gesendet …";
   const row={
     title:$("submissionTitle").value.trim(),
@@ -1183,7 +1201,8 @@ $("submissionForm").onsubmit=async(e)=>{
     source_url:$("submissionUrl").value.trim(),
     category:$("submissionCategory").value,
     location:$("submissionLocation").value.trim()||null,
-    submitter_name:$("submissionName").value.trim()||null,
+    submitter_name:submitterName||null,
+    publish_submitter_name:publishSubmitterName,
     status:"new"
   };
   const {error}=await db.from("submissions").insert(row);
@@ -1208,7 +1227,7 @@ function renderSubmissions(){
   const filter=$("submissionStatus")?.value||"new";
   const rows=readerSubmissions.filter(x=>filter==="all"||x.status===filter);
   root.innerHTML=rows.map(x=>`<article class="submission-card">
-    <div class="submission-meta">${esc(submissionStatusLabel(x.status))} · ${esc(new Date(x.created_at).toLocaleString("de-DE"))}${x.location?` · ${esc(x.location)}`:""}${x.submitter_name?` · von ${esc(x.submitter_name)}`:""}</div>
+    <div class="submission-meta">${esc(submissionStatusLabel(x.status))} · ${esc(new Date(x.created_at).toLocaleString("de-DE"))}${x.location?` · ${esc(x.location)}`:""}${x.submitter_name?` · Name/Pseudonym: ${esc(x.submitter_name)}`:""} · Namensnennung: ${x.publish_submitter_name&&x.submitter_name?"Ja":"Nein"}</div>
     <h4>${esc(x.title)}</h4><p>${esc(x.story_text)}</p>
     <div class="submission-source">Quelle: <a href="${esc(x.source_url)}" target="_blank" rel="noopener noreferrer">${esc(x.source_url)}</a></div>
     <div class="submission-actions">
@@ -1233,9 +1252,14 @@ async function acceptSubmission(id){
   $("summary").value=x.story_text;
   $("sourcesEditor").innerHTML="";addSourceRow("Leserhinweis / Originalquelle",x.source_url);
   $("feelGoodText").value="";
+  const mayPublishName=Boolean(x.publish_submitter_name && x.submitter_name);
+  $("bylineName").value=mayPublishName?x.submitter_name:"";
+  $("bylineVisible").value=mayPublishName?"true":"false";
   await setSubmissionStatus(id,"accepted");
   switchAdminTab("editor");
-  $("editorMessage").textContent="Lesereinsendung übernommen. Bitte redaktionell prüfen, umformulieren und erst danach veröffentlichen.";
+  $("editorMessage").textContent=(x.publish_submitter_name&&x.submitter_name)
+    ? `Lesereinsendung übernommen. Namensnennung freigegeben: „von ${x.submitter_name}“. Bitte redaktionell prüfen und erst danach veröffentlichen.`
+    : "Lesereinsendung übernommen. Die veröffentlichte Nachricht bleibt ohne Namensnennung. Bitte redaktionell prüfen und erst danach veröffentlichen.";
 }
 
 // Extend admin tab behavior for submissions.
