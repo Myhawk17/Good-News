@@ -1,9 +1,11 @@
 const cfg = window.APP_CONFIG || {};
-const configured = Boolean(
+const backendConfigured = Boolean(
   cfg.SUPABASE_URL && cfg.SUPABASE_ANON_KEY &&
   !cfg.SUPABASE_URL.includes("DEINE_") &&
   !cfg.SUPABASE_ANON_KEY.includes("DEIN_")
 );
+const supabaseClientAvailable = Boolean(window.supabase && typeof window.supabase.createClient === "function");
+const configured = backendConfigured && supabaseClientAvailable;
 const db = configured ? window.supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY) : null;
 
 const $ = (id) => document.getElementById(id);
@@ -179,7 +181,7 @@ async function loadAnalyticsSummary(){
 let reactionCounts = {};
 let myReactions = {};
 async function loadReactions(){
-  if(!configured || !allNews.length) return;
+  if(!db || !allNews.length) return;
   const ids=allNews.map(n=>n.id);
   const [{data:rows,error},{data:mine,error:mineErr}] = await Promise.all([
     db.from("news_reactions").select("news_id,reaction").in("news_id",ids),
@@ -208,31 +210,91 @@ function sourcesOf(item) {
   return Array.isArray(item.sources) ? item.sources : [];
 }
 
+const PUBLIC_FEED_CACHE_KEY="goodNewsPublicFeedCacheV2";
+
+function readCachedPublicNews(){
+  try{
+    const parsed=JSON.parse(localStorage.getItem(PUBLIC_FEED_CACHE_KEY)||"null");
+    return Array.isArray(parsed?.items)?parsed.items:[];
+  }catch{return []}
+}
+function writeCachedPublicNews(items){
+  try{
+    localStorage.setItem(PUBLIC_FEED_CACHE_KEY,JSON.stringify({
+      saved_at:new Date().toISOString(),
+      items:Array.isArray(items)?items:[]
+    }));
+  }catch{}
+}
+function renderCachedFeed(){
+  const cached=readCachedPublicNews();
+  if(!cached.length)return false;
+  allNews=cached;
+  renderFeed();
+  return true;
+}
 function setupState() {
+  if(renderCachedFeed())return;
   feed.innerHTML = `<section class="empty-state"><div>
-    <h1>Fast fertig.</h1>
-    <p>Diese Version ist noch nicht mit Supabase verbunden. Öffne <b>config.js</b> und trage deine Project URL und deinen Publishable/anon Key ein.</p>
+    <h1>Verbindung fehlt</h1>
+    <p>Good News konnte gerade keine Verbindung herstellen. Bitte versuche es gleich noch einmal.</p>
   </div></section>`;
 }
 
 async function fetchPublicNews() {
-  if (!configured) return setupState();
-  const nowIso = new Date().toISOString();
-  const { data, error } = await db
-    .from("news")
-    .select("*")
-    .eq("status","published")
-    .lte("publish_at", nowIso)
-    .order("priority_rank",{ascending:false})
-    .order("publish_at",{ascending:false});
-  if (error) return showFeedError(error.message);
-  allNews = data || [];
-  await loadReactions();
-  const deepId = new URL(location.href).searchParams.get("news");
-  renderFeed({startId:deepId});
+  if(!backendConfigured)return setupState();
+
+  const cachedWasShown=allNews.length>0 || renderCachedFeed();
+  const nowIso=new Date().toISOString();
+  const url=new URL(`${cfg.SUPABASE_URL.replace(/\/$/,"")}/rest/v1/news`);
+  url.searchParams.set("select","*");
+  url.searchParams.set("status","eq.published");
+  url.searchParams.set("publish_at",`lte.${nowIso}`);
+  url.searchParams.set("order","priority_rank.desc,publish_at.desc");
+
+  const controller=new AbortController();
+  const timeout=setTimeout(()=>controller.abort(),8000);
+  try{
+    const response=await fetch(url.toString(),{
+      headers:{
+        "apikey":cfg.SUPABASE_ANON_KEY,
+        "Authorization":`Bearer ${cfg.SUPABASE_ANON_KEY}`,
+        "Accept":"application/json"
+      },
+      signal:controller.signal,
+      cache:"no-store"
+    });
+    if(!response.ok)throw new Error(`Feed HTTP ${response.status}`);
+    const data=await response.json();
+    allNews=Array.isArray(data)?data:[];
+    writeCachedPublicNews(allNews);
+
+    const deepId=new URL(location.href).searchParams.get("news");
+    renderFeed({startId:deepId});
+
+    // Reaktionen sind Zusatzdaten und dürfen den ersten sichtbaren Slide nie verzögern.
+    if(db){
+      loadReactions().then(()=>{
+        // Nur die Reaktionszahlen aktualisieren, wenn der Nutzer noch ganz oben ist.
+        // So wird beim Lesen kein Scrollpunkt überraschend verschoben.
+        if(feed.scrollTop<20)renderFeed({startId:deepId});
+      }).catch(err=>console.warn("Reaktionen konnten nicht nachgeladen werden",err));
+    }
+  }catch(err){
+    console.warn("Öffentlicher Feed konnte nicht aktualisiert werden:",err);
+    if(!cachedWasShown){
+      feed.innerHTML=`<section class="empty-state"><div>
+        <h1>Good News lädt noch</h1>
+        <p>Die Verbindung ist gerade langsam. Tippe auf das Logo oder öffne die App gleich noch einmal.</p>
+      </div></section>`;
+    }
+  }finally{
+    clearTimeout(timeout);
+  }
 }
 
 function showFeedError(message) {
+  if(allNews.length)return;
   feed.innerHTML = `<section class="empty-state"><div><h1>Feed nicht erreichbar</h1><p>${esc(message)}</p></div></section>`;
 }
 
@@ -518,7 +580,7 @@ async function refreshSettingsAccount(){
   if(!configured){
     loggedOut.hidden=false;
     loggedIn.hidden=true;
-    if(message)message.textContent="Die Anmeldung ist noch nicht mit Supabase verbunden.";
+    if(message)message.textContent=backendConfigured?"Anmeldung wird gerade geladen. Bitte versuche es in einem Moment erneut.":"Die Anmeldung ist noch nicht mit Supabase verbunden.";
     return;
   }
   const {data:{session}}=await db.auth.getSession();
@@ -1148,6 +1210,8 @@ setupEditorAutosave();
 if(localStorage.getItem("goodNewsAdminTab")==="editor"){
   restoreEditorDraft();
 }
+// Sofort den letzten bekannten Feed zeigen; danach im Hintergrund aktualisieren.
+renderCachedFeed();
 trackDailyActive();
 fetchPublicNews();
 

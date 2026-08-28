@@ -7,7 +7,7 @@
   <meta name="description" content="Good News – Jeden Tag passiert auch Gutes.">
   <title>Good News</title>
   <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="style.css?v=49">
+  <link rel="stylesheet" href="style.css?v=50">
 </head>
 <body>
 <header class="appbar">
@@ -29,7 +29,16 @@
     </div>
   </header>
 
-  <main id="feed" class="feed" aria-live="polite"></main>
+  <main id="feed" class="feed" aria-live="polite">
+    <section class="feed-loading" id="feedLoading" aria-label="Good News werden geladen">
+      <img src="date-slide-background-v2.png" alt="" aria-hidden="true">
+      <div class="feed-loading-overlay"></div>
+      <div class="feed-loading-copy">
+        <strong>GOOD NEWS</strong>
+        <span>Nachrichten werden geladen …</span>
+      </div>
+    </section>
+  </main>
 
   <div class="swipe-hint" id="swipeHint">↑ wischen</div>
 
@@ -487,6 +496,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="app.js?v=33"></script>
+  <script src="app.js?v=34"></script>
 </body>
 </html>
