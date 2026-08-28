@@ -29,6 +29,21 @@ const fmtDateShort = (iso) => new Intl.DateTimeFormat("de-DE", {
   day:"2-digit", month:"2-digit", year:"numeric"
 }).format(new Date(`${iso}T12:00:00`));
 
+function historicalTitle(title, yearsAgo){
+  const years=Number(yearsAgo)||null;
+  let event=String(title||"").trim();
+  // Alte Varianten wie „Vor 243 Jahren …“ oder „Vor 243 Jahren: …“ bereinigen.
+  event=event.replace(/^vor\s+\d+\s+jahren\s*[:–—-]?\s*/i,"").trim();
+  return years ? `Vor ${years} Jahren: ${event}` : event;
+}
+function displayCategory(item){
+  return item?.daily_slot==="damals" ? "Was war..." : (item?.category||"Kategorie");
+}
+function displayTitle(item){
+  return item?.daily_slot==="damals" ? historicalTitle(item?.title,item?.years_ago) : (item?.title||"");
+}
+
+
 const getFavorites = () => {
   try { return JSON.parse(localStorage.getItem("goodNewsFavorites") || "[]"); }
   catch { return []; }
@@ -284,11 +299,11 @@ function buildSlide(item, index, total) {
     ${item.image_url ? `<img class="slide-bg-blur" src="${esc(item.image_url)}" alt="" aria-hidden="true"><img class="slide-bg" src="${esc(item.image_url)}" alt="" style="${imageStyleOf(item)}">` : ""}
     <div class="slide-inner">
       <div class="topline">
-        <span class="pill">${esc(item.category)}</span>
+        <span class="pill">${esc(displayCategory(item))}</span>
         ${item.priority === "top" ? `<span class="pill top-pill">Topmeldung</span>` : ""}
         <span class="pill">${esc(fmtDateShort(item.published_date))} · ${esc(item.published_time?.slice(0,5) || "")}</span>
       </div>
-      <h1>${esc(item.title)}</h1>
+      <h1>${esc(displayTitle(item))}</h1>
       <p class="summary">${esc(item.summary)}</p>
 
       ${item.context_text ? `<div class="context-box"><strong>Kurz erklärt</strong>${esc(item.context_text)}</div>` : ""}
@@ -519,7 +534,7 @@ function renderDashboard() {
     <div class="metric"><strong>${todayItems.length}</strong><span>heute</span></div>
     <div class="metric"><strong>${published}</strong><span>veröffentlicht</span></div>
     <div class="metric"><strong>${drafts}</strong><span>Entwürfe</span></div>`;
-  const slots=[['damals','🕰️ DAMALS'],['fortschritt','🚀 FORTSCHRITT'],['heute','❤️ HEUTE']];
+  const slots=[['damals','🕰️ WAS WAR...'],['fortschritt','🚀 FORTSCHRITT'],['heute','❤️ HEUTE']];
   const triple=slots.map(([key,label])=>{const n=todayItems.find(x=>x.daily_slot===key);return `<div class="triple-slot ${n?'':'missing'}"><div class="slot-label">${label}</div>${n?`<h4>${esc(n.title)}</h4><div class="muted">${n.status==='published'?'Veröffentlicht':'Entwurf'}</div>`:`<div class="muted">Noch nicht besetzt</div>`}</div>`}).join('');
   $("todayList").innerHTML=`<div class="triple-grid">${triple}</div>`+(todayItems.length?todayItems.map(adminItemHtml).join(""):`<p class="muted">Für heute gibt es noch keine Beiträge.</p>`);
   bindAdminItemButtons($("todayList"));
@@ -528,7 +543,7 @@ function renderDashboard() {
 function adminItemHtml(n){
   return `<article class="admin-item" data-admin-id="${n.id}">
     <div class="admin-item-head">
-      <div><h4>${esc(n.title)}</h4><div class="admin-meta">${esc(fmtDateShort(n.published_date))} · ${esc(n.published_time?.slice(0,5)||"")} · ${esc(n.category)}</div></div>
+      <div><h4>${esc(displayTitle(n))}</h4><div class="admin-meta">${esc(fmtDateShort(n.published_date))} · ${esc(n.published_time?.slice(0,5)||"")} · ${esc(displayCategory(n))}</div></div>
       <span class="status ${esc(n.status)}">${n.status==="published"?"Veröffentlicht":"Entwurf"}</span>
     </div>
     <div class="admin-item-actions">
@@ -864,7 +879,7 @@ function openPreview(n){
     <article class="preview-card ${n.image_url?"has-image":""}">
       ${n.image_url?`<img class="slide-bg-blur" src="${esc(n.image_url)}" alt="" aria-hidden="true"><img class="slide-bg" src="${esc(n.image_url)}" alt="" style="${imageStyleOf(n)}">`:""}
       <div class="slide-inner">
-        <div class="topline"><span class="pill">${esc(n.category||"Kategorie")}</span>${n.priority==="top"?'<span class="pill top-pill">Topmeldung</span>':""}</div>
+        <div class="topline"><span class="pill">${esc(displayCategory(n))}</span>${n.priority==="top"?'<span class="pill top-pill">Topmeldung</span>':""}</div>
         <h1>${esc(n.title||"Deine Überschrift")}</h1>
         <p class="summary">${esc(n.summary||"Hier erscheint deine Nachricht.")}</p>
         ${n.context_text?`<div class="context-box"><strong>Kurz erklärt</strong>${esc(n.context_text)}</div>`:""}
@@ -1248,11 +1263,11 @@ async function loadTripleDrafts(){
 function tripleDraftStatusLabel(s){return ({new:"Neu",imported:"Übernommen",rejected:"Abgelehnt"})[s]||s}
 function normalizeTripleItem(item,slot){
   item=item||{};
-  const defaults={damals:"Damals",fortschritt:"Fortschritt",heute:"Heute"};
+  const defaults={damals:"Was war...",fortschritt:"Fortschritt",heute:"Heute"};
   const src=Array.isArray(item.sources)?item.sources:(item.source_url?[{name:item.source_name||"Quelle",url:item.source_url}]:[]);
   return {
-    category:item.category||defaults[slot],
-    title:item.title||"",
+    category:slot==="damals"?"Was war...":(item.category||defaults[slot]),
+    title:slot==="damals"?historicalTitle(item.title,Number(item.years_ago)||null):(item.title||""),
     summary:item.summary||item.text||"",
     feel_good_text:item.feel_good_text||item.feel_good||"",
     context_text:item.context_text||null,
@@ -1276,7 +1291,7 @@ function renderTripleDrafts(){
       <div class="submission-meta">${esc(tripleDraftStatusLabel(x.status))} · ${esc(new Date(x.created_at).toLocaleString("de-DE"))} · für ${esc(fmtDateShort(x.draft_date))}</div>
       <div class="triple-draft-source">${esc(x.source_label||"Automatischer Entwurf")}</div>
       <div class="triple-grid triple-grid-drafts">
-        <div class="triple-slot"><div class="slot-label">🕰️ DAMALS</div><h4>${esc(d.title||"Ohne Überschrift")}</h4><p>${esc(d.summary)}</p>${d.image_url?`<div class="draft-image-note">🖼️ ${d.image_kind==="ai"?"KI-Illustration":"Bildvorschlag"}</div>`:""}${d.feel_good_text?`<div class="draft-feel">💛 ${esc(d.feel_good_text)}</div>`:""}</div>
+        <div class="triple-slot"><div class="slot-label">🕰️ WAS WAR...</div><h4>${esc(d.title||"Ohne Überschrift")}</h4><p>${esc(d.summary)}</p>${d.image_url?`<div class="draft-image-note">🖼️ ${d.image_kind==="ai"?"KI-Illustration":"Bildvorschlag"}</div>`:""}${d.feel_good_text?`<div class="draft-feel">💛 ${esc(d.feel_good_text)}</div>`:""}</div>
         <div class="triple-slot"><div class="slot-label">🚀 FORTSCHRITT</div><h4>${esc(f.title||"Ohne Überschrift")}</h4><p>${esc(f.summary)}</p>${f.image_url?`<div class="draft-image-note">🖼️ ${f.image_kind==="ai"?"KI-Illustration":"Bildvorschlag"}</div>`:""}${f.feel_good_text?`<div class="draft-feel">💛 ${esc(f.feel_good_text)}</div>`:""}</div>
         <div class="triple-slot"><div class="slot-label">❤️ HEUTE</div><h4>${esc(h.title||"Ohne Überschrift")}</h4><p>${esc(h.summary)}</p>${h.image_url?`<div class="draft-image-note">🖼️ ${h.image_kind==="ai"?"KI-Illustration":"Bildvorschlag"}</div>`:""}${h.feel_good_text?`<div class="draft-feel">💛 ${esc(h.feel_good_text)}</div>`:""}</div>
       </div>
@@ -1305,7 +1320,7 @@ async function importTripleDraft(id){
     const localDateTime=`${x.draft_date}T${times[slot]}:00`;
     return {
       published_date:x.draft_date,published_time:times[slot],publish_at:new Date(localDateTime).toISOString(),
-      category:n.category,story_key:null,title:n.title,summary:n.summary,context_text:n.context_text,
+      category:slot==="damals"?"Was war...":n.category,story_key:null,title:slot==="damals"?historicalTitle(n.title,n.years_ago):n.title,summary:n.summary,context_text:n.context_text,
       status:"draft",priority:"normal",priority_rank:0,image_url:n.image_url,image_path:null,image_credit:n.image_credit,
       image_license:n.image_license,image_source_url:n.image_source_url,image_kind:n.image_kind,
       sources:n.sources,daily_slot:slot,years_ago:n.years_ago,feel_good_text:n.feel_good_text||null,
