@@ -1372,7 +1372,7 @@ fetchPublicNews();
 if("serviceWorker" in navigator){
   addEventListener("load",async()=>{
     try{
-      const reg=await navigator.serviceWorker.register("sw.js");
+      const reg=await navigator.serviceWorker.register("sw.js?v=50", {updateViaCache:"none"});
       await reg.update();
       let reloading=false;
       navigator.serviceWorker.addEventListener("controllerchange",()=>{
