@@ -23,9 +23,8 @@ let currentAdminSession = null;
 
 const USER_PREFS_KEY="goodNewsUserPreferencesV1";
 const USER_PREF_DEFAULTS={
-  appearance:"system",
+  appearance:"dark",
   textSize:"normal",
-  reduceMotion:false,
   dataSaver:false,
   notifications:false,
   notifyMorning:true,
@@ -44,11 +43,15 @@ let userPrefs={...USER_PREF_DEFAULTS};
 function readUserPreferences(){
   try{
     const saved=JSON.parse(localStorage.getItem(USER_PREFS_KEY)||"{}");
-    return {
+    const normalized={
       ...USER_PREF_DEFAULTS,
       ...saved,
       notifyCategories:Array.isArray(saved.notifyCategories)?saved.notifyCategories:[...USER_PREF_DEFAULTS.notifyCategories]
     };
+    if(!["dark","light"].includes(normalized.appearance))normalized.appearance="dark";
+    if(!["small","normal","large"].includes(normalized.textSize))normalized.textSize="normal";
+    delete normalized.reduceMotion;
+    return normalized;
   }catch{
     return {...USER_PREF_DEFAULTS,notifyCategories:[...USER_PREF_DEFAULTS.notifyCategories]};
   }
@@ -63,9 +66,7 @@ function saveUserPreferences(next=userPrefs){
   applyUserPreferences();
 }
 function resolvedAppearance(){
-  if(userPrefs.appearance==="light")return "light";
-  if(userPrefs.appearance==="dark")return "dark";
-  return window.matchMedia?.("(prefers-color-scheme: light)")?.matches?"light":"dark";
+  return userPrefs.appearance==="light"?"light":"dark";
 }
 function applyUserPreferences(){
   const root=document.documentElement;
@@ -73,17 +74,12 @@ function applyUserPreferences(){
   root.classList.toggle("user-theme-dark",resolvedAppearance()==="dark");
   root.classList.toggle("user-text-small",userPrefs.textSize==="small");
   root.classList.toggle("user-text-large",userPrefs.textSize==="large");
-  root.classList.toggle("user-reduce-motion",Boolean(userPrefs.reduceMotion));
   root.classList.toggle("user-data-saver",Boolean(userPrefs.dataSaver));
   root.dataset.dataSaver=userPrefs.dataSaver?"true":"false";
-}
-function prefersReducedAppMotion(){
-  return Boolean(userPrefs.reduceMotion || window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches);
 }
 function populateUserPreferences(){
   if($("prefAppearance"))$("prefAppearance").value=userPrefs.appearance;
   if($("prefTextSize"))$("prefTextSize").value=userPrefs.textSize;
-  if($("prefReduceMotion"))$("prefReduceMotion").checked=Boolean(userPrefs.reduceMotion);
   if($("prefDataSaver"))$("prefDataSaver").checked=Boolean(userPrefs.dataSaver);
   if($("prefNotifications"))$("prefNotifications").checked=Boolean(userPrefs.notifications);
   if($("prefNotifyMorning"))$("prefNotifyMorning").checked=Boolean(userPrefs.notifyMorning);
@@ -95,9 +91,8 @@ function populateUserPreferences(){
 }
 function collectUserPreferences(){
   return {
-    appearance:$("prefAppearance")?.value||"system",
+    appearance:$("prefAppearance")?.value||"dark",
     textSize:$("prefTextSize")?.value||"normal",
-    reduceMotion:Boolean($("prefReduceMotion")?.checked),
     dataSaver:Boolean($("prefDataSaver")?.checked),
     notifications:Boolean($("prefNotifications")?.checked),
     notifyMorning:Boolean($("prefNotifyMorning")?.checked),
@@ -126,9 +121,6 @@ function commitUserPreferences({rerender=false}={}){
 
 userPrefs=readUserPreferences();
 applyUserPreferences();
-window.matchMedia?.("(prefers-color-scheme: light)")?.addEventListener?.("change",()=>{
-  if(userPrefs.appearance==="system")applyUserPreferences();
-});
 
 const esc = (value="") => String(value).replace(/[&<>"']/g, c => ({
   "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
@@ -532,7 +524,7 @@ function scrollToNews(id) {
   const target = feed.querySelector(`[data-id="${CSS.escape(String(id))}"]`);
   if (target) {
     readerDialog.open && readerDialog.close();
-    target.scrollIntoView({behavior:prefersReducedAppMotion()?"auto":"smooth",block:"start"});
+    target.scrollIntoView({behavior:"smooth",block:"start"});
   }
 }
 
@@ -655,6 +647,23 @@ function runMenuAction(fn){return (...args)=>{closeMainMenu();return fn(...args)
 $("searchBtn").onclick = runMenuAction(openSearch);
 $("archiveBtn").onclick = runMenuAction(openArchive);
 $("favoritesBtn").onclick = runMenuAction(openFavorites);
+
+let slideTextHidden=false;
+function applySlideFocusMode(){
+  document.documentElement.classList.toggle("slide-text-hidden",slideTextHidden);
+  const btn=$("slideFocusBtn");
+  if(!btn)return;
+  btn.classList.toggle("active",slideTextHidden);
+  btn.setAttribute("aria-pressed",String(slideTextHidden));
+  btn.setAttribute("aria-label",slideTextHidden?"Slide-Text einblenden":"Slide-Text ausblenden");
+  btn.title=slideTextHidden?"Text wieder einblenden":"Nur Bild anzeigen";
+}
+$("slideFocusBtn")?.addEventListener("click",()=>{
+  slideTextHidden=!slideTextHidden;
+  applySlideFocusMode();
+});
+applySlideFocusMode();
+
 $("userPreferencesBtn").onclick = runMenuAction(()=>{
   populateUserPreferences();
   userPreferencesDialog.showModal();
@@ -663,13 +672,12 @@ document.addEventListener("click",(e)=>{
   if(!mainMenu.hidden && !mainMenu.contains(e.target) && e.target!==menuBtn) closeMainMenu();
 });
 document.addEventListener("keydown",(e)=>{if(e.key==="Escape")closeMainMenu()});
-$("homeBtn").onclick = () => {closeMainMenu();feed.scrollTo({top:0,behavior:prefersReducedAppMotion()?"auto":"smooth"});}
+$("homeBtn").onclick = () => {closeMainMenu();feed.scrollTo({top:0,behavior:"smooth"});}
 document.querySelectorAll("[data-close]").forEach(b=>b.onclick=()=>$(b.dataset.close).close());
 feed.addEventListener("scroll",()=>{if(feed.scrollTop>100)$("swipeHint").style.display="none"},{passive:true});
 
 
 ["prefAppearance","prefTextSize"].forEach(id=>$(id)?.addEventListener("change",()=>commitUserPreferences({rerender:id==="prefTextSize"})));
-$("prefReduceMotion")?.addEventListener("change",()=>commitUserPreferences());
 $("prefDataSaver")?.addEventListener("change",()=>commitUserPreferences({rerender:true}));
 $("prefNotifications")?.addEventListener("change",()=>commitUserPreferences());
 $("prefNotifyMorning")?.addEventListener("change",()=>commitUserPreferences());

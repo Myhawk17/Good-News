@@ -1,9 +1,9 @@
-const CACHE="good-news-v47-2026-11";
+const CACHE="good-news-v48-2026-12";
 const STATIC=[
   "./",
   "./index.html",
-  "./style.css?v=51",
-  "./app.js?v=35",
+  "./style.css?v=52",
+  "./app.js?v=36",
   "./config.js",
   "./manifest.json",
   "./date-slide-background-v2.png",

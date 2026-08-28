@@ -1050,16 +1050,51 @@ html.user-text-small .slide .summary{font-size:clamp(.92rem,3.5vw,1.2rem)}
 html.user-text-large .slide h1{font-size:clamp(2.35rem,9vw,5.8rem)}
 html.user-text-large .slide .summary{font-size:clamp(1.08rem,4.3vw,1.58rem)}
 
-/* Reduzierte Bewegung */
-html.user-reduce-motion *,
-html.user-reduce-motion *::before,
-html.user-reduce-motion *::after{
-  animation-duration:.01ms!important;
-  animation-iteration-count:1!important;
-  transition-duration:.01ms!important;
-  scroll-behavior:auto!important;
-}
-html.user-reduce-motion .feed{scroll-snap-stop:normal}
-
 /* Datensparmodus: Blur-Hintergrund wird im JS gar nicht erzeugt. */
 html.user-data-saver .slide-bg-blur{display:none!important}
+
+
+/* Good News – kompakte rechte Buttonleiste: Menü, Auge, Redaktion */
+.appbar-actions{
+  flex-direction:column;
+  align-items:center;
+  gap:4px;
+}
+.slide-focus-btn,
+.admin-quick-btn,
+.menu-toggle-btn{flex:0 0 auto}
+.slide-focus-btn{
+  width:32px;
+  height:32px;
+  border-radius:10px;
+  padding:7px;
+  background:#18181ca8;
+}
+.slide-focus-btn svg{
+  width:100%;
+  height:100%;
+  fill:none;
+  stroke:currentColor;
+  stroke-width:1.8;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
+.slide-focus-btn.active{
+  background:#f4f4f5;
+  color:#111;
+}
+.admin-quick-btn{margin-top:0}
+
+/* Bildmodus: Text, Buttons und Abdunklung der Nachrichten-Slides ausblenden. */
+html.slide-text-hidden .slide .slide-inner{
+  opacity:0;
+  visibility:hidden;
+  pointer-events:none;
+}
+html.slide-text-hidden .slide.has-image::before{
+  opacity:0;
+}
+.slide .slide-inner,
+.slide.has-image::before{
+  transition:opacity .16s ease;
+}

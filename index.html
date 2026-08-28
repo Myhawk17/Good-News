@@ -7,7 +7,7 @@
   <meta name="description" content="Good News – Jeden Tag passiert auch Gutes.">
   <title>Good News</title>
   <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="style.css?v=51">
+  <link rel="stylesheet" href="style.css?v=52">
 </head>
 <body>
 <header class="appbar">
@@ -26,6 +26,12 @@
         <button id="userPreferencesBtn" type="button"><span>⚙</span>Einstellungen</button>
         <button id="accountBtn" type="button"><span>↪</span><span id="accountBtnLabel">Anmelden</span></button>
       </div>
+      <button class="icon-btn slide-focus-btn" id="slideFocusBtn" type="button" aria-label="Slide-Text ausblenden" aria-pressed="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"></path>
+          <circle cx="12" cy="12" r="2.6"></circle>
+        </svg>
+      </button>
       <button class="icon-btn admin-quick-btn" id="adminBtn" aria-label="Redaktion öffnen" hidden>⚙</button>
     </div>
   </header>
@@ -101,7 +107,6 @@
           <span>Gilt für Menüs, Suche, Archiv und Fenster. Die Nachrichtenbilder bleiben unverändert.</span>
         </div>
         <select id="prefAppearance" aria-label="Darstellung">
-          <option value="system">System</option>
           <option value="dark">Dunkel</option>
           <option value="light">Hell</option>
         </select>
@@ -114,23 +119,12 @@
         </div>
         <select id="prefTextSize" aria-label="Textgröße">
           <option value="small">Klein</option>
-          <option value="normal">Standard</option>
+          <option value="normal">Mittel</option>
           <option value="large">Groß</option>
         </select>
       </section>
 
-      <section class="user-setting-card user-setting-toggle-row">
-        <div class="user-setting-copy">
-          <strong>Animationen reduzieren</strong>
-          <span>Weniger weiche Übergänge und Scroll-Animationen.</span>
-        </div>
-        <label class="switch-control" aria-label="Animationen reduzieren">
-          <input id="prefReduceMotion" type="checkbox">
-          <span class="switch-slider" aria-hidden="true"></span>
-        </label>
-      </section>
-
-      <section class="user-setting-card user-setting-toggle-row">
+<section class="user-setting-card user-setting-toggle-row">
         <div class="user-setting-copy">
           <strong>Datensparmodus</strong>
           <span>Lädt Bilder zurückhaltender und verzichtet auf zusätzliche Hintergrund-Unschärfe.</span>
@@ -590,6 +584,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="app.js?v=35"></script>
+  <script src="app.js?v=36"></script>
 </body>
 </html>
