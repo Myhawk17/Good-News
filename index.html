@@ -374,22 +374,28 @@
           <fieldset class="image-fieldset-slim">
             <legend>Bild</legend>
 
-            <div class="image-input-row">
-              <label>Bild hochladen
-                <input id="imageFile" type="file" accept="image/*">
-              </label>
-              <label>Alternativ Bild-URL
-                <input id="imageUrl" type="url" placeholder="https://…">
-              </label>
+            <div class="image-choice-box">
+              <strong>Bild auswählen</strong>
+              <div class="muted">Lade eine Datei hoch oder füge die direkte Adresse des Bildes ein. Eine hochgeladene Datei hat Vorrang.</div>
+              <div class="image-input-row">
+                <label>📁 Datei hochladen
+                  <input id="imageFile" type="file" accept="image/*">
+                </label>
+                <label>🔗 Bild-Link
+                  <input id="imageUrl" type="url" placeholder="Direkter Link zur Bilddatei (JPG, PNG, WebP …)">
+                </label>
+              </div>
             </div>
 
-            <div class="image-source-fields">
-              <label>Bildquelle
-                <input id="imageSourceUrl" type="url" placeholder="Link zur Original-/Quellseite">
+            <div class="image-source-fields image-rights-box">
+              <strong>Bildnachweis & Rechte</strong>
+              <div class="muted">Diese Angaben gehören zum Bild, werden aber nicht als Bild geladen.</div>
+              <label>Originalseite / Lizenzseite
+                <input id="imageSourceUrl" type="url" placeholder="z. B. Wikimedia-Commons-Seite des Bildes">
               </label>
               <div class="form-grid two">
                 <label>Urheber / Bildnachweis
-                  <input id="imageCredit" maxlength="160" placeholder="z. B. Wikimedia Commons">
+                  <input id="imageCredit" maxlength="160" placeholder="z. B. Max Mustermann / Wikimedia Commons">
                 </label>
                 <label>Lizenz
                   <input id="imageLicense" maxlength="120" placeholder="z. B. CC BY-SA 4.0">
@@ -584,6 +590,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="app.js?v=39"></script>
+  <script src="app.js?v=37"></script>
 </body>
 </html>
