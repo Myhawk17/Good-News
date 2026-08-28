@@ -505,7 +505,7 @@ function buildSlide(item, index, total) {
       <h1>${esc(displayTitle(item))}</h1>
       <p class="summary">${esc(item.summary)}</p>
 
-      ${item.context_text ? `<div class="context-box"><strong>Kurz erklärt</strong>${esc(item.context_text)}</div>` : ""}
+      ${item.context_text ? `<div class="context-box">${esc(item.context_text)}</div>` : ""}
       
       <div class="slide-actions">
         <button class="slide-action fav-btn ${fav ? "active":""}" data-id="${item.id}">${fav ? "♥ Gespeichert" : "♡ Merken"}</button>
@@ -1279,7 +1279,7 @@ function openPreview(n){
         ${n.byline_visible&&n.byline_name?`<div class="news-byline">von ${esc(n.byline_name)}</div>`:""}
         <h1>${esc(n.title||"Deine Überschrift")}</h1>
         <p class="summary">${esc(n.summary||"Hier erscheint deine Nachricht.")}</p>
-        ${n.context_text?`<div class="context-box"><strong>Kurz erklärt</strong>${esc(n.context_text)}</div>`:""}
+        ${n.context_text?`<div class="context-box">${esc(n.context_text)}</div>`:""}
               </div>
     </article>`;
   previewDialog.showModal();
