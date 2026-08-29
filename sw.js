@@ -1,9 +1,9 @@
-const CACHE="good-news-v65-notification-badge";
+const CACHE="good-news-v66-quick-actions-reports";
 const STATIC=[
   "./",
   "./index.html",
-  "./style.css?v=63",
-  "./app.js?v=51",
+  "./style.css?v=64",
+  "./app.js?v=52",
   "./config.js",
   "./manifest.json",
   "./date-slide-background-v2.png",

@@ -7,7 +7,7 @@
   <meta name="description" content="Good News – Jeden Tag passiert auch Gutes.">
   <title>Good News</title>
   <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="style.css?v=63">
+  <link rel="stylesheet" href="style.css?v=64">
 </head>
 <body>
 <header class="appbar">
@@ -31,14 +31,18 @@
       </button>
         <button id="accountBtn" type="button"><span>↪</span><span id="accountBtnLabel">Anmelden</span></button>
       </div>
-      <button class="icon-btn slide-focus-btn" id="slideFocusBtn" type="button" aria-label="Slide-Text ausblenden" aria-pressed="false">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"></path>
-          <circle cx="12" cy="12" r="2.6"></circle>
-        </svg>
-      </button>
-      <button class="icon-btn slide-fav-quick-btn" id="slideFavBtn" type="button" aria-label="Meldung merken" title="Merken">♡</button>
-      <button class="icon-btn slide-share-quick-btn" id="slideShareBtn" type="button" aria-label="Meldung teilen" title="Teilen">↗</button>
+      <button class="icon-btn quick-toggle-btn" id="quickToggleBtn" type="button" aria-label="Schnellfunktionen öffnen" aria-expanded="false" aria-controls="quickActions">＋</button>
+      <div class="quick-actions" id="quickActions" hidden>
+        <button class="icon-btn slide-focus-btn" id="slideFocusBtn" type="button" aria-label="Slide-Text ausblenden" aria-pressed="false" title="Text ausblenden">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"></path>
+            <circle cx="12" cy="12" r="2.6"></circle>
+          </svg>
+        </button>
+        <button class="icon-btn slide-fav-quick-btn" id="slideFavBtn" type="button" aria-label="Meldung merken" title="Merken">♡</button>
+        <button class="icon-btn slide-share-quick-btn" id="slideShareBtn" type="button" aria-label="Meldung teilen" title="Teilen">↗</button>
+        <button class="icon-btn slide-report-quick-btn" id="slideReportBtn" type="button" aria-label="Fehler melden" title="Fehler melden">⚑</button>
+      </div>
       <button class="icon-btn admin-quick-btn" id="adminBtn" aria-label="Redaktion öffnen" hidden>⚙</button>
     </div>
   </header>
@@ -65,6 +69,20 @@
       <button class="icon-btn dialog-close" data-close="readerDialog">✕</button>
     </div>
     <div id="readerContent"></div>
+  </dialog>
+
+  <dialog id="reportDialog" class="sheet report-dialog">
+    <div class="dialog-head"><div><div class="eyebrow">Good News</div><h2>Fehler melden</h2></div><button class="icon-btn dialog-close" data-close="reportDialog">✕</button></div>
+    <form id="reportForm" class="stack">
+      <p id="reportNewsTitle" class="muted"></p>
+      <label>Was ist dir aufgefallen?
+        <select id="reportType" required>
+          <option value="content">Inhaltlicher Fehler</option><option value="source">Quelle / Link fehlerhaft</option><option value="image">Bild / Bildquelle fehlerhaft</option><option value="spelling">Rechtschreibfehler</option><option value="other">Sonstiges</option>
+        </select>
+      </label>
+      <label>Hinweis (optional)<textarea id="reportComment" rows="4" maxlength="1000" placeholder="Was sollten wir prüfen?"></textarea></label>
+      <button class="primary" type="submit">Meldung senden</button><div id="reportMessage" class="message"></div>
+    </form>
   </dialog>
 
   <dialog id="submissionDialog" class="sheet submission-dialog">
@@ -363,6 +381,10 @@
           </span>
         </button>
 
+        <button class="tab admin-menu-item" data-tab="reports">
+          <span class="admin-menu-icon">⚑</span><span class="admin-menu-copy"><strong>Fehlermeldungen <span id="reportBadge" class="badge" hidden></span></strong><small>Hinweise der Nutzer prüfen</small></span>
+        </button>
+
         <button class="tab admin-menu-item" data-tab="settings">
           <span class="admin-menu-icon">🎨</span>
           <span class="admin-menu-copy">
@@ -382,6 +404,8 @@
         <div class="filters"><select id="tripleDraftStatus"><option value="new">Neu</option><option value="imported">Übernommen</option><option value="rejected">Abgelehnt</option><option value="all">Alle</option></select></div>
         <div id="tripleDraftList"></div>
       </section>
+
+      <section id="tab-reports" class="tab-panel" hidden><div class="section-head"><div><h3>⚑ Fehlermeldungen</h3><p class="muted">Von Nutzern gemeldete Hinweise zu veröffentlichten Beiträgen.</p></div></div><div id="reportList"></div></section>
 
       <section id="tab-editor" class="tab-panel" hidden>
         <form id="newsForm" class="stack">
@@ -702,6 +726,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="app.js?v=51"></script>
+  <script src="app.js?v=52"></script>
 </body>
 </html>

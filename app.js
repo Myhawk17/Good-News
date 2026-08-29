@@ -610,6 +610,32 @@ $("slideFavBtn")?.addEventListener("click",()=>{
 });
 $("slideShareBtn")?.addEventListener("click",()=>{const item=currentSlideItem();if(item)shareItem(item);});
 
+let reportNewsId=null;
+$("slideReportBtn")?.addEventListener("click",()=>{
+  const item=currentSlideItem();if(!item)return;reportNewsId=item.id;
+  $("reportNewsTitle").textContent=item.title||"Aktuelle Meldung";$("reportForm").reset();$("reportMessage").textContent="";$("reportDialog").showModal();
+});
+$("reportForm")?.addEventListener("submit",async e=>{
+  e.preventDefault();const msg=$("reportMessage");if(!configured||!reportNewsId){msg.textContent="Meldung konnte nicht gesendet werden.";return;}
+  msg.textContent="Wird gesendet …";
+  try{
+    const {data:{user}}=await db.auth.getUser();
+    const {error}=await db.from("news_reports").insert({news_id:reportNewsId,reporter_user_id:user?.id||null,report_type:$("reportType").value,comment:$("reportComment").value.trim()||null});
+    if(error)throw error;msg.textContent="Danke! Dein Hinweis ist bei der Redaktion angekommen. 💛";setTimeout(()=>$("reportDialog").open&&$("reportDialog").close(),1400);
+  }catch(err){msg.textContent="Das hat leider nicht geklappt: "+(err.message||String(err));}
+});
+
+const reportTypeLabels={content:"Inhaltlicher Fehler",source:"Quelle / Link",image:"Bild / Bildquelle",spelling:"Rechtschreibung",other:"Sonstiges"};
+async function loadNewsReports(){
+  if(!currentAdminSession)return;
+  const {data,error}=await db.from("news_reports").select("id,news_id,report_type,comment,status,created_at,news(title)").order("created_at",{ascending:false});
+  if(error){$("reportList").innerHTML=`<p class="message">${esc(error.message)}</p>`;return;}
+  const rows=data||[], fresh=rows.filter(r=>r.status==="new").length,badge=$("reportBadge");if(badge){badge.textContent=fresh;badge.hidden=!fresh;}
+  $("reportList").innerHTML=rows.length?rows.map(r=>`<article class="submission-card"><div class="submission-meta">${esc(reportTypeLabels[r.report_type]||r.report_type)} · ${esc(new Date(r.created_at).toLocaleString("de-DE"))}</div><h4>${esc(r.news?.title||`Beitrag #${r.news_id}`)}</h4>${r.comment?`<p>${esc(r.comment)}</p>`:""}<div class="row"><button class="secondary report-status-btn" data-report-id="${r.id}" data-status="resolved">✓ Erledigt</button><button class="secondary report-status-btn" data-report-id="${r.id}" data-status="dismissed">Verwerfen</button></div></article>`).join(""):`<p class="muted">Keine Fehlermeldungen vorhanden.</p>`;
+  document.querySelectorAll(".report-status-btn").forEach(b=>b.onclick=async()=>{const {error}=await db.from("news_reports").update({status:b.dataset.status,updated_at:new Date().toISOString()}).eq("id",b.dataset.reportId);if(!error)loadNewsReports();});
+}
+
+
 function openReader(title, eyebrow, html) {
   $("readerTitle").textContent = title;
   $("readerEyebrow").textContent = eyebrow;
@@ -715,6 +741,18 @@ $("searchBtn").onclick = runMenuAction(openSearch);
 $("archiveBtn").onclick = runMenuAction(openArchive);
 $("favoritesBtn").onclick = runMenuAction(openFavorites);
 
+const quickToggleBtn=$("quickToggleBtn"), quickActions=$("quickActions");
+let quickActionsOpen=localStorage.getItem("goodNewsQuickActionsOpen")==="true";
+function applyQuickActionsState(){
+  if(!quickToggleBtn||!quickActions)return;
+  quickActions.hidden=!quickActionsOpen;
+  quickToggleBtn.textContent=quickActionsOpen?"×":"＋";
+  quickToggleBtn.setAttribute("aria-expanded",String(quickActionsOpen));
+  quickToggleBtn.setAttribute("aria-label",quickActionsOpen?"Schnellfunktionen schließen":"Schnellfunktionen öffnen");
+}
+quickToggleBtn?.addEventListener("click",()=>{quickActionsOpen=!quickActionsOpen;localStorage.setItem("goodNewsQuickActionsOpen",String(quickActionsOpen));applyQuickActionsState();});
+applyQuickActionsState();
+
 let slideTextHidden=false;
 function applySlideFocusMode(){
   document.documentElement.classList.toggle("slide-text-hidden",slideTextHidden);
@@ -793,6 +831,7 @@ function switchAdminTab(name) {
   document.querySelectorAll(".tab-panel").forEach(p=>p.hidden = p.id !== `tab-${name}`);
   if(name==="dashboard"){renderDashboard();loadAnalyticsSummary();}
   if(name==="manage") renderAdminList();
+  if(name==="reports") loadNewsReports();
 }
 document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>switchAdminTab(t.dataset.tab));
 
