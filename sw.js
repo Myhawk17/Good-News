@@ -1,9 +1,9 @@
-const CACHE="good-news-v66-quick-actions-reports";
+const CACHE="good-news-v67-error-states";
 const STATIC=[
   "./",
   "./index.html",
-  "./style.css?v=64",
-  "./app.js?v=52",
+  "./style.css?v=65",
+  "./app.js?v=53",
   "./config.js",
   "./manifest.json",
   "./date-slide-background-v2.png",

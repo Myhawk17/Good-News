@@ -7,7 +7,7 @@
   <meta name="description" content="Good News – Jeden Tag passiert auch Gutes.">
   <title>Good News</title>
   <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="style.css?v=64">
+  <link rel="stylesheet" href="style.css?v=65">
 </head>
 <body>
 <header class="appbar">
@@ -385,6 +385,11 @@
           <span class="admin-menu-icon">⚑</span><span class="admin-menu-copy"><strong>Fehlermeldungen <span id="reportBadge" class="badge" hidden></span></strong><small>Hinweise der Nutzer prüfen</small></span>
         </button>
 
+        <button class="tab admin-menu-item" data-tab="error-tests">
+          <span class="admin-menu-icon">🧪</span>
+          <span class="admin-menu-copy"><strong>Fehlerzustände testen</strong><small>Offline, Server, Bild &amp; weitere Zustände simulieren</small></span>
+        </button>
+
         <button class="tab admin-menu-item" data-tab="settings">
           <span class="admin-menu-icon">🎨</span>
           <span class="admin-menu-copy">
@@ -406,6 +411,20 @@
       </section>
 
       <section id="tab-reports" class="tab-panel" hidden><div class="section-head"><div><h3>⚑ Fehlermeldungen</h3><p class="muted">Von Nutzern gemeldete Hinweise zu veröffentlichten Beiträgen.</p></div></div><div id="reportList"></div></section>
+
+      <section id="tab-error-tests" class="tab-panel" hidden>
+        <div class="section-head"><div><h3>🧪 Fehlerzustände testen</h3><p class="muted">Nur auf diesem Gerät sichtbar. Es werden keine echten Daten verändert.</p></div></div>
+        <div class="error-test-grid">
+          <button class="secondary error-test-btn" data-error-test="offline">📴 Offline simulieren</button>
+          <button class="secondary error-test-btn" data-error-test="server">☕ Serverfehler simulieren</button>
+          <button class="secondary error-test-btn" data-error-test="image">🖼 Bildfehler simulieren</button>
+          <button class="secondary error-test-btn" data-error-test="empty">🌱 Keine Nachrichten simulieren</button>
+          <button class="secondary error-test-btn" data-error-test="slow">⏳ Langsame Verbindung simulieren</button>
+          <button class="secondary error-test-btn" data-error-test="action">⚠ Aktion fehlgeschlagen</button>
+          <button class="primary error-test-btn" data-error-test="normal">✓ Normalzustand wiederherstellen</button>
+        </div>
+        <div id="errorTestMessage" class="message"></div>
+      </section>
 
       <section id="tab-editor" class="tab-panel" hidden>
         <form id="newsForm" class="stack">
@@ -726,6 +745,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="app.js?v=52"></script>
+  <script src="app.js?v=53"></script>
 </body>
 </html>

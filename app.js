@@ -550,6 +550,18 @@ function buildSlide(item, index, total) {
         ${item.image_url ? `<button class="image-source-link" type="button" data-image-source-id="${item.id}">${item.image_kind === "ai" ? "ⓘ KI-Illustration" : "Bildquelle"}</button>` : `<span class="source-spacer"></span>`}
       </div>
     </div>`;
+  // Ein kaputtes Bild darf den Slide nicht kaputt aussehen lassen.
+  const mainImg=article.querySelector(".slide-bg");
+  if(mainImg){
+    mainImg.addEventListener("error",()=>{
+      article.classList.add("image-load-error");
+      if(!article.querySelector(".image-error-note")){
+        const note=document.createElement("div"); note.className="image-error-note";
+        note.textContent="Bild konnte gerade nicht geladen werden.";
+        article.appendChild(note);
+      }
+    },{once:true});
+  }
   article.querySelector(".text-source-link")?.addEventListener("click",()=>openTextSource(item));
   article.querySelector(".image-source-link")?.addEventListener("click",()=>openImageSource(item));
   return article;
@@ -2285,3 +2297,51 @@ async function sendAdminTestPush(){
 if($("sendTestPushBtn")){
   $("sendTestPushBtn").addEventListener("click",sendAdminTestPush);
 }
+
+
+// ---------------- GOOD NEWS 3.2: OFFLINE-/FEHLERZUSTÄNDE + ADMIN-TESTS ----------------
+const ERROR_TEST_KEY="goodNewsErrorTestMode";
+let errorTestMode=localStorage.getItem(ERROR_TEST_KEY)||"normal";
+function errorBackdrop(){return allNews.find(n=>n.image_url)?.image_url||"date-slide-background-v2.png"}
+function renderFriendlyError(kind){
+  const states={
+    offline:["📴","Kurz offline 🌿","Sobald du wieder verbunden bist, sind die Good News wieder für dich da."],
+    server:["☕","Die Good News machen gerade eine kurze Pause","Die Verbindung konnte nicht hergestellt werden. Versuch es gleich noch einmal."],
+    empty:["🌱","Für diesen Tag haben wir noch keine Good News","Schau später noch einmal vorbei oder öffne einen anderen Tag."],
+    slow:["⏳","Good News sind unterwegs …","Die Verbindung ist gerade etwas langsam. Einen kleinen Moment noch."],
+  };
+  const s=states[kind]||states.server;
+  feed.innerHTML=`<section class="error-state-slide ${kind==='slow'?'simulated-slow':''}"><img src="${esc(errorBackdrop())}" alt="" aria-hidden="true"><div class="error-state-copy"><div class="error-icon">${s[0]}</div><h1>${s[1]}</h1><p>${s[2]}</p>${kind==='empty'?'<button class="secondary" id="errorBackBtn">Zum letzten Tag mit Nachrichten</button>':'<button class="secondary" id="errorRetryBtn">Erneut versuchen</button>'}</div></section>`;
+  $("errorRetryBtn")?.addEventListener("click",()=>{setErrorTestMode("normal");fetchPublicNews()});
+  $("errorBackBtn")?.addEventListener("click",()=>{setErrorTestMode("normal");renderFeed()});
+}
+function simulateImageError(){
+  renderFeed();
+  const slide=feed.querySelector(".slide.has-image");
+  if(!slide){renderFriendlyError("server");return}
+  slide.classList.add("image-load-error");
+  const note=document.createElement("div");note.className="image-error-note";note.textContent="Bild konnte gerade nicht geladen werden.";slide.appendChild(note);
+  slide.scrollIntoView({block:"start"});
+}
+function showConnectionBanner(text){
+  let b=$("connectionBanner");
+  if(!b){b=document.createElement("div");b.id="connectionBanner";b.className="connection-banner";document.body.appendChild(b)}
+  b.textContent=text;b.hidden=false;
+}
+function hideConnectionBanner(){const b=$("connectionBanner");if(b)b.hidden=true}
+function setErrorTestMode(mode){
+  errorTestMode=mode||"normal";localStorage.setItem(ERROR_TEST_KEY,errorTestMode);
+  const msg=$("errorTestMessage");if(msg)msg.textContent=errorTestMode==="normal"?"Normalzustand ist wieder aktiv.":"Testmodus aktiv: "+errorTestMode+". Nur auf diesem Gerät.";
+  hideConnectionBanner();
+  if(errorTestMode==="normal"){renderFeed();return}
+  if(errorTestMode==="image"){simulateImageError();return}
+  if(errorTestMode==="action"){renderFeed();showConnectionBanner("Das hat gerade nicht geklappt. Versuch es bitte noch einmal.");setTimeout(hideConnectionBanner,4500);return}
+  renderFriendlyError(errorTestMode);
+}
+document.querySelectorAll(".error-test-btn").forEach(btn=>btn.addEventListener("click",()=>setErrorTestMode(btn.dataset.errorTest)));
+window.addEventListener("offline",()=>{showConnectionBanner("Offline – gespeicherte Good News werden angezeigt");if(!allNews.length)renderFriendlyError("offline")});
+window.addEventListener("online",()=>{hideConnectionBanner();if(errorTestMode==="normal")fetchPublicNews()});
+if(!navigator.onLine)showConnectionBanner("Offline – gespeicherte Good News werden angezeigt");
+
+// Der Testmodus greift auch nach einem Neuladen – ausschließlich lokal im Admin-Gerät.
+if(errorTestMode!=="normal")setTimeout(()=>setErrorTestMode(errorTestMode),250);
