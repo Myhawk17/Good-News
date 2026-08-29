@@ -1217,3 +1217,6 @@ html.slide-text-hidden .slide.has-image::before{
 
 /* PWA installation */
 .main-menu button[hidden]{display:none!important}
+
+/* Build-Anzeige */
+.app-build-label{padding:10px 16px 4px;text-align:center;font-size:12px;line-height:1.2;opacity:.52;letter-spacing:.02em;user-select:none}

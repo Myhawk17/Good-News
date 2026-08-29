@@ -1,9 +1,9 @@
-const CACHE="good-news-v68-pwa-release";
+const CACHE="good-news-v69-build31";
 const STATIC=[
   "./",
   "./index.html",
-  "./style.css?v=66",
-  "./app.js?v=54",
+  "./style.css?v=67",
+  "./app.js?v=55",
   "./config.js",
   "./manifest.json",
   "./favicon-32.png",
