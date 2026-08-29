@@ -7,7 +7,7 @@
   <meta name="description" content="Good News – Jeden Tag passiert auch Gutes.">
   <title>Good News</title>
   <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="style.css?v=62">
+  <link rel="stylesheet" href="style.css?v=63">
 </head>
 <body>
 <header class="appbar">
@@ -621,6 +621,16 @@
           </fieldset>
 
 
+
+          <fieldset class="push-admin-fieldset">
+            <legend>Push-Benachrichtigungen</legend>
+            <p class="muted">Hier kannst du prüfen, ob der Push-Versand auf deinem Gerät funktioniert.</p>
+            <div class="push-admin-actions">
+              <button class="secondary" type="button" id="sendTestPushBtn">🔔 Test-Push an dieses Konto senden</button>
+            </div>
+            <div id="pushAdminMessage" class="message" aria-live="polite"></div>
+          </fieldset>
+
           <fieldset class="legal-admin-fieldset">
             <legend>Rechtliches</legend>
             <p class="muted">Diese Angaben werden automatisch im Menü unter „Impressum &amp; Datenschutz“ angezeigt.</p>
@@ -692,6 +702,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="app.js?v=49"></script>
+  <script src="app.js?v=50"></script>
 </body>
 </html>

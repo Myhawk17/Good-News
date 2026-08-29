@@ -1,9 +1,9 @@
-const CACHE="good-news-v62-push-public-key";
+const CACHE="good-news-v63-push-test";
 const STATIC=[
   "./",
   "./index.html",
-  "./style.css?v=62",
-  "./app.js?v=49",
+  "./style.css?v=63",
+  "./app.js?v=50",
   "./config.js",
   "./manifest.json",
   "./date-slide-background-v2.png",

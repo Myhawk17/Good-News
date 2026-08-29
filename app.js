@@ -2186,3 +2186,37 @@ function bindPushPreference(){
   input.addEventListener("change",()=>syncPushPreference(input.checked));
 }
 window.addEventListener("DOMContentLoaded",bindPushPreference);
+
+
+// Admin-Test für echten Web Push
+
+async function sendAdminTestPush(){
+  const msg=$("pushAdminMessage");
+  if(msg) msg.textContent="Test-Push wird vorbereitet …";
+  try{
+    const sub=await getPushSubscription();
+    if(!sub){
+      throw new Error("Aktiviere zuerst unter Einstellungen die Benachrichtigungen auf diesem Gerät.");
+    }
+    await savePushSubscription(sub);
+    const {data,error}=await db.functions.invoke("send-good-news-push",{
+      body:{
+        mode:"test",
+        title:"Good News",
+        body:"🎉 Dein Good-News-Push funktioniert!"
+      }
+    });
+    if(error) throw error;
+    if(!data?.sent){
+      throw new Error(data?.message==="No active subscriptions"
+        ?"Für dieses Konto wurde noch kein aktives Push-Abo gefunden."
+        :(data?.error||"Der Test-Push konnte nicht versendet werden."));
+    }
+    if(msg) msg.textContent="Test-Push wurde gesendet. Schau jetzt in deine Benachrichtigungen. ✅";
+  }catch(err){
+    if(msg) msg.textContent=err?.message||String(err);
+  }
+}
+if($("sendTestPushBtn")){
+  $("sendTestPushBtn").addEventListener("click",sendAdminTestPush);
+}
