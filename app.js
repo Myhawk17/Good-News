@@ -768,6 +768,25 @@ $("resetUserPreferencesBtn")?.addEventListener("click",()=>{
 });
 
 // ---------------- ADMIN ----------------
+
+let currentUserIsAdmin=false;
+
+async function sessionIsAdmin(session){
+  if(!session?.user?.id || !db) return false;
+  const {data,error}=await db
+    .from("user_roles")
+    .select("role")
+    .eq("user_id",session.user.id)
+    .eq("role","admin")
+    .maybeSingle();
+  if(error){
+    console.warn("Adminrolle konnte nicht geprüft werden:", error.message);
+    return false;
+  }
+  return Boolean(data);
+}
+
+
 function switchAdminTab(name) {
   localStorage.setItem("goodNewsAdminTab", name);
   document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("active",t.dataset.tab===name));
@@ -801,9 +820,10 @@ async function refreshSettingsAccount(){
   }
   const {data:{session}}=await db.auth.getSession();
   currentAdminSession=session;
+  currentUserIsAdmin=await sessionIsAdmin(session);
   loggedOut.hidden=!!session;
   loggedIn.hidden=!session;
-  $("adminBtn").hidden=!session;
+  $("adminBtn").hidden=!currentUserIsAdmin;
   if($("accountBtnLabel")) $("accountBtnLabel").textContent=session?"Konto":"Anmelden";
   if($("accountDialogTitle")) $("accountDialogTitle").textContent=session?"Konto":"Anmelden";
   if(message&&!session)message.textContent="";
@@ -843,20 +863,30 @@ async function refreshAuth() {
   }
   const {data:{session}} = await db.auth.getSession();
   currentAdminSession=session;
-  $("adminBtn").hidden=!session;
+  currentUserIsAdmin=await sessionIsAdmin(session);
+  $("adminBtn").hidden=!currentUserIsAdmin;
   if($("accountBtnLabel")) $("accountBtnLabel").textContent=session?"Konto":"Anmelden";
-  $("loginView").hidden=!!session;
-  $("adminView").hidden=!session;
-  if(session){
-    $("whoAmI").textContent=session.user.email||"Redaktion";
-    await loadAdminNews();
-    await loadSubmissions();
-    await loadTripleDrafts();
-    await loadAppSettings();
-    await loadAnalyticsSummary();
-    const lastTab = localStorage.getItem("goodNewsAdminTab") || "dashboard";
-    switchAdminTab(lastTab);
+  $("loginView").hidden=currentUserIsAdmin;
+  $("adminView").hidden=!currentUserIsAdmin;
+
+  if(session && !currentUserIsAdmin){
+    $("loginMessage").textContent="Dieses Konto hat keine Redaktionsrechte.";
+    return;
   }
+  if(!session){
+    $("loginMessage").textContent="";
+    return;
+  }
+
+  $("loginMessage").textContent="";
+  $("whoAmI").textContent=session.user.email||"Redaktion";
+  await loadAdminNews();
+  await loadSubmissions();
+  await loadTripleDrafts();
+  await loadAppSettings();
+  await loadAnalyticsSummary();
+  const lastTab = localStorage.getItem("goodNewsAdminTab") || "dashboard";
+  switchAdminTab(lastTab);
 }
 
 $("loginForm").onsubmit = async (e)=>{
@@ -1408,25 +1438,33 @@ $("newsForm").onsubmit=async(e)=>{
 };
 
 if(db){
-  db.auth.getSession().then(({data:{session}})=>{
+  db.auth.getSession().then(async({data:{session}})=>{
     currentAdminSession=session;
-    $("adminBtn").hidden=!session;
+    currentUserIsAdmin=await sessionIsAdmin(session);
+    $("adminBtn").hidden=!currentUserIsAdmin;
     if($("accountBtnLabel")) $("accountBtnLabel").textContent=session?"Konto":"Anmelden";
   }).catch(()=>{
     currentAdminSession=null;
+    currentUserIsAdmin=false;
     $("adminBtn").hidden=true;
     if($("accountBtnLabel")) $("accountBtnLabel").textContent="Anmelden";
   });
   db.auth.onAuthStateChange((_event,session)=>{
     currentAdminSession=session;
-    $("adminBtn").hidden=!session;
+    currentUserIsAdmin=false;
+    $("adminBtn").hidden=true;
     if($("accountBtnLabel")) $("accountBtnLabel").textContent=session?"Konto":"Anmelden";
-    if(adminDialog.open)setTimeout(refreshAuth,0);
-    if(settingsDialog.open)setTimeout(refreshSettingsAccount,0);
-    setTimeout(fetchPublicNews,0);
+    setTimeout(async()=>{
+      currentUserIsAdmin=await sessionIsAdmin(session);
+      $("adminBtn").hidden=!currentUserIsAdmin;
+      if(adminDialog.open)await refreshAuth();
+      if(settingsDialog.open)await refreshSettingsAccount();
+      await fetchPublicNews();
+    },0);
   });
 }else{
   currentAdminSession=null;
+  currentUserIsAdmin=false;
   $("adminBtn").hidden=true;
 }
 resetEditor();
