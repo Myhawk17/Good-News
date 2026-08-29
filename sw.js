@@ -1,4 +1,4 @@
-const CACHE="good-news-v64-push-subscription-fix";
+const CACHE="good-news-v65-notification-badge";
 const STATIC=[
   "./",
   "./index.html",
@@ -7,7 +7,8 @@ const STATIC=[
   "./config.js",
   "./manifest.json",
   "./date-slide-background-v2.png",
-  "./icon-192.png"
+  "./icon-192.png",
+  "./notification-badge.png"
 ];
 
 self.addEventListener("install",e=>{
@@ -52,7 +53,7 @@ self.addEventListener("push",event=>{
   const options={
     body:data.body||"Neue Good News sind da.",
     icon:data.icon||"./icon-192.png",
-    badge:data.badge||"./icon-192.png",
+    badge:data.badge||"./notification-badge.png",
     data:{url:data.url||"./"},
     tag:data.tag||"good-news-daily"
   };
