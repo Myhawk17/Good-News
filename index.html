@@ -7,7 +7,7 @@
   <meta name="description" content="Good News – Jeden Tag passiert auch Gutes.">
   <title>Good News</title>
   <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="style.css?v=54">
+  <link rel="stylesheet" href="style.css?v=55">
 </head>
 <body>
 <header class="appbar">
@@ -395,7 +395,13 @@
                   <input id="imageLicense" maxlength="120" placeholder="z. B. CC BY-SA 4.0">
                 </label>
               </div>
-              <input id="imageKind" type="hidden" value="photo">
+              <label>Bildart
+                <select id="imageKind">
+                  <option value="photo">Original-/Motivbild</option>
+                  <option value="symbol">Symbolbild</option>
+                  <option value="ai">KI-Illustration</option>
+                </select>
+              </label>
             </div>
 
             <div id="imagePreviewBox" class="image-editor image-editor-slim" hidden>
@@ -569,6 +575,11 @@
     </section>
   </dialog>
 
+  <dialog id="textSourceDialog" class="source-dialog">
+    <div class="dialog-head"><div><div class="eyebrow">Quellenangaben</div><h2>Textquelle</h2></div><button class="icon-btn dialog-close" data-close="textSourceDialog">✕</button></div>
+    <div id="textSourceDetails" class="image-source-details"></div>
+  </dialog>
+
   <dialog id="imageSourceDialog" class="source-dialog">
     <div class="dialog-head">
       <div><div class="eyebrow">Bildangaben</div><h2 id="imageSourceTitle">ⓘ Bildquelle</h2></div>
@@ -584,6 +595,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="app.js?v=41"></script>
+  <script src="app.js?v=42"></script>
 </body>
 </html>

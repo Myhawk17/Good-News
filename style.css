@@ -1150,3 +1150,7 @@ html.slide-text-hidden .slide.has-image::before{
 @media (max-width:520px){
   .slide .slide-inner{left:24px;width:calc((100% - 48px) / var(--slide-fit));}
 }
+
+.slide-source-row{display:grid;grid-template-columns:1fr 1fr 1fr;align-items:center;gap:8px;width:100%;margin-top:16px}
+.text-source-link,.slide-source-row .image-source-link{border:0;background:transparent;color:#d7d7dc;padding:2px 0;margin:0;font:inherit;font-size:inherit;text-decoration:underline;text-decoration-color:#777;text-underline-offset:3px;cursor:pointer;white-space:nowrap}
+.text-source-link{text-align:left;justify-self:start}.slide-source-row .image-source-link{text-align:right;justify-self:end}.symbol-image-note{display:block;text-align:center;justify-self:center;white-space:nowrap;color:#d7d7dc}.source-spacer{display:block}

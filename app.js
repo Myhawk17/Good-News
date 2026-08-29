@@ -501,6 +501,16 @@ function imageViewOf(item={}){
 }
 function imageStyleOf(item={}){const v=imageViewOf(item);return `object-fit:${v.fit};object-position:${v.x}% ${v.y}%;transform:scale(${v.zoom});transform-origin:center center;`}
 
+function openTextSource(item={}){
+  const dlg=$("textSourceDialog"), details=$("textSourceDetails");
+  if(!dlg||!details)return;
+  const sources=sourcesOf(item);
+  details.innerHTML=sources.length
+    ? sources.map((src,i)=>`<p><strong>${sources.length>1?`Quelle ${i+1}: `:""}${esc(src.name||"Textquelle")}</strong><br><a class="source-detail-link" href="${esc(src.url)}" target="_blank" rel="noopener noreferrer">Quelle öffnen ↗</a></p>`).join("")
+    : `<p class="muted">Für diese Meldung sind noch keine Textquellen hinterlegt.</p>`;
+  dlg.showModal();
+}
+
 function openImageSource(item={}){
   const dlg=$("imageSourceDialog"), details=$("imageSourceDetails"), title=$("imageSourceTitle");
   if(!dlg||!details)return;
@@ -540,12 +550,9 @@ function buildSlide(item, index, total) {
       </div>
 
       <div class="slide-source-row">
-        <div class="source-line source-line-simple">
-          ${primarySource
-            ? `<a class="quiet-link" href="${esc(primarySource.url)}" target="_blank" rel="noopener noreferrer">Quelle: ${esc(primarySource.name)}</a>`
-            : `<span>Good News</span>`}
-        </div>
-        ${item.image_url ? `<button class="image-source-link" type="button" data-image-source-id="${item.id}">${item.image_kind === "ai" ? "ⓘ KI-Illustration" : "ⓘ Bildquelle"}</button>` : ""}
+        <button class="text-source-link" type="button" data-text-source-id="${item.id}">Textquelle</button>
+        <span class="symbol-image-note">${item.image_kind === "symbol" ? "ⓘ Symbolbild" : ""}</span>
+        ${item.image_url ? `<button class="image-source-link" type="button" data-image-source-id="${item.id}">${item.image_kind === "ai" ? "ⓘ KI-Illustration" : "Bildquelle"}</button>` : `<span class="source-spacer"></span>`}
       </div>
     </div>`;
   article.querySelector(".fav-btn").onclick = (e) => {
@@ -555,6 +562,7 @@ function buildSlide(item, index, total) {
     if(active) trackAnalyticsEvent("favorite",item.id);
   };
   article.querySelector(".share-btn").onclick = () => shareItem(item);
+  article.querySelector(".text-source-link")?.addEventListener("click",()=>openTextSource(item));
   article.querySelector(".image-source-link")?.addEventListener("click",()=>openImageSource(item));
   return article;
 }
