@@ -1,11 +1,17 @@
-const CACHE="good-news-v67-error-states";
+const CACHE="good-news-v68-pwa-release";
 const STATIC=[
   "./",
   "./index.html",
-  "./style.css?v=65",
-  "./app.js?v=53",
+  "./style.css?v=66",
+  "./app.js?v=54",
   "./config.js",
   "./manifest.json",
+  "./favicon-32.png",
+  "./apple-touch-icon.png",
+  "./icons/icon-192.png",
+  "./icons/icon-512.png",
+  "./icons/maskable-192.png",
+  "./icons/maskable-512.png",
   "./date-slide-background-v2.png",
   "./icon-192.png",
   "./notification-badge.png"

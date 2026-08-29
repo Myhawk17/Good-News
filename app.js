@@ -753,6 +753,35 @@ $("searchBtn").onclick = runMenuAction(openSearch);
 $("archiveBtn").onclick = runMenuAction(openArchive);
 $("favoritesBtn").onclick = runMenuAction(openFavorites);
 
+
+// ---------------- PWA INSTALLATION ----------------
+let deferredInstallPrompt=null;
+const installAppBtn=$("installAppBtn");
+function isStandaloneApp(){
+  return window.matchMedia?.("(display-mode: standalone)").matches || window.navigator.standalone===true;
+}
+function syncInstallButton(){
+  if(!installAppBtn)return;
+  installAppBtn.hidden=isStandaloneApp() || !deferredInstallPrompt;
+}
+window.addEventListener("beforeinstallprompt",e=>{
+  e.preventDefault();
+  deferredInstallPrompt=e;
+  syncInstallButton();
+});
+installAppBtn?.addEventListener("click",runMenuAction(async()=>{
+  if(!deferredInstallPrompt)return;
+  deferredInstallPrompt.prompt();
+  try{await deferredInstallPrompt.userChoice}catch{}
+  deferredInstallPrompt=null;
+  syncInstallButton();
+}));
+window.addEventListener("appinstalled",()=>{
+  deferredInstallPrompt=null;
+  syncInstallButton();
+});
+syncInstallButton();
+
 const quickToggleBtn=$("quickToggleBtn"), quickActions=$("quickActions");
 let quickActionsOpen=localStorage.getItem("goodNewsQuickActionsOpen")==="true";
 function applyQuickActionsState(){

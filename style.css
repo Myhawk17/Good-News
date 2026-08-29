@@ -1214,3 +1214,6 @@ html.slide-text-hidden .slide.has-image::before{
 .error-test-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:14px 0}.error-test-grid button{min-height:48px;text-align:left}.error-test-grid .primary{grid-column:1/-1;text-align:center}
 .simulated-slow .feed-loading>img{filter:grayscale(1) brightness(.55)}
 @media(max-width:560px){.error-test-grid{grid-template-columns:1fr}.error-test-grid .primary{grid-column:auto}}
+
+/* PWA installation */
+.main-menu button[hidden]{display:none!important}
