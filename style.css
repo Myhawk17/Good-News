@@ -1189,3 +1189,8 @@ html.slide-text-hidden .slide.has-image::before{
 .legal-panel h3{font-size:1.35rem;margin:8px 0 16px}.legal-panel h4{margin:22px 0 6px;font-size:1rem}.legal-panel p{margin:6px 0 12px}
 .legal-notice{border:1px solid var(--line);border-radius:16px;padding:14px;margin:0 0 20px;background:var(--panel)}
 .legal-notice p{margin:5px 0 0;color:var(--muted)}.legal-placeholder{font-weight:700}.legal-small{font-size:.88rem;color:var(--muted);margin-top:24px!important}
+
+/* Rechtliches im Hauptmenü – zweizeilig, damit nichts überläuft */
+#legalBtn{align-items:center}
+#legalBtn .legal-menu-label{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;min-width:0;line-height:1.08;gap:3px;white-space:normal}
+#legalBtn .legal-menu-label>span{display:block;white-space:nowrap}
