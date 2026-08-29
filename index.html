@@ -7,7 +7,7 @@
   <meta name="description" content="Good News – Jeden Tag passiert auch Gutes.">
   <title>Good News</title>
   <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="style.css?v=60">
+  <link rel="stylesheet" href="style.css?v=61">
 </head>
 <body>
 <header class="appbar">
@@ -198,10 +198,10 @@
         </div>
         <h4>Angaben zum Anbieter</h4>
         <p><strong>Good News</strong><br>
-        Verantwortliche Person: <span class="legal-placeholder">[Name ergänzen]</span><br>
-        Ladungsfähige Anschrift: <span class="legal-placeholder">[Geschäfts-/Impressumsadresse ergänzen]</span></p>
+        Verantwortliche Person: <span class="legal-placeholder"><span id="legalProviderName">[Name ergänzen]</span></span><br>
+        Ladungsfähige Anschrift: <span class="legal-placeholder"><span id="legalProviderAddress">[Geschäfts-/Impressumsadresse ergänzen]</span></span></p>
         <h4>Kontakt</h4>
-        <p>E-Mail: <span class="legal-placeholder">[Kontakt-E-Mail ergänzen]</span></p>
+        <p>E-Mail: <span class="legal-placeholder"><span id="legalContactEmail">[Kontakt-E-Mail ergänzen]</span></span></p>
         <h4>Redaktionell verantwortlich</h4>
         <p><span class="legal-placeholder">[Name und Anschrift ergänzen, soweit erforderlich]</span></p>
         <p class="legal-small">Hinweis: Ein Postfach oder eine reine Kontakt-E-Mail ersetzt eine erforderliche ladungsfähige Anschrift nicht. Vor dem öffentlichen Release müssen die Platzhalter geprüft und vervollständigt werden.</p>
@@ -620,6 +620,39 @@
             </div>
           </fieldset>
 
+
+          <fieldset class="legal-admin-fieldset">
+            <legend>Rechtliches</legend>
+            <p class="muted">Diese Angaben werden automatisch im Menü unter „Impressum &amp; Datenschutz“ angezeigt.</p>
+
+            <label>Name / Anbieter
+              <input id="settingLegalName" maxlength="160" placeholder="Vor- und Nachname oder Unternehmen">
+            </label>
+
+            <label>Ladungsfähige Geschäfts-/Impressumsadresse
+              <textarea id="settingLegalAddress" rows="3" maxlength="400" placeholder="Straße Hausnummer&#10;PLZ Ort"></textarea>
+            </label>
+
+            <label>Kontakt-E-Mail
+              <input id="settingLegalEmail" type="email" maxlength="180" placeholder="kontakt@…">
+            </label>
+
+            <div class="form-grid two">
+              <label>Redaktionell verantwortlich
+                <input id="settingLegalEditorialName" maxlength="160" placeholder="Name">
+              </label>
+              <label>Datenschutz-Kontakt
+                <input id="settingLegalPrivacyEmail" type="email" maxlength="180" placeholder="datenschutz@…">
+              </label>
+            </div>
+
+            <label>Anschrift redaktionell verantwortlich
+              <textarea id="settingLegalEditorialAddress" rows="3" maxlength="400" placeholder="Nur ausfüllen, wenn abweichend"></textarea>
+            </label>
+
+            <div class="legal-admin-note">Die ladungsfähige Anschrift bleibt bis zu deinem öffentlichen Release leer bzw. als Platzhalter sichtbar. Trage hier später einfach die Adresse deines Impressumsservices oder deiner Geschäftsanschrift ein.</div>
+          </fieldset>
+
           <fieldset>
             <legend>Vorschau</legend>
             <div id="themePreview" class="theme-preview">
@@ -630,7 +663,7 @@
           </fieldset>
 
           <div class="sticky-actions">
-            <button class="primary" type="submit">Design speichern</button>
+            <button class="primary" type="submit">Änderungen speichern</button>
             <button class="secondary" type="button" id="resetThemeBtn">Standard wiederherstellen</button>
           </div>
           <div id="settingsMessage" class="message"></div>
@@ -659,6 +692,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="app.js?v=46"></script>
+  <script src="app.js?v=47"></script>
 </body>
 </html>

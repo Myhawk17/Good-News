@@ -1,9 +1,9 @@
-const CACHE="good-news-v59-legal-menu-wrap";
+const CACHE="good-news-v60-legal-settings";
 const STATIC=[
   "./",
   "./index.html",
-  "./style.css?v=60",
-  "./app.js?v=46",
+  "./style.css?v=61",
+  "./app.js?v=47",
   "./config.js",
   "./manifest.json",
   "./date-slide-background-v2.png",

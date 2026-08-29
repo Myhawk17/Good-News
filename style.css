@@ -1194,3 +1194,8 @@ html.slide-text-hidden .slide.has-image::before{
 #legalBtn{align-items:center}
 #legalBtn .legal-menu-label{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;min-width:0;line-height:1.08;gap:3px;white-space:normal}
 #legalBtn .legal-menu-label>span{display:block;white-space:nowrap}
+
+/* Rechtliches in den Redaktions-Einstellungen */
+.legal-admin-fieldset{border-color:color-mix(in srgb,var(--line) 80%,transparent)}
+.legal-admin-fieldset textarea{resize:vertical}
+.legal-admin-note{margin-top:4px;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:var(--panel);color:var(--muted);font-size:.9rem;line-height:1.45}

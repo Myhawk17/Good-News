@@ -400,3 +400,7 @@ using (public.is_admin());
 -- insert into public.user_roles (user_id, role)
 -- select id, 'admin' from auth.users where email = 'DEINE-EMAIL'
 -- on conflict (user_id) do update set role='admin';
+
+
+-- Rechtliche Angaben, öffentlich lesbar über app_settings; nur Admins dürfen sie ändern.
+alter table public.app_settings add column if not exists legal_settings jsonb not null default '{}'::jsonb;

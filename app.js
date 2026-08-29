@@ -1505,7 +1505,64 @@ async function loadAppSettings() {
   }
 }
 
+
+function legalText(value,fallback){
+  const v=String(value||"").trim();
+  return v || fallback;
+}
+
+function legalHtmlLines(value,fallback){
+  const v=String(value||"").trim();
+  return esc(v || fallback).replace(/\n/g,"<br>");
+}
+
+function applyLegalSettings(settings={}){
+  const l=settings?.legal_settings||{};
+  const name=legalText(l.provider_name,"[Name ergänzen]");
+  const address=legalText(l.provider_address,"[Geschäfts-/Impressumsadresse ergänzen]");
+  const email=legalText(l.contact_email,"[Kontakt-E-Mail ergänzen]");
+  const editorialName=legalText(l.editorial_name,name==="[Name ergänzen]"?"[Angaben vor Veröffentlichung ergänzen]":name);
+  const editorialAddress=legalText(l.editorial_address,address);
+  const privacyEmail=legalText(l.privacy_email,email);
+
+  if($("legalProviderName")) $("legalProviderName").textContent=name;
+  if($("legalProviderAddress")) $("legalProviderAddress").innerHTML=legalHtmlLines(address,"[Geschäfts-/Impressumsadresse ergänzen]");
+  if($("legalContactEmail")){
+    $("legalContactEmail").innerHTML=email.startsWith("[")?esc(email):`<a href="mailto:${esc(email)}">${esc(email)}</a>`;
+  }
+  if($("legalEditorialResponsible")){
+    $("legalEditorialResponsible").innerHTML=`${esc(editorialName)}<br>${legalHtmlLines(editorialAddress,"[Anschrift ergänzen]")}`;
+  }
+  if($("legalPrivacyResponsible")){
+    const privacyParts=[name,address,privacyEmail].filter(Boolean);
+    $("legalPrivacyResponsible").innerHTML=`${esc(privacyParts[0]||"[Name ergänzen]")}<br>${legalHtmlLines(privacyParts[1]||"[Anschrift ergänzen]","[Anschrift ergänzen]")}<br>${privacyEmail.startsWith("[")?esc(privacyEmail):`<a href="mailto:${esc(privacyEmail)}">${esc(privacyEmail)}</a>`}`;
+  }
+}
+
+function populateLegalSettingsForm(settings={}){
+  if(!$("settingLegalName")) return;
+  const l=settings?.legal_settings||{};
+  $("settingLegalName").value=l.provider_name||"";
+  $("settingLegalAddress").value=l.provider_address||"";
+  $("settingLegalEmail").value=l.contact_email||"";
+  $("settingLegalEditorialName").value=l.editorial_name||"";
+  $("settingLegalEditorialAddress").value=l.editorial_address||"";
+  $("settingLegalPrivacyEmail").value=l.privacy_email||"";
+}
+
+function readLegalSettingsForm(){
+  return {
+    provider_name:$("settingLegalName")?.value.trim()||"",
+    provider_address:$("settingLegalAddress")?.value.trim()||"",
+    contact_email:$("settingLegalEmail")?.value.trim()||"",
+    editorial_name:$("settingLegalEditorialName")?.value.trim()||"",
+    editorial_address:$("settingLegalEditorialAddress")?.value.trim()||"",
+    privacy_email:$("settingLegalPrivacyEmail")?.value.trim()||""
+  };
+}
+
 function applyAppSettings(s){
+  applyLegalSettings(s);
   document.body.classList.add("theme-user");
   document.documentElement.style.setProperty("--user-bg", s.background_color || "#0e0e10");
   document.documentElement.style.setProperty("--user-text", s.text_color || "#f5f5f5");
@@ -1546,6 +1603,7 @@ function applyAppSettings(s){
 
 function populateSettingsForm(s){
   if(!$("settingAppName")) return;
+  populateLegalSettingsForm(s);
   $("settingAppName").value=s.app_name||"Good News";
   $("settingLogoUrl").value=s.logo_path?"":(s.logo_url||"");
   $("settingBg").value=s.background_color||"#0e0e10";
@@ -1581,7 +1639,8 @@ function readSettingsForm(){
     show_category:$("settingShowCategory").checked,
     show_date:$("settingShowDate").checked,
     show_sources:$("settingShowSources").checked,
-    show_counter:$("settingShowCounter").checked
+    show_counter:$("settingShowCounter").checked,
+    legal_settings:readLegalSettingsForm()
   };
 }
 
@@ -1624,7 +1683,7 @@ if($("settingLogoFile")){
 
   $("settingsForm").onsubmit=async(e)=>{
     e.preventDefault();
-    $("settingsMessage").textContent="Design wird gespeichert …";
+    $("settingsMessage").textContent="Änderungen werden gespeichert …";
     try{
       const payload=readSettingsForm();
       let logoUrl=$("settingLogoUrl").value.trim() || appSettings?.logo_url || null;
@@ -1645,7 +1704,7 @@ if($("settingLogoFile")){
       appSettings=data;
       applyAppSettings(data);
       populateSettingsForm(data);
-      $("settingsMessage").textContent="Design gespeichert.";
+      $("settingsMessage").textContent="Änderungen gespeichert.";
     }catch(err){
       $("settingsMessage").textContent=err.message||String(err);
     }
