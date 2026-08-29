@@ -1126,3 +1126,27 @@ html.slide-text-hidden .slide.has-image::before{
   z-index:42;
 }
 .menu-toggle-btn,.admin-quick-btn{position:relative;z-index:42}
+
+
+/* Good News: Jeder Nachrichten-Slide bleibt exakt in einem Handybildschirm. */
+.slide{
+  height:100dvh;
+  min-height:100dvh;
+  max-height:100dvh;
+  flex:0 0 100dvh;
+  overflow:hidden;
+}
+.slide .slide-inner{
+  --slide-fit:1;
+  position:absolute;
+  left:24px;
+  bottom:max(30px,env(safe-area-inset-bottom));
+  width:calc((100% - 48px) / var(--slide-fit));
+  max-width:none;
+  transform:scale(var(--slide-fit));
+  transform-origin:left bottom;
+  overflow:visible;
+}
+@media (max-width:520px){
+  .slide .slide-inner{left:24px;width:calc((100% - 48px) / var(--slide-fit));}
+}

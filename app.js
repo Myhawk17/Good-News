@@ -435,6 +435,31 @@ function germanHolidayMap(y){let e=easterSunday(y),m={},add=(d,i,t)=>m[isoLocal(
 function specialDayFor(s){let d=new Date(`${s}T12:00:00`),h=germanHolidayMap(d.getFullYear());return h[s]||SPECIAL_DAYS[s.slice(5)]||null}
 function buildDateSlide(s){let today=isoLocal(new Date()),past=s<today,d=new Date(`${s}T12:00:00`),wd=new Intl.DateTimeFormat("de-DE",{weekday:"long"}).format(d).toUpperCase(),dm=new Intl.DateTimeFormat("de-DE",{day:"2-digit",month:"long"}).format(d),sp=specialDayFor(s),sec=document.createElement("section");sec.className=`date-slide${past?" past":""}`;sec.innerHTML=`<img class="date-slide-art" src="date-slide-background-v2.png" alt="" aria-hidden="true"><div class="date-slide-overlay"></div><div class="date-slide-bottom"><div class="date-slide-weekday">${esc(wd)}</div><div class="date-slide-date">${esc(dm)}</div><div class="date-slide-year">${d.getFullYear()}</div>${sp?`<div class="date-slide-special"><span>HEUTE IST</span><strong>${esc(sp[0])} ${esc(sp[1])}</strong></div>`:""}<div class="date-slide-hint">↓ Zu den Good News</div></div>`;return sec}
 
+
+function fitSlidesToViewport(){
+  document.querySelectorAll(".feed .slide").forEach(slide=>{
+    const inner=slide.querySelector(".slide-inner");
+    if(!inner)return;
+    inner.style.setProperty("--slide-fit","1");
+    const cs=getComputedStyle(slide);
+    const topPad=parseFloat(cs.paddingTop)||0;
+    const bottomPad=parseFloat(cs.paddingBottom)||0;
+    const available=Math.max(120,slide.clientHeight-topPad-bottomPad);
+    let scale=1;
+    for(let i=0;i<12;i++){
+      inner.style.setProperty("--slide-fit",String(scale));
+      const visualHeight=inner.scrollHeight*scale;
+      if(visualHeight<=available+1)break;
+      const next=Math.max(.56,scale*(available/visualHeight)*.985);
+      if(Math.abs(next-scale)<.005){scale=Math.max(.56,scale-.025)}else{scale=next}
+    }
+    inner.style.setProperty("--slide-fit",String(scale));
+  });
+}
+function scheduleSlideFit(){
+  requestAnimationFrame(()=>requestAnimationFrame(fitSlidesToViewport));
+}
+
 function renderFeed({startId=null}={}) {
   const data = activeCategory === "Alle" ? allNews : allNews.filter(n => categoryBucket(n) === activeCategory);
   feed.innerHTML = "";
@@ -448,8 +473,12 @@ function renderFeed({startId=null}={}) {
     feed.appendChild(buildSlide(item, index, data.length));
     prevDate = item.published_date;
   });
+  scheduleSlideFit();
   if (startId) setTimeout(() => scrollToNews(startId), 30);
 }
+
+window.addEventListener("resize",scheduleSlideFit,{passive:true});
+if(document.fonts?.ready)document.fonts.ready.then(scheduleSlideFit);
 
 function addDayBreak(date) {
   const sec = document.createElement("section");

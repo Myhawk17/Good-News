@@ -1,9 +1,9 @@
-const CACHE="good-news-v52-no-context-box";
+const CACHE="good-news-v53-fixed-slide-height";
 const STATIC=[
   "./",
   "./index.html",
-  "./style.css?v=53",
-  "./app.js?v=40",
+  "./style.css?v=54",
+  "./app.js?v=41",
   "./config.js",
   "./manifest.json",
   "./date-slide-background-v2.png",
