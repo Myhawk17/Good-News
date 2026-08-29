@@ -1,9 +1,9 @@
-const CACHE="good-news-v54-source-dialogs";
+const CACHE="good-news-v55-top-slide-actions";
 const STATIC=[
   "./",
   "./index.html",
-  "./style.css?v=55",
-  "./app.js?v=42",
+  "./style.css?v=56",
+  "./app.js?v=43",
   "./config.js",
   "./manifest.json",
   "./date-slide-background-v2.png",

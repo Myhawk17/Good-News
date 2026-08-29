@@ -1154,3 +1154,9 @@ html.slide-text-hidden .slide.has-image::before{
 .slide-source-row{display:grid;grid-template-columns:1fr 1fr 1fr;align-items:center;gap:8px;width:100%;margin-top:16px}
 .text-source-link,.slide-source-row .image-source-link{border:0;background:transparent;color:#d7d7dc;padding:2px 0;margin:0;font:inherit;font-size:inherit;text-decoration:underline;text-decoration-color:#777;text-underline-offset:3px;cursor:pointer;white-space:nowrap}
 .text-source-link{text-align:left;justify-self:start}.slide-source-row .image-source-link{text-align:right;justify-self:end}.symbol-image-note{display:block;text-align:center;justify-self:center;white-space:nowrap;color:#d7d7dc}.source-spacer{display:block}
+
+
+/* Slide-Aktionen oben rechts unter dem Auge */
+.slide-actions{display:none!important}
+.slide-fav-quick-btn,.slide-share-quick-btn{display:grid!important;place-items:center;visibility:hidden;position:relative;z-index:42;font-size:1.35rem;line-height:1}
+.slide-fav-quick-btn.active{background:#f5f5f5;color:#111}

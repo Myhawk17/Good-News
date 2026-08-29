@@ -544,24 +544,12 @@ function buildSlide(item, index, total) {
       <h1>${esc(displayTitle(item))}</h1>
       <p class="summary">${esc(item.summary)}</p>
 
-      <div class="slide-actions">
-        <button class="slide-action fav-btn ${fav ? "active":""}" data-id="${item.id}">${fav ? "♥ Gespeichert" : "♡ Merken"}</button>
-        <button class="slide-action share-btn" data-id="${item.id}">↗ Teilen</button>
-      </div>
-
       <div class="slide-source-row">
         <button class="text-source-link" type="button" data-text-source-id="${item.id}">Textquelle</button>
         <span class="symbol-image-note">${item.image_kind === "symbol" ? "ⓘ Symbolbild" : ""}</span>
         ${item.image_url ? `<button class="image-source-link" type="button" data-image-source-id="${item.id}">${item.image_kind === "ai" ? "ⓘ KI-Illustration" : "Bildquelle"}</button>` : `<span class="source-spacer"></span>`}
       </div>
     </div>`;
-  article.querySelector(".fav-btn").onclick = (e) => {
-    const active = toggleFavorite(item.id);
-    e.currentTarget.classList.toggle("active",active);
-    e.currentTarget.textContent = active ? "♥ Gespeichert" : "♡ Merken";
-    if(active) trackAnalyticsEvent("favorite",item.id);
-  };
-  article.querySelector(".share-btn").onclick = () => shareItem(item);
   article.querySelector(".text-source-link")?.addEventListener("click",()=>openTextSource(item));
   article.querySelector(".image-source-link")?.addEventListener("click",()=>openImageSource(item));
   return article;
@@ -589,6 +577,38 @@ async function shareItem(item) {
     }
   } catch {}
 }
+
+function currentSlideItem(){
+  const slides=[...feed.querySelectorAll(".slide[data-id]")];
+  if(!slides.length)return null;
+  const center=window.innerHeight/2;
+  let best=slides[0],bestDist=Infinity;
+  for(const slide of slides){
+    const r=slide.getBoundingClientRect();
+    const dist=Math.abs((r.top+r.bottom)/2-center);
+    if(dist<bestDist){best=slide;bestDist=dist;}
+  }
+  return allNews.find(n=>String(n.id)===String(best.dataset.id))||null;
+}
+function syncSlideQuickActions(){
+  const item=currentSlideItem(), favBtn=$("slideFavBtn"), shareBtn=$("slideShareBtn");
+  if(!favBtn||!shareBtn)return;
+  const available=!!item;
+  favBtn.style.visibility=available?"visible":"hidden";
+  shareBtn.style.visibility=available?"visible":"hidden";
+  if(!available)return;
+  const active=isFavorite(item.id);
+  favBtn.textContent=active?"♥":"♡";
+  favBtn.classList.toggle("active",active);
+  favBtn.setAttribute("aria-label",active?"Meldung nicht mehr merken":"Meldung merken");
+}
+$("slideFavBtn")?.addEventListener("click",()=>{
+  const item=currentSlideItem(); if(!item)return;
+  const active=toggleFavorite(item.id);
+  if(active)trackAnalyticsEvent("favorite",item.id);
+  syncSlideQuickActions();
+});
+$("slideShareBtn")?.addEventListener("click",()=>{const item=currentSlideItem();if(item)shareItem(item);});
 
 function openReader(title, eyebrow, html) {
   $("readerTitle").textContent = title;
@@ -721,7 +741,14 @@ document.addEventListener("click",(e)=>{
 document.addEventListener("keydown",(e)=>{if(e.key==="Escape")closeMainMenu()});
 $("homeBtn").onclick = () => {closeMainMenu();feed.scrollTo({top:0,behavior:"smooth"});}
 document.querySelectorAll("[data-close]").forEach(b=>b.onclick=()=>$(b.dataset.close).close());
-feed.addEventListener("scroll",()=>{if(feed.scrollTop>100)$("swipeHint").style.display="none"},{passive:true});
+let quickActionScrollTimer;
+feed.addEventListener("scroll",()=>{
+  if(feed.scrollTop>100)$("swipeHint").style.display="none";
+  clearTimeout(quickActionScrollTimer);
+  quickActionScrollTimer=setTimeout(syncSlideQuickActions,80);
+},{passive:true});
+window.addEventListener("resize",syncSlideQuickActions);
+setTimeout(syncSlideQuickActions,250);
 
 
 ["prefAppearance","prefTextSize"].forEach(id=>$(id)?.addEventListener("change",()=>commitUserPreferences({rerender:id==="prefTextSize"})));
