@@ -2113,7 +2113,7 @@ document.querySelectorAll("[data-legal-tab]").forEach(btn=>btn.addEventListener(
 
 
 // --- Push-Benachrichtigungen ---
-const PUSH_PUBLIC_KEY = ""; // Vor echtem Versand einmalig mit dem öffentlichen VAPID-Schlüssel befüllen.
+const PUSH_PUBLIC_KEY = "BK3FtoZHXCmal9ul6LE0mneb_JN-gZh9udlFO5UKThwxxHPYrKP5UsPIi804PZgYIhwq44RCrLVgWxXXbYLY91Q"; // Vor echtem Versand einmalig mit dem öffentlichen VAPID-Schlüssel befüllen.
 
 function pushSupported(){
   return "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
