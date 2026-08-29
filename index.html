@@ -7,7 +7,7 @@
   <meta name="description" content="Good News – Jeden Tag passiert auch Gutes.">
   <title>Good News</title>
   <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="style.css?v=58">
+  <link rel="stylesheet" href="style.css?v=59">
 </head>
 <body>
 <header class="appbar">
@@ -24,6 +24,11 @@
         <button id="submitNewsBtn" type="button"><span>＋</span>Nachricht einreichen</button>
         <div class="menu-separator" aria-hidden="true"></div>
         <button id="userPreferencesBtn" type="button"><span>⚙</span>Einstellungen</button>
+      <button class="menu-item" id="legalBtn" type="button">
+        <span class="menu-icon" aria-hidden="true">ⓘ</span>
+        <span>Impressum &amp; Datenschutz</span>
+        <span class="menu-chevron" aria-hidden="true">›</span>
+      </button>
         <button id="accountBtn" type="button"><span>↪</span><span id="accountBtnLabel">Anmelden</span></button>
       </div>
       <button class="icon-btn slide-focus-btn" id="slideFocusBtn" type="button" aria-label="Slide-Text ausblenden" aria-pressed="false">
@@ -654,6 +659,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="app.js?v=45"></script>
+  <script src="app.js?v=46"></script>
 </body>
 </html>

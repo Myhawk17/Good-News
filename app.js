@@ -2038,3 +2038,16 @@ switchAdminTab=function(name){
   __switchAdminTabTriple(name);
   if(name==="triple-drafts")loadTripleDrafts();
 };
+
+
+// Impressum & Datenschutz
+
+$("legalBtn")?.addEventListener("click",()=>{
+  closeDialog(menuDialog);
+  openDialog($("legalDialog"));
+});
+document.querySelectorAll("[data-legal-tab]").forEach(btn=>btn.addEventListener("click",()=>{
+  const key=btn.dataset.legalTab;
+  document.querySelectorAll("[data-legal-tab]").forEach(x=>x.classList.toggle("active",x===btn));
+  document.querySelectorAll("[data-legal-panel]").forEach(x=>x.classList.toggle("active",x.dataset.legalPanel===key));
+}));
