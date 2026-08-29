@@ -1160,3 +1160,20 @@ html.slide-text-hidden .slide.has-image::before{
 .slide-actions{display:none!important}
 .slide-fav-quick-btn,.slide-share-quick-btn{display:grid!important;place-items:center;visibility:hidden;position:relative;z-index:42;font-size:1.35rem;line-height:1}
 .slide-fav-quick-btn.active{background:#f5f5f5;color:#111}
+
+/* Rechtliches – im bestehenden Good-News-Dialogstil */
+.legal-dialog{width:min(720px,calc(100% - 24px));max-height:min(88dvh,900px);padding:0;overflow:hidden}
+.legal-dialog .dialog-head{padding:20px 20px 12px}
+.legal-tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 20px 14px}
+.legal-tab{border:1px solid var(--line);background:var(--panel);color:var(--muted);border-radius:14px;padding:11px 12px;font:inherit;font-weight:700;cursor:pointer}
+.legal-tab.active{background:var(--text);color:var(--bg);border-color:var(--text)}
+.legal-scroll{max-height:calc(88dvh - 130px);overflow:auto;padding:0 20px 24px}
+.legal-panel{display:none;line-height:1.55}
+.legal-panel.active{display:block}
+.legal-panel h3{font-size:1.35rem;margin:8px 0 16px}
+.legal-panel h4{margin:22px 0 6px;font-size:1rem}
+.legal-panel p{margin:6px 0 12px}
+.legal-notice{border:1px solid var(--line);border-radius:16px;padding:14px;margin:0 0 20px;background:var(--panel)}
+.legal-notice p{margin:5px 0 0;color:var(--muted)}
+.legal-placeholder{font-weight:700}
+.legal-small{font-size:.88rem;color:var(--muted);margin-top:24px!important}

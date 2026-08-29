@@ -7,7 +7,7 @@
   <meta name="description" content="Good News – Jeden Tag passiert auch Gutes.">
   <title>Good News</title>
   <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="style.css?v=57">
+  <link rel="stylesheet" href="style.css?v=58">
 </head>
 <body>
 <header class="appbar">
@@ -171,6 +171,63 @@
     <div class="user-settings-footer">
       <button class="secondary" id="resetUserPreferencesBtn" type="button">Standard wiederherstellen</button>
       <div id="userPreferencesMessage" class="message" aria-live="polite"></div>
+    </div>
+  </dialog>
+
+
+  <dialog id="legalDialog" class="legal-dialog">
+    <div class="dialog-head">
+      <div><div class="eyebrow">Good News</div><h2>Impressum & Datenschutz</h2></div>
+      <button class="icon-btn dialog-close" data-close="legalDialog">✕</button>
+    </div>
+    <div class="legal-tabs" role="tablist" aria-label="Rechtliche Informationen">
+      <button class="legal-tab active" type="button" data-legal-tab="imprint">Impressum</button>
+      <button class="legal-tab" type="button" data-legal-tab="privacy">Datenschutz</button>
+    </div>
+    <div class="legal-scroll">
+      <section class="legal-panel active" data-legal-panel="imprint">
+        <h3>Impressum</h3>
+        <div class="legal-notice">
+          <strong>Vor Veröffentlichung ergänzen</strong>
+          <p>Die ladungsfähige Anschrift wird ergänzt, sobald die Geschäfts-/Impressumsadresse feststeht. Diese Fassung ist noch nicht für die öffentliche Veröffentlichung bestimmt.</p>
+        </div>
+        <h4>Angaben zum Anbieter</h4>
+        <p><strong>Good News</strong><br>
+        Verantwortliche Person: <span class="legal-placeholder">[Name ergänzen]</span><br>
+        Ladungsfähige Anschrift: <span class="legal-placeholder">[Geschäfts-/Impressumsadresse ergänzen]</span></p>
+        <h4>Kontakt</h4>
+        <p>E-Mail: <span class="legal-placeholder">[Kontakt-E-Mail ergänzen]</span></p>
+        <h4>Redaktionell verantwortlich</h4>
+        <p><span class="legal-placeholder">[Name und Anschrift ergänzen, soweit erforderlich]</span></p>
+        <p class="legal-small">Hinweis: Ein Postfach oder eine reine Kontakt-E-Mail ersetzt eine erforderliche ladungsfähige Anschrift nicht. Vor dem öffentlichen Release müssen die Platzhalter geprüft und vervollständigt werden.</p>
+      </section>
+
+      <section class="legal-panel" data-legal-panel="privacy">
+        <h3>Datenschutzerklärung</h3>
+        <div class="legal-notice">
+          <strong>Entwurf für die Release-Vorbereitung</strong>
+          <p>Die Kontaktdaten des Verantwortlichen sowie gegebenenfalls Angaben zu Hosting und Auftragsverarbeitung müssen vor Veröffentlichung abschließend geprüft werden.</p>
+        </div>
+        <h4>1. Verantwortlicher</h4>
+        <p><span class="legal-placeholder">[Name, ladungsfähige Anschrift und Datenschutz-Kontakt ergänzen]</span></p>
+        <h4>2. Bereitstellung der App</h4>
+        <p>Good News stellt redaktionell ausgewählte Nachrichten und zugehörige Quellenangaben bereit. Für Datenbank-, Anmelde- und Speicherfunktionen wird Supabase eingesetzt. Beim technischen Abruf können für die Bereitstellung notwendige Verbindungs- und Protokolldaten verarbeitet werden.</p>
+        <h4>3. Anmeldung und Konto</h4>
+        <p>Bei Nutzung einer Anmeldung werden insbesondere die für das Konto erforderlichen Anmeldedaten verarbeitet. Redaktionsrechte werden getrennt vom normalen Nutzerkonto verwaltet.</p>
+        <h4>4. Lokale Speicherung</h4>
+        <p>Die App speichert bestimmte Einstellungen und Funktionen lokal auf dem Gerät, beispielsweise Darstellungsoptionen und gemerkte Meldungen. Diese Daten dienen der gewünschten App-Funktionalität.</p>
+        <h4>5. Nutzungsstatistik</h4>
+        <p>Good News kann pseudonyme Ereignisse wie aktive Nutzung, Merken oder Teilen einer Meldung erfassen, um die App zu verbessern. Vor dem öffentlichen Release wird abschließend geprüft, welche Daten tatsächlich erhoben werden und auf welcher Rechtsgrundlage dies erfolgt.</p>
+        <h4>6. Nutzerbeiträge</h4>
+        <p>Wenn Nutzer Inhalte einsenden, werden die dabei übermittelten Angaben verarbeitet, um den Beitrag zu prüfen und gegebenenfalls redaktionell zu verwenden.</p>
+        <h4>7. Externe Quellen und Links</h4>
+        <p>Die App enthält Links zu Text- und Bildquellen. Beim Öffnen eines externen Links gelten die Datenschutzbestimmungen des jeweiligen Anbieters.</p>
+        <h4>8. Rechte betroffener Personen</h4>
+        <p>Betroffene Personen haben im Rahmen der gesetzlichen Voraussetzungen insbesondere Rechte auf Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung, Datenübertragbarkeit und Widerspruch sowie ein Beschwerderecht bei einer Datenschutzaufsichtsbehörde.</p>
+        <h4>9. Änderungen</h4>
+        <p>Diese Datenschutzerklärung wird angepasst, wenn sich Funktionen oder die Datenverarbeitung von Good News ändern.</p>
+        <p class="legal-small">Stand: August 2026 · Entwurfsfassung – vor Veröffentlichung rechtlich und technisch abschließend prüfen.</p>
+      </section>
     </div>
   </dialog>
 
@@ -597,6 +654,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="app.js?v=44"></script>
+  <script src="app.js?v=45"></script>
 </body>
 </html>
