@@ -753,7 +753,7 @@ setTimeout(syncSlideQuickActions,250);
 
 ["prefAppearance","prefTextSize"].forEach(id=>$(id)?.addEventListener("change",()=>commitUserPreferences({rerender:id==="prefTextSize"})));
 $("prefDataSaver")?.addEventListener("change",()=>commitUserPreferences({rerender:true}));
-$("prefNotifications")?.addEventListener("change",()=>commitUserPreferences());
+// prefNotifications is handled by bindPushPreference() so browser permission and subscription stay in sync.
 $("prefNotifyMorning")?.addEventListener("change",()=>commitUserPreferences());
 $("prefNotifyEvening")?.addEventListener("change",()=>commitUserPreferences());
 document.querySelectorAll("[data-notify-category]").forEach(input=>input.addEventListener("change",()=>commitUserPreferences()));
@@ -2132,7 +2132,8 @@ async function getPushSubscription(){
 async function savePushSubscription(sub){
   if(!sub) return;
   const j=sub.toJSON();
-  const {data:{user}}=await supabase.auth.getUser();
+  const {data:{user},error:userError}=await db.auth.getUser();
+  if(userError) throw userError;
   const payload={
     user_id:user?.id||null,
     endpoint:j.endpoint,
@@ -2141,7 +2142,7 @@ async function savePushSubscription(sub){
     enabled:true,
     updated_at:new Date().toISOString()
   };
-  const {error}=await supabase.from("push_subscriptions").upsert(payload,{onConflict:"endpoint"});
+  const {error}=await db.from("push_subscriptions").upsert(payload,{onConflict:"endpoint"});
   if(error) throw error;
 }
 async function enablePush(){
@@ -2158,7 +2159,7 @@ async function enablePush(){
 async function disablePush(){
   const sub=await getPushSubscription();
   if(sub){
-    await supabase.from("push_subscriptions").delete().eq("endpoint",sub.endpoint);
+    await db.from("push_subscriptions").delete().eq("endpoint",sub.endpoint);
     await sub.unsubscribe();
   }
   return true;
@@ -2176,14 +2177,39 @@ async function syncPushPreference(checked){
   }
 }
 function bindPushPreference(){
-  const candidates=[
-    $("prefPush"),$("settingPush"),$("pushNotifications"),
-    ...document.querySelectorAll('input[type="checkbox"]')
-  ].filter(Boolean);
-  const input=candidates.find(x=>/push|benachrichtigung/i.test(`${x.id} ${x.name||""} ${x.closest("label")?.textContent||""}`));
+  const input=$("prefNotifications");
   if(!input) return;
-  input.checked=localStorage.getItem("goodnews_push_enabled")==="1";
-  input.addEventListener("change",()=>syncPushPreference(input.checked));
+
+  // Existing user preference remains the single source of truth in the UI.
+  input.addEventListener("change",async()=>{
+    if(input.checked){
+      await syncPushPreference(true);
+      if(input.checked){
+        userPrefs.notifications=true;
+        saveUserPreferences({...userPrefs,notifications:true});
+      }
+    }else{
+      await syncPushPreference(false);
+      userPrefs.notifications=false;
+      saveUserPreferences({...userPrefs,notifications:false});
+    }
+    updateNotificationPreferencesVisibility();
+  });
+
+  // If the app says push is active, verify that a browser subscription really exists.
+  (async()=>{
+    try{
+      const sub=await getPushSubscription();
+      const reallyEnabled=Boolean(sub && Notification.permission==="granted");
+      localStorage.setItem("goodnews_push_enabled",reallyEnabled?"1":"0");
+      if(userPrefs.notifications && !reallyEnabled){
+        userPrefs.notifications=false;
+        saveUserPreferences({...userPrefs,notifications:false});
+        input.checked=false;
+        updateNotificationPreferencesVisibility();
+      }
+    }catch{}
+  })();
 }
 window.addEventListener("DOMContentLoaded",bindPushPreference);
 
@@ -2196,7 +2222,7 @@ async function sendAdminTestPush(){
   try{
     const sub=await getPushSubscription();
     if(!sub){
-      throw new Error("Aktiviere zuerst unter Einstellungen die Benachrichtigungen auf diesem Gerät.");
+      throw new Error("Auf diesem Gerät gibt es noch kein Push-Abo. Öffne Einstellungen und aktiviere Benachrichtigungen erneut.");
     }
     await savePushSubscription(sub);
     const {data,error}=await db.functions.invoke("send-good-news-push",{
