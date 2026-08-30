@@ -14,7 +14,7 @@
   <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-  <link rel="stylesheet" href="style.css?v=75">
+  <link rel="stylesheet" href="style.css?v=76">
 </head>
 <body>
 <header class="appbar">
@@ -39,19 +39,19 @@
         <span class="menu-chevron" aria-hidden="true">›</span>
       </button>
         <button id="accountBtn" type="button"><span>↪</span><span id="accountBtnLabel">Anmelden</span></button>
-        <div class="app-build-label" aria-label="App-Version">Good News · Build 49</div>
+        <div class="app-build-label" aria-label="App-Version">Good News · Build 50</div>
       </div>
-      <button class="icon-btn quick-toggle-btn" id="quickToggleBtn" type="button" aria-label="Schnellfunktionen öffnen" aria-expanded="false" aria-controls="quickActions">＋</button>
-      <div class="quick-actions" id="quickActions" hidden>
-        <button class="icon-btn slide-focus-btn" id="slideFocusBtn" type="button" aria-label="Slide-Text ausblenden" aria-pressed="false" title="Text ausblenden">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"></path>
-            <circle cx="12" cy="12" r="2.6"></circle>
-          </svg>
-        </button>
-        <button class="icon-btn slide-fav-quick-btn" id="slideFavBtn" type="button" aria-label="Meldung merken" title="Merken">♡</button>
-        <button class="icon-btn slide-share-quick-btn" id="slideShareBtn" type="button" aria-label="Meldung teilen" title="Teilen">↗</button>
-        <button class="icon-btn slide-report-quick-btn" id="slideReportBtn" type="button" aria-label="Fehler melden" title="Fehler melden">⚑</button>
+      <button class="icon-btn slide-focus-btn" id="slideFocusBtn" type="button" aria-label="Slide-Text ausblenden" aria-pressed="false" title="Text ausblenden">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"></path>
+          <circle cx="12" cy="12" r="2.6"></circle>
+        </svg>
+      </button>
+      <button class="icon-btn quick-toggle-btn" id="quickToggleBtn" type="button" aria-label="Meldungsmenü öffnen" aria-expanded="false" aria-controls="quickActions">⋮</button>
+      <div class="quick-actions article-action-menu" id="quickActions" hidden>
+        <button class="article-action-item slide-fav-quick-btn" id="slideFavBtn" type="button" aria-label="Meldung zu Favoriten hinzufügen"><span aria-hidden="true">♡</span><span>Zu Favoriten</span></button>
+        <button class="article-action-item slide-share-quick-btn" id="slideShareBtn" type="button" aria-label="Meldung teilen"><span aria-hidden="true">↗</span><span>Teilen</span></button>
+        <button class="article-action-item slide-report-quick-btn" id="slideReportBtn" type="button" aria-label="Fehler melden"><span aria-hidden="true">⚑</span><span>Fehler melden</span></button>
       </div>
       <button class="icon-btn admin-quick-btn" id="adminBtn" aria-label="Redaktion öffnen" hidden>⚙</button>
     </div>
@@ -887,6 +887,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="app.js?v=69"></script>
+  <script src="app.js?v=70"></script>
 </body>
 </html>

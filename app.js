@@ -719,28 +719,34 @@ function currentSlideItem(){
   return allNews.find(n=>String(n.id)===String(best.dataset.id))||null;
 }
 function syncSlideQuickActions(){
-  const item=currentSlideItem(), favBtn=$("slideFavBtn"), shareBtn=$("slideShareBtn");
-  if(!favBtn||!shareBtn)return;
+  const item=currentSlideItem(), favBtn=$("slideFavBtn"), shareBtn=$("slideShareBtn"), reportBtn=$("slideReportBtn"), menuBtn=$("quickToggleBtn");
   const available=!!item;
-  favBtn.style.visibility=available?"visible":"hidden";
-  shareBtn.style.visibility=available?"visible":"hidden";
-  if(!available)return;
+  [favBtn,shareBtn,reportBtn].filter(Boolean).forEach(btn=>btn.disabled=!available);
+  if(menuBtn) menuBtn.style.visibility=available?"visible":"hidden";
+  if(!available||!favBtn)return;
   const active=isFavorite(item.id);
-  favBtn.textContent=active?"♥":"♡";
   favBtn.classList.toggle("active",active);
-  favBtn.setAttribute("aria-label",active?"Meldung nicht mehr merken":"Meldung merken");
+  favBtn.innerHTML=`<span aria-hidden="true">${active?"♥":"♡"}</span><span>${active?"Aus Favoriten entfernen":"Zu Favoriten"}</span>`;
+  favBtn.setAttribute("aria-label",active?"Meldung aus Favoriten entfernen":"Meldung zu Favoriten hinzufügen");
 }
 $("slideFavBtn")?.addEventListener("click",()=>{
   const item=currentSlideItem(); if(!item)return;
   const active=toggleFavorite(item.id);
   if(active)trackAnalyticsEvent("favorite",item.id);
   syncSlideQuickActions();
+  closeQuickActions();
 });
-$("slideShareBtn")?.addEventListener("click",()=>{const item=currentSlideItem();if(item)shareItem(item);});
+$("slideShareBtn")?.addEventListener("click",()=>{
+  const item=currentSlideItem();if(!item)return;
+  closeQuickActions();
+  shareItem(item);
+});
 
 let reportNewsId=null;
 $("slideReportBtn")?.addEventListener("click",()=>{
-  const item=currentSlideItem();if(!item)return;reportNewsId=item.id;
+  const item=currentSlideItem();if(!item)return;
+  closeQuickActions();
+  reportNewsId=item.id;
   $("reportNewsTitle").textContent=item.title||"Aktuelle Meldung";$("reportForm").reset();$("reportMessage").textContent="";markFormClean($("reportForm"));$("reportDialog").showModal();
 });
 $("reportForm")?.addEventListener("submit",async e=>{
@@ -827,17 +833,28 @@ function openSearch() {
 function openArchive() {
   const groups = {};
   allNews.forEach(n => (groups[n.published_date] ||= []).push(n));
-  const html = Object.entries(groups).sort((a,b)=>b[0].localeCompare(a[0])).map(([date,items])=>`
-    <div class="archive-day">
-      <button data-date="${date}">
-        <strong>${esc(fmtDate(date))}</strong>
-        <div class="muted">${items.length} ${items.length===1?"Meldung":"Meldungen"}</div>
-      </button>
-    </div>`).join("");
-  openReader("Archiv","Nach Tagen",html || "<p>Noch kein Archiv vorhanden.</p>");
-  $("readerContent").querySelectorAll("[data-date]").forEach(btn=>btn.onclick=()=>{
-    const item=allNews.find(n=>n.published_date===btn.dataset.date); if(item) scrollToNews(item.id);
-  });
+  const html = Object.entries(groups).sort((a,b)=>b[0].localeCompare(a[0])).map(([date,items])=>{
+    const sorted=[...items].sort((a,b)=>String(a.published_time||"").localeCompare(String(b.published_time||"")));
+    return `
+      <details class="archive-day">
+        <summary>
+          <span>
+            <strong>${esc(fmtDate(date))}</strong>
+            <small>${items.length} ${items.length===1?"Meldung":"Meldungen"}</small>
+          </span>
+          <span class="archive-chevron" aria-hidden="true">⌄</span>
+        </summary>
+        <div class="archive-items">
+          ${sorted.map(n=>`
+            <button class="archive-news-item" type="button" data-jump="${n.id}">
+              <span class="archive-news-meta">${esc(n.published_time?.slice(0,5)||"")} · ${esc(displayCategory(n))}</span>
+              <strong>${esc(displayTitle(n))}</strong>
+            </button>`).join("")}
+        </div>
+      </details>`;
+  }).join("");
+  openReader("Archiv","Tippe auf einen Tag, um die Meldungen aufzuklappen.",html || "<p>Noch kein Archiv vorhanden.</p>");
+  $("readerContent").querySelectorAll("[data-jump]").forEach(btn=>btn.onclick=()=>scrollToNews(btn.dataset.jump));
 }
 
 function openFavorites() {
@@ -920,15 +937,28 @@ window.addEventListener("appinstalled",()=>{
 syncInstallButton();
 
 const quickToggleBtn=$("quickToggleBtn"), quickActions=$("quickActions");
-let quickActionsOpen=localStorage.getItem("goodNewsQuickActionsOpen")==="true";
+let quickActionsOpen=false;
 function applyQuickActionsState(){
   if(!quickToggleBtn||!quickActions)return;
   quickActions.hidden=!quickActionsOpen;
-  quickToggleBtn.textContent=quickActionsOpen?"×":"＋";
+  quickToggleBtn.textContent="⋮";
+  quickToggleBtn.classList.toggle("active",quickActionsOpen);
   quickToggleBtn.setAttribute("aria-expanded",String(quickActionsOpen));
-  quickToggleBtn.setAttribute("aria-label",quickActionsOpen?"Schnellfunktionen schließen":"Schnellfunktionen öffnen");
+  quickToggleBtn.setAttribute("aria-label",quickActionsOpen?"Meldungsmenü schließen":"Meldungsmenü öffnen");
 }
-quickToggleBtn?.addEventListener("click",()=>{quickActionsOpen=!quickActionsOpen;localStorage.setItem("goodNewsQuickActionsOpen",String(quickActionsOpen));applyQuickActionsState();});
+function closeQuickActions(){
+  quickActionsOpen=false;
+  applyQuickActionsState();
+}
+quickToggleBtn?.addEventListener("click",(e)=>{
+  e.stopPropagation();
+  quickActionsOpen=!quickActionsOpen;
+  applyQuickActionsState();
+});
+quickActions?.addEventListener("click",e=>e.stopPropagation());
+document.addEventListener("click",e=>{
+  if(quickActionsOpen && !quickActions?.contains(e.target) && e.target!==quickToggleBtn) closeQuickActions();
+});
 applyQuickActionsState();
 
 let slideTextHidden=false;
@@ -1433,11 +1463,53 @@ function bindAdminItemButtons(root){
   root.querySelectorAll(".delete-admin").forEach(b=>b.onclick=()=>deleteArticle(b.dataset.id));
 }
 
+function currentPushSlot(){
+  return new Date().getHours()<12?"morning":"evening";
+}
+function newsDeepLink(item){
+  const url=new URL(location.href);
+  url.search="";
+  url.hash="";
+  url.searchParams.set("news",String(item.id));
+  return url.toString();
+}
+async function broadcastPublishedNews(item){
+  if(!item?.id) return {sent:0,skipped:0};
+  const {data,error}=await db.functions.invoke("send-good-news-push",{
+    body:{
+      mode:"broadcast",
+      slot:currentPushSlot(),
+      category:displayCategory(item),
+      title:"Good News",
+      body:displayTitle(item),
+      url:newsDeepLink(item),
+      tag:`good-news-${item.id}`
+    }
+  });
+  if(error) throw error;
+  return data||{sent:0,skipped:0};
+}
 async function quickPublish(id){
   const n=adminNews.find(x=>String(x.id)===String(id)); if(!n)return;
-  const {error}=await db.from("news").update({status:"published",publish_at:new Date().toISOString()}).eq("id",id);
+  const publishAt=new Date().toISOString();
+  const {data:saved,error}=await db.from("news")
+    .update({status:"published",publish_at:publishAt,updated_at:publishAt})
+    .eq("id",id)
+    .select("*")
+    .single();
   if(error)return alert(error.message);
+  let pushNote="";
+  try{
+    const result=await broadcastPublishedNews(saved||{...n,status:"published",publish_at:publishAt});
+    pushNote=result?.sent>0
+      ? ` Push gesendet (${result.sent}).`
+      : " Kein passendes aktives Push-Abo.";
+  }catch(err){
+    console.warn("Push nach Veröffentlichung fehlgeschlagen:",err);
+    pushNote=" Veröffentlicht; Push konnte nicht gesendet werden.";
+  }
   await Promise.all([loadAdminNews(),fetchPublicNews()]);
+  showAppNotice(`Veröffentlicht.${pushNote}`);
 }
 async function deleteArticle(id){
   const n=adminNews.find(x=>String(x.id)===String(id)); if(!n)return;
@@ -1911,12 +1983,27 @@ $("newsForm").onsubmit=async(e)=>{
       sources:d.sources,publish_at:publishAt,updated_at:new Date().toISOString()
     };
     const id=$("newsId").value;
-    const result=id?await db.from("news").update(row).eq("id",id):await db.from("news").insert(row);
+    const previous=id?adminNews.find(x=>String(x.id)===String(id)):null;
+    const becamePublished=d.status==="published" && previous?.status!=="published" && new Date(publishAt).getTime()<=Date.now()+1000;
+    const query=id
+      ? db.from("news").update(row).eq("id",id).select("*").single()
+      : db.from("news").insert(row).select("*").single();
+    const result=await query;
     if(result.error)throw result.error;
-    $("editorMessage").textContent="Gespeichert.";
+    let saveNotice="Gespeichert.";
+    if(becamePublished){
+      try{
+        const push=await broadcastPublishedNews(result.data||{...row,id});
+        saveNotice=push?.sent>0?`Gespeichert. Push gesendet (${push.sent}).`:"Gespeichert. Kein passendes aktives Push-Abo.";
+      }catch(err){
+        console.warn("Push nach Veröffentlichung fehlgeschlagen:",err);
+        saveNotice="Gespeichert. Veröffentlichung war erfolgreich, Push nicht.";
+      }
+    }
+    $("editorMessage").textContent=saveNotice;
     clearEditorDraft();
     resetEditor();
-    showAppNotice("Gespeichert.");
+    showAppNotice(saveNotice);
     await Promise.all([loadAdminNews(),fetchPublicNews()]);
     switchAdminTab("dashboard");
   }catch(err){$("editorMessage").textContent=err.message||String(err)}
@@ -1972,7 +2059,7 @@ fetchPublicNews({preservePosition:false});
 // selbst alle offenen Good-News-Fenster auf den neuen Build führen. So hängt die
 // installierte PWA nicht mehr an einer alten Cache-/Worker-Version fest.
 // Build 35 – adaptive Überschriften (max. 4 Zeilen) und stärkerer Lesbarkeitsverlauf.
-const GOOD_NEWS_BUILD=49;
+const GOOD_NEWS_BUILD=50;
 let goodNewsSwRegistration=null;
 let goodNewsReloading=false;
 

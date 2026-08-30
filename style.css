@@ -1346,3 +1346,97 @@ html.main-menu-open .main-menu{pointer-events:auto}
     background:#17171bf7;
   }
 }
+
+
+/* Build 50 – Archiv als aufklappbare Tagesliste */
+.archive-day{
+  padding:0;
+  border-bottom:1px solid #303036;
+}
+.archive-day summary{
+  list-style:none;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  padding:15px 2px;
+  cursor:pointer;
+  user-select:none;
+}
+.archive-day summary::-webkit-details-marker{display:none}
+.archive-day summary span:first-child{display:grid;gap:4px}
+.archive-day summary strong{font-size:1rem}
+.archive-day summary small{color:var(--muted);font-size:.86rem;font-weight:500}
+.archive-chevron{font-size:1.25rem;color:var(--muted);transition:transform .18s ease}
+.archive-day[open] .archive-chevron{transform:rotate(180deg)}
+.archive-items{display:grid;padding:0 0 10px}
+.archive-news-item{
+  width:100%;
+  display:grid;
+  gap:4px;
+  text-align:left;
+  border:0;
+  border-top:1px solid #29292e;
+  background:transparent;
+  color:var(--text);
+  padding:12px 8px;
+  border-radius:0;
+}
+.archive-news-item:active{background:#ffffff0d}
+.archive-news-meta{font-size:.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:.045em}
+.archive-news-item strong{font-size:.98rem;line-height:1.35}
+
+/* Build 50 – im Feed nur Auge + Meldungsmenü; Aktionen liegen im Drei-Punkte-Menü */
+.slide-focus-btn{display:grid!important;place-items:center;position:relative;z-index:43}
+.quick-toggle-btn{
+  display:grid!important;
+  place-items:center;
+  position:relative;
+  z-index:45;
+  font-size:1.7rem;
+  line-height:1;
+  font-weight:800;
+}
+.quick-toggle-btn.active{background:#f5f5f5;color:#111}
+.article-action-menu{
+  position:absolute;
+  right:42px;
+  top:84px;
+  z-index:60;
+  width:max-content;
+  min-width:190px;
+  display:grid;
+  gap:3px;
+  padding:7px;
+  border:1px solid #ffffff24;
+  border-radius:14px;
+  background:#151518f2;
+  box-shadow:0 14px 40px #0009;
+  backdrop-filter:blur(10px);
+}
+.article-action-menu[hidden]{display:none!important}
+.article-action-item{
+  display:grid!important;
+  grid-template-columns:26px 1fr;
+  align-items:center;
+  gap:8px;
+  width:100%;
+  min-height:40px;
+  border:0;
+  border-radius:9px;
+  padding:8px 10px;
+  background:transparent;
+  color:#fff;
+  text-align:left;
+  font:inherit;
+}
+.article-action-item:active,.article-action-item.active{background:#ffffff18}
+.article-action-item:disabled{opacity:.45}
+.article-action-item span:first-child{font-size:1.15rem;text-align:center}
+.slide-fav-quick-btn,.slide-share-quick-btn,.slide-report-quick-btn{
+  visibility:visible!important;
+  position:static!important;
+  z-index:auto!important;
+  font-size:inherit!important;
+  line-height:inherit!important;
+}
