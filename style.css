@@ -29,7 +29,7 @@ button{cursor:pointer}
 .topline{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:18px;font-size:.78rem;letter-spacing:.07em;text-transform:uppercase}
 .pill{padding:6px 9px;border-radius:999px;background:#ffffff18;backdrop-filter:blur(8px)}
 .top-pill{background:#f5f5f5;color:#111;font-weight:900}
-.slide h1{font-size:clamp(2.1rem,8.2vw,5.1rem);line-height:.97;letter-spacing:-.052em;margin:0 0 20px;max-width:15ch}
+.slide h1{font-size:clamp(2.1rem,8.2vw,5.1rem);line-height:.97;letter-spacing:-.052em;margin:0 0 20px;max-width:min(15ch,100%);overflow-wrap:anywhere;word-break:normal;hyphens:auto;text-wrap:balance}
 .slide .summary{font-size:clamp(1rem,3.9vw,1.4rem);line-height:1.5;max-width:59ch;margin:0;color:#e1e1e4}
 .slide-actions{display:flex;gap:9px;margin-top:22px;flex-wrap:wrap}
 .slide-action{border:1px solid #ffffff38;background:#1117;color:#fff;padding:9px 12px;border-radius:999px;backdrop-filter:blur(8px)}
@@ -1220,3 +1220,11 @@ html.slide-text-hidden .slide.has-image::before{
 
 /* Build-Anzeige */
 .app-build-label{padding:10px 16px 4px;text-align:center;font-size:12px;line-height:1.2;opacity:.52;letter-spacing:.02em;user-select:none}
+
+
+/* Build 32 – lange Überschriften bleiben innerhalb des Displays.
+   Der Browser trennt deutsche Komposita bevorzugt automatisch; overflow-wrap ist nur das Sicherheitsnetz. */
+.slide h1{min-width:0}
+@media (max-width:520px){
+  .slide h1{max-width:100%;hyphens:auto;overflow-wrap:anywhere;word-break:normal;text-wrap:balance}
+}
