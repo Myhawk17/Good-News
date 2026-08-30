@@ -436,6 +436,27 @@ function specialDayFor(s){let d=new Date(`${s}T12:00:00`),h=germanHolidayMap(d.g
 function buildDateSlide(s){let today=isoLocal(new Date()),past=s<today,d=new Date(`${s}T12:00:00`),wd=new Intl.DateTimeFormat("de-DE",{weekday:"long"}).format(d).toUpperCase(),dm=new Intl.DateTimeFormat("de-DE",{day:"2-digit",month:"long"}).format(d),sp=specialDayFor(s),sec=document.createElement("section");sec.className=`date-slide${past?" past":""}`;sec.innerHTML=`<img class="date-slide-art" src="date-slide-background-v2.png" alt="" aria-hidden="true"><div class="date-slide-overlay"></div><div class="date-slide-bottom"><div class="date-slide-weekday">${esc(wd)}</div><div class="date-slide-date">${esc(dm)}</div><div class="date-slide-year">${d.getFullYear()}</div>${sp?`<div class="date-slide-special"><span>HEUTE IST</span><strong>${esc(sp[0])} ${esc(sp[1])}</strong></div>`:""}<div class="date-slide-hint">↓ Zu den Good News</div></div>`;return sec}
 
 
+function headlineLineCount(headline){
+  if(!headline)return 0;
+  const cs=getComputedStyle(headline);
+  const lineHeight=parseFloat(cs.lineHeight);
+  if(!Number.isFinite(lineHeight)||lineHeight<=0)return 0;
+  return Math.max(1,Math.ceil((headline.scrollHeight-.5)/lineHeight));
+}
+
+function fitHeadlineToFourLines(slide){
+  const headline=slide.querySelector("h1");
+  if(!headline)return;
+  let factor=1;
+  headline.style.setProperty("--headline-fit","1");
+  // Lange Titel bleiben vollständig sichtbar, werden aber nur so weit verkleinert,
+  // bis sie in höchstens vier Zeilen passen.
+  for(let i=0;i<11 && headlineLineCount(headline)>4;i++){
+    factor=Math.max(.68,factor-.04);
+    headline.style.setProperty("--headline-fit",factor.toFixed(2));
+  }
+}
+
 function fitSlidesToViewport(){
   document.querySelectorAll(".feed .slide").forEach(slide=>{
     const inner=slide.querySelector(".slide-inner");
@@ -446,14 +467,22 @@ function fitSlidesToViewport(){
     const bottomPad=parseFloat(cs.paddingBottom)||0;
     const available=Math.max(120,slide.clientHeight-topPad-bottomPad);
     let scale=1;
-    for(let i=0;i<12;i++){
+
+    // Titel- und Gesamtanpassung beeinflussen sich gegenseitig (Breite/Umbruch).
+    // Zwei kurze Durchläufe stabilisieren die Darstellung auch auf kleinen Displays.
+    for(let pass=0;pass<2;pass++){
       inner.style.setProperty("--slide-fit",String(scale));
-      const visualHeight=inner.scrollHeight*scale;
-      if(visualHeight<=available+1)break;
-      const next=Math.max(.56,scale*(available/visualHeight)*.985);
-      if(Math.abs(next-scale)<.005){scale=Math.max(.56,scale-.025)}else{scale=next}
+      fitHeadlineToFourLines(slide);
+      for(let i=0;i<12;i++){
+        inner.style.setProperty("--slide-fit",String(scale));
+        const visualHeight=inner.scrollHeight*scale;
+        if(visualHeight<=available+1)break;
+        const next=Math.max(.56,scale*(available/visualHeight)*.985);
+        if(Math.abs(next-scale)<.005){scale=Math.max(.56,scale-.025)}else{scale=next}
+      }
     }
     inner.style.setProperty("--slide-fit",String(scale));
+    fitHeadlineToFourLines(slide);
   });
 }
 function scheduleSlideFit(){
@@ -873,9 +902,12 @@ function switchAdminTab(name) {
   if(name==="dashboard"){renderDashboard();loadAnalyticsSummary();}
   if(name==="manage") renderAdminList();
   if(name==="reports") loadNewsReports();
+  // Der bevorzugte Referenz-Viewport ist 360 × 640 (auf dem Testgerät ca. 77 % Vorschau).
+  if(name==="display-tests" && !displayTestSize) openDisplayTest(360,640);
 }
 document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>switchAdminTab(t.dataset.tab));
 
+// Build 35 – Display-Testmodus; Referenzansicht 360 × 640 als bevorzugter Standard.
 // Build 33 – Display-Testmodus. Ein iframe bekommt die echte gewählte CSS-Viewportgröße
 // und wird nur optisch so skaliert, dass er auch auf einem einzelnen Handy sichtbar bleibt.
 const displayTestStage=$("displayTestStage");
@@ -1590,6 +1622,7 @@ renderCachedFeed();
 trackDailyActive();
 fetchPublicNews();
 
+// Build 35 – adaptive Überschriften (max. 4 Zeilen) und stärkerer Lesbarkeitsverlauf.
 // Build 34 – PWA-Updates sollen sofort statt erst Stunden später ankommen.
 let goodNewsSwRegistration=null;
 let goodNewsReloading=false;

@@ -1,4 +1,4 @@
-const CACHE="good-news-v72-build34";
+const CACHE="good-news-v73-build35";
 const STATIC=[
   "./",
   "./index.html",

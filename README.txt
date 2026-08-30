@@ -93,3 +93,10 @@ GOOD NEWS 3.0 – ENTWÜRFE - DREIER
 Neu in der Redaktion: „Entwürfe - Dreier“. Automatisch eingehende Dreier werden dort nur als Vorschläge gespeichert. Mit „Als 3 Entwürfe übernehmen“ entstehen drei redaktionelle Beiträge mit Status ENTWURF. Es erfolgt keine automatische Veröffentlichung.
 
 WICHTIG: Nach dem Update den neuen Abschnitt aus SUPABASE_SETUP.sql im Supabase SQL Editor ausführen, damit die Tabelle triple_drafts existiert.
+
+BUILD 35 – MOBILE NEWS-SLIDES
+-----------------------------
+- Referenzansicht im Displaytest: 360 × 640 (auf dem verwendeten Testgerät etwa 77 % Vorschaugröße)
+- Lange Überschriften werden automatisch verkleinert, damit sie möglichst auf höchstens vier Zeilen bleiben
+- Stärkerer dunkler Verlauf hinter dem unteren Textbereich für bessere Lesbarkeit auf hellen Bildern
+- PWA-Cache auf Build 35 angehoben
