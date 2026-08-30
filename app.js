@@ -22,6 +22,14 @@ let activeCategory = "Alle";
 let currentAdminSession = null;
 
 const USER_PREFS_KEY="goodNewsUserPreferencesV1";
+const GOOD_NEWS_CATEGORIES=[
+  "Was war....",
+  "Tiere",
+  "Sport",
+  "Wirtschaft & Politik",
+  "Fortschritt, Medizin & Technologie",
+  "Kultur/Natur"
+];
 const USER_PREF_DEFAULTS={
   appearance:"dark",
   textSize:"normal",
@@ -171,14 +179,6 @@ function displayTitle(item){
   return item?.daily_slot==="damals" ? historicalTitle(item?.title,item?.years_ago) : (item?.title||"");
 }
 
-const GOOD_NEWS_CATEGORIES=[
-  "Was war....",
-  "Tiere",
-  "Sport",
-  "Wirtschaft & Politik",
-  "Fortschritt, Medizin & Technologie",
-  "Kultur/Natur"
-];
 function categoryBucket(item={}){
   const c=String(item.category||"").trim();
   if(item.daily_slot==="damals"||["Was war....","Was war...","Damals"].includes(c))return "Was war....";
@@ -398,14 +398,7 @@ async function fetchPublicNews() {
     const deepId=new URL(location.href).searchParams.get("news");
     renderFeed({startId:deepId});
 
-    // Reaktionen sind Zusatzdaten und dürfen den ersten sichtbaren Slide nie verzögern.
-    if(db){
-      loadReactions().then(()=>{
-        // Nur die Reaktionszahlen aktualisieren, wenn der Nutzer noch ganz oben ist.
-        // So wird beim Lesen kein Scrollpunkt überraschend verschoben.
-        if(feed.scrollTop<20)renderFeed({startId:deepId});
-      }).catch(err=>console.warn("Reaktionen konnten nicht nachgeladen werden",err));
-    }
+    // Reaktionen sind derzeit nicht Bestandteil der sichtbaren App und werden deshalb nicht geladen.
   }catch(err){
     console.warn("Öffentlicher Feed konnte nicht aktualisiert werden:",err);
     if(!cachedWasShown){
@@ -1657,7 +1650,7 @@ fetchPublicNews();
 // selbst alle offenen Good-News-Fenster auf den neuen Build führen. So hängt die
 // installierte PWA nicht mehr an einer alten Cache-/Worker-Version fest.
 // Build 35 – adaptive Überschriften (max. 4 Zeilen) und stärkerer Lesbarkeitsverlauf.
-const GOOD_NEWS_BUILD=41;
+const GOOD_NEWS_BUILD=42;
 let goodNewsSwRegistration=null;
 let goodNewsReloading=false;
 
@@ -2650,3 +2643,187 @@ if(!navigator.onLine)showConnectionBanner("Offline – gespeicherte Good News we
 
 // Der Testmodus greift auch nach einem Neuladen – ausschließlich lokal im Admin-Gerät.
 if(errorTestMode!=="normal")setTimeout(()=>setErrorTestMode(errorTestMode),250);
+
+
+// ---------------- GOOD NEWS 4.0: DSGVO SELBSTAUSKUNFT + ADMIN-AUSKUNFT ----------------
+let myPrivacyExportCache=null;
+let adminPrivacyExportCache=null;
+
+function localPrivacySnapshot(){
+  return {
+    generated_at:new Date().toISOString(),
+    preferences:{...userPrefs},
+    favorites:getFavorites(),
+    push_enabled_local:localStorage.getItem("goodnews_push_enabled")==="1",
+    analytics:{
+      enabled:Boolean(userPrefs.analytics),
+      local_device_id:userPrefs.analytics ? (localStorage.getItem("goodNewsDeviceId")||null) : null
+    }
+  };
+}
+
+async function invokePrivacyFunction(body){
+  if(!configured || !db) throw new Error("Die Kontofunktionen sind derzeit nicht verbunden.");
+  const {data,error}=await db.functions.invoke("good-news-privacy",{body});
+  if(error){
+    let message=error.message||"Die Anfrage konnte nicht ausgeführt werden.";
+    try{
+      if(error.context && typeof error.context.clone==="function"){
+        const payload=await error.context.clone().json();
+        if(payload?.error) message=payload.error;
+      }
+    }catch{}
+    throw new Error(message);
+  }
+  if(!data?.ok) throw new Error(data?.error||"Die Anfrage konnte nicht ausgeführt werden.");
+  return data.data||data;
+}
+
+function privacyExportBundle(serverData, includeLocal=false){
+  return {
+    service:"Good News",
+    export_type:includeLocal?"Selbstauskunft":"Admin-Auskunft",
+    generated_at:new Date().toISOString(),
+    server_data:serverData,
+    ...(includeLocal?{local_device_data:localPrivacySnapshot()}:{}),
+    explanation:{
+      local_data:"Favoriten und App-Einstellungen werden lokal auf dem jeweiligen Gerät gespeichert und sind nur in einer Selbstauskunft auf diesem Gerät enthalten.",
+      analytics:"Die optionale Nutzungsstatistik wird nicht mit dem Benutzerkonto verknüpft.",
+      submissions:"Lesereinsendungen besitzen derzeit keine Benutzerkonto-ID und können nicht automatisch einem Konto zugeordnet werden."
+    }
+  };
+}
+
+function downloadJsonFile(filename,data){
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json;charset=utf-8"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=url;
+  a.download=filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+
+function fmtPrivacyDate(value){
+  if(!value)return "–";
+  try{return new Intl.DateTimeFormat("de-DE",{dateStyle:"medium",timeStyle:"short"}).format(new Date(value));}
+  catch{return String(value);}
+}
+
+function renderPrivacyExport(target,data,{showEmail=true,localData=null}={}){
+  if(!target)return;
+  const account=data?.account||{};
+  const roles=Array.isArray(data?.roles)?data.roles:[];
+  const pushes=Array.isArray(data?.push_subscriptions)?data.push_subscriptions:[];
+  const reports=Array.isArray(data?.news_reports)?data.news_reports:[];
+  const notes=Array.isArray(data?.notes)?data.notes:[];
+  const reportRows=reports.length
+    ? `<ul class="privacy-compact-list">${reports.map(r=>`<li><strong>Fehlermeldung #${esc(r.id)}</strong> · Meldung ${esc(r.news_id)} · ${esc(r.report_type||"")}<br><span class="muted">${esc(fmtPrivacyDate(r.created_at))}${r.comment?` · ${esc(r.comment)}`:""}</span></li>`).join("")}</ul>`
+    : `<p class="muted">Keine deinem Konto zugeordneten Fehlermeldungen.</p>`;
+  const pushRows=pushes.length
+    ? `<ul class="privacy-compact-list">${pushes.map(p=>`<li><strong>Push-Abo #${esc(p.id)}</strong> · ${p.enabled?"aktiv":"inaktiv"}<br><span class="muted">angelegt ${esc(fmtPrivacyDate(p.created_at))}</span></li>`).join("")}</ul>`
+    : `<p class="muted">Keine Push-Abonnements gespeichert.</p>`;
+  target.innerHTML=`
+    <div class="privacy-summary-grid">
+      ${showEmail?`<div><span>E-Mail</span><strong>${esc(account.email||"–")}</strong></div>`:""}
+      <div><span>Konto-ID</span><strong class="privacy-mono">${esc(account.id||"–")}</strong></div>
+      <div><span>Konto erstellt</span><strong>${esc(fmtPrivacyDate(account.created_at))}</strong></div>
+      <div><span>Letzte Anmeldung</span><strong>${esc(fmtPrivacyDate(account.last_sign_in_at))}</strong></div>
+      <div><span>Rolle</span><strong>${esc(roles.map(r=>r.role).join(", ")||"Nutzer")}</strong></div>
+      <div><span>Push-Abos</span><strong>${pushes.length}</strong></div>
+      <div><span>Fehlermeldungen</span><strong>${reports.length}</strong></div>
+      ${localData?`<div><span>Lokale Favoriten</span><strong>${Array.isArray(localData.favorites)?localData.favorites.length:0}</strong></div>`:""}
+    </div>
+    <details><summary>Push-Abonnements</summary>${pushRows}</details>
+    <details><summary>Fehlermeldungen</summary>${reportRows}</details>
+    ${localData?`<details><summary>Lokale App-Daten auf diesem Gerät</summary><pre class="privacy-json-preview">${esc(JSON.stringify(localData,null,2))}</pre></details>`:""}
+    ${notes.length?`<div class="privacy-note-list">${notes.map(n=>`<p>ℹ️ ${esc(n)}</p>`).join("")}</div>`:""}
+  `;
+  target.hidden=false;
+}
+
+async function loadMyPrivacyData(){
+  const msg=$("myDataMessage");
+  const result=$("myDataResult");
+  const download=$("downloadMyDataBtn");
+  if(msg)msg.textContent="Daten werden zusammengestellt …";
+  if(result)result.hidden=true;
+  if(download)download.hidden=true;
+  try{
+    const serverData=await invokePrivacyFunction({mode:"self_export"});
+    myPrivacyExportCache=privacyExportBundle(serverData,true);
+    renderPrivacyExport(result,serverData,{localData:myPrivacyExportCache.local_device_data});
+    if(download)download.hidden=false;
+    if(msg)msg.textContent="Deine Daten sind bereit.";
+  }catch(err){
+    if(msg)msg.textContent=err?.message||String(err);
+  }
+}
+
+$("loadMyDataBtn")?.addEventListener("click",loadMyPrivacyData);
+$("downloadMyDataBtn")?.addEventListener("click",()=>{
+  if(!myPrivacyExportCache)return;
+  const stamp=new Date().toISOString().slice(0,10);
+  downloadJsonFile(`good-news-datenauskunft-${stamp}.json`,myPrivacyExportCache);
+});
+
+async function clearGoodNewsLocalAccountData(){
+  const keys=[USER_PREFS_KEY,"goodNewsFavorites","goodNewsDeviceId","goodNewsAnalyticsActiveDay","goodnews_push_enabled",PUBLIC_FEED_CACHE_KEY,"goodNewsQuickActionsOpen"];
+  keys.forEach(k=>{try{localStorage.removeItem(k)}catch{}});
+  try{
+    const sub=await getPushSubscription();
+    if(sub)await sub.unsubscribe();
+  }catch{}
+}
+
+$("deleteMyAccountBtn")?.addEventListener("click",async()=>{
+  const msg=$("myDataMessage");
+  if(!confirm("Möchtest du dein Good-News-Konto und die damit verknüpften Serverdaten wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden."))return;
+  const phrase=prompt('Zur Bestätigung bitte LÖSCHEN eingeben:');
+  if(phrase!=="LÖSCHEN"){
+    if(msg)msg.textContent="Löschung abgebrochen.";
+    return;
+  }
+  if(msg)msg.textContent="Konto wird gelöscht …";
+  try{
+    await invokePrivacyFunction({mode:"self_delete",confirm:"LÖSCHEN"});
+    await clearGoodNewsLocalAccountData();
+    try{await db.auth.signOut()}catch{}
+    alert("Dein Good-News-Konto und die direkt zugeordneten Serverdaten wurden gelöscht.");
+    location.reload();
+  }catch(err){
+    if(msg)msg.textContent=err?.message||String(err);
+  }
+});
+
+$("privacyAdminForm")?.addEventListener("submit",async(e)=>{
+  e.preventDefault();
+  const email=$("privacyAdminEmail")?.value.trim();
+  const msg=$("privacyAdminMessage");
+  const result=$("privacyAdminResult");
+  const download=$("privacyAdminDownloadBtn");
+  if(!email)return;
+  if(msg)msg.textContent="Nutzerdaten werden gesucht …";
+  if(result)result.hidden=true;
+  if(download)download.hidden=true;
+  try{
+    const serverData=await invokePrivacyFunction({mode:"admin_lookup",email});
+    adminPrivacyExportCache=privacyExportBundle(serverData,false);
+    renderPrivacyExport(result,serverData,{showEmail:true});
+    if(download)download.hidden=false;
+    if(msg)msg.textContent="Auskunft zusammengestellt.";
+  }catch(err){
+    adminPrivacyExportCache=null;
+    if(msg)msg.textContent=err?.message||String(err);
+  }
+});
+
+$("privacyAdminDownloadBtn")?.addEventListener("click",()=>{
+  if(!adminPrivacyExportCache)return;
+  const email=String(adminPrivacyExportCache?.server_data?.account?.email||"nutzer").replace(/[^a-z0-9._-]+/gi,"-");
+  const stamp=new Date().toISOString().slice(0,10);
+  downloadJsonFile(`good-news-dsgvo-${email}-${stamp}.json`,adminPrivacyExportCache);
+});
+

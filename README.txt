@@ -106,3 +106,11 @@ BUILD 35 – MOBILE NEWS-SLIDES
 - Lange Überschriften werden automatisch verkleinert, damit sie möglichst auf höchstens vier Zeilen bleiben
 - Stärkerer dunkler Verlauf hinter dem unteren Textbereich für bessere Lesbarkeit auf hellen Bildern
 - PWA-Cache auf Build 35 angehoben
+
+BUILD 42 – DATENSCHUTZ-SELBSTAUSKUNFT
+-------------------------------------
+- Angemeldete Nutzer: Konto → „Meine Daten“ → Daten anzeigen / JSON herunterladen.
+- Angemeldete Nutzer können ihr Konto und direkt verknüpfte Serverdaten selbst löschen.
+- Redaktion: neuer Menüpunkt „DSGVO-Auskunft“ mit gezielter Suche nach Konto-E-Mail und JSON-Export.
+- Die dafür verwendete Supabase Edge Function `good-news-privacy` ist im verbundenen Supabase-Projekt deployed und verlangt ein gültiges Login; Admin-Suchen werden serverseitig zusätzlich auf die Adminrolle geprüft.
+- Lokale Favoriten/Einstellungen werden beim Selbsexport auf dem jeweiligen Gerät ergänzt; anonyme Statistikdaten sind absichtlich nicht mit dem Konto verknüpft.

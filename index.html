@@ -14,7 +14,7 @@
   <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-  <link rel="stylesheet" href="style.css?v=71">
+  <link rel="stylesheet" href="style.css?v=72">
 </head>
 <body>
 <header class="appbar">
@@ -39,7 +39,7 @@
         <span class="menu-chevron" aria-hidden="true">›</span>
       </button>
         <button id="accountBtn" type="button"><span>↪</span><span id="accountBtnLabel">Anmelden</span></button>
-        <div class="app-build-label" aria-label="App-Version">Good News · Build 41</div>
+        <div class="app-build-label" aria-label="App-Version">Good News · Build 42</div>
       </div>
       <button class="icon-btn quick-toggle-btn" id="quickToggleBtn" type="button" aria-label="Schnellfunktionen öffnen" aria-expanded="false" aria-controls="quickActions">＋</button>
       <div class="quick-actions" id="quickActions" hidden>
@@ -284,7 +284,7 @@
         <p>Personenbezogene Daten werden nur so lange gespeichert, wie sie für den jeweiligen Zweck erforderlich sind oder gesetzliche Aufbewahrungspflichten bestehen. Lokale App-Daten können durch Zurücksetzen der Einstellungen, Löschen von Favoriten, Löschen der Website-/App-Daten oder Deinstallation entfernt werden. Nicht mehr benötigte redaktionelle Einsendungen und Fehlermeldungen werden im Rahmen der redaktionellen Pflege gelöscht. Ungültige Push-Abonnements werden beim Versand technisch erkannt und entfernt.</p>
 
         <h4>11. Deine Rechte</h4>
-        <p>Du hast im Rahmen der gesetzlichen Voraussetzungen insbesondere Rechte auf Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung, Datenübertragbarkeit und Widerspruch. Erteilte Einwilligungen kannst du jederzeit mit Wirkung für die Zukunft widerrufen. Außerdem besteht ein Beschwerderecht bei einer Datenschutzaufsichtsbehörde.</p>
+        <p>Du hast im Rahmen der gesetzlichen Voraussetzungen insbesondere Rechte auf Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung, Datenübertragbarkeit und Widerspruch. Erteilte Einwilligungen kannst du jederzeit mit Wirkung für die Zukunft widerrufen. Angemeldete Nutzer können die ihrem Konto zugeordneten Good-News-Daten zusätzlich direkt im Kontobereich einsehen und herunterladen sowie ihr Konto und die direkt zugeordneten Serverdaten löschen. Außerdem besteht ein Beschwerderecht bei einer Datenschutzaufsichtsbehörde.</p>
         <p class="legal-small">Für Verantwortliche mit Sitz in Bremen ist insbesondere der Landesbeauftragte für Datenschutz und Informationsfreiheit der Freien Hansestadt Bremen zuständig: <a href="https://www.datenschutz.bremen.de/" target="_blank" rel="noopener noreferrer">datenschutz.bremen.de</a>.</p>
 
         <h4>12. Änderungen dieser Datenschutzerklärung</h4>
@@ -328,6 +328,27 @@
           <button class="secondary" id="settingsLogoutBtn" type="button">Abmelden</button>
         </div>
         <p class="muted account-admin-hint">Redaktionsfunktionen öffnest du über das ⚙ unter dem Menü.</p>
+
+        <section class="privacy-self-card" aria-labelledby="myDataTitle">
+          <div class="section-head compact">
+            <div>
+              <h3 id="myDataTitle">Meine Daten</h3>
+              <p class="muted">Hier kannst du die deinem Konto zugeordneten Good-News-Daten selbst einsehen und als JSON-Datei herunterladen.</p>
+            </div>
+          </div>
+          <div class="privacy-actions">
+            <button class="secondary" id="loadMyDataBtn" type="button">Meine Daten anzeigen</button>
+            <button class="secondary" id="downloadMyDataBtn" type="button" hidden>Datenexport herunterladen</button>
+          </div>
+          <div id="myDataMessage" class="message" aria-live="polite"></div>
+          <div id="myDataResult" class="privacy-result" hidden></div>
+
+          <details class="privacy-delete-box">
+            <summary>Konto und Serverdaten löschen</summary>
+            <p class="muted">Löscht dein Good-News-Konto sowie die direkt damit verknüpften Serverdaten. Lokale App-Daten auf diesem Gerät werden anschließend ebenfalls entfernt. Diese Aktion kann nicht rückgängig gemacht werden.</p>
+            <button class="danger" id="deleteMyAccountBtn" type="button">Konto endgültig löschen</button>
+          </details>
+        </section>
       </div>
     </section>
   </dialog>
@@ -432,6 +453,14 @@
         <button class="tab admin-menu-item" data-tab="display-tests">
           <span class="admin-menu-icon">📱</span>
           <span class="admin-menu-copy"><strong>Displaygrößen testen</strong><small>Typische Handy-Displays direkt simulieren</small></span>
+        </button>
+
+        <button class="tab admin-menu-item" data-tab="privacy-admin">
+          <span class="admin-menu-icon">🔐</span>
+          <span class="admin-menu-copy">
+            <strong>DSGVO-Auskunft</strong>
+            <small>Nutzerdaten gezielt per E-Mail abrufen</small>
+          </span>
         </button>
 
         <button class="tab admin-menu-item" data-tab="settings">
@@ -652,6 +681,27 @@
         <div id="adminList"></div>
       </section>
 
+      <section id="tab-privacy-admin" class="tab-panel" hidden>
+        <div class="section-head">
+          <div>
+            <h3>🔐 DSGVO-Auskunft</h3>
+            <p class="muted">Suche gezielt nach einem Good-News-Konto. Die Suche steht nur der Redaktion mit Adminrechten zur Verfügung.</p>
+          </div>
+        </div>
+        <form id="privacyAdminForm" class="stack privacy-admin-form">
+          <label>E-Mail-Adresse des Kontos
+            <input id="privacyAdminEmail" type="email" autocomplete="off" placeholder="name@example.de" required>
+          </label>
+          <div class="privacy-actions">
+            <button class="primary" type="submit">Nutzerdaten suchen</button>
+            <button class="secondary" id="privacyAdminDownloadBtn" type="button" hidden>Auskunft herunterladen</button>
+          </div>
+          <div id="privacyAdminMessage" class="message" aria-live="polite"></div>
+          <div id="privacyAdminResult" class="privacy-result" hidden></div>
+        </form>
+        <p class="muted privacy-admin-note">Hinweis: Lokale Favoriten und App-Einstellungen liegen nur auf dem jeweiligen Gerät. Die freiwillige Nutzungsstatistik ist nicht mit dem Benutzerkonto verknüpft. Lesereinsendungen besitzen derzeit keine Konto-ID und können deshalb nicht automatisch zugeordnet werden.</p>
+      </section>
+
       <section id="tab-settings" class="tab-panel" hidden>
         <form id="settingsForm" class="stack">
           <fieldset>
@@ -806,6 +856,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="app.js?v=62"></script>
+  <script src="app.js?v=63"></script>
 </body>
 </html>

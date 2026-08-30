@@ -1263,3 +1263,28 @@ html.slide-text-hidden .slide.has-image::before{
   -webkit-overflow-scrolling:touch;
   padding-bottom:max(28px,env(safe-area-inset-bottom));
 }
+
+
+/* Build 42 – DSGVO-Selbstauskunft und gezielte Admin-Auskunft */
+.privacy-self-card{margin-top:18px;padding-top:18px;border-top:1px solid var(--line,#33343a)}
+.privacy-self-card h3,.privacy-admin-form h3{margin:0 0 6px}
+.privacy-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.privacy-result{margin-top:14px;padding:14px;border:1px solid var(--line,#33343a);border-radius:18px;background:rgba(255,255,255,.035)}
+.privacy-summary-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:12px}
+.privacy-summary-grid>div{min-width:0;padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.045)}
+.privacy-summary-grid span{display:block;font-size:.78rem;color:var(--muted,#aaa);margin-bottom:4px}
+.privacy-summary-grid strong{display:block;overflow-wrap:anywhere}
+.privacy-mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.82rem}
+.privacy-result details{padding:10px 0;border-top:1px solid var(--line,#33343a)}
+.privacy-result details:first-of-type{margin-top:4px}
+.privacy-result summary{cursor:pointer;font-weight:700}
+.privacy-compact-list{margin:10px 0 0;padding-left:20px}.privacy-compact-list li{margin:8px 0}
+.privacy-json-preview{white-space:pre-wrap;word-break:break-word;max-height:280px;overflow:auto;padding:10px;border-radius:12px;background:rgba(0,0,0,.22);font-size:.78rem}
+.privacy-note-list{margin-top:10px;color:var(--muted,#aaa)}.privacy-note-list p{margin:7px 0}
+.privacy-delete-box{margin-top:18px;padding:12px 14px;border:1px solid rgba(220,70,70,.4);border-radius:16px}
+.privacy-delete-box summary{cursor:pointer;font-weight:700}.privacy-delete-box .danger{margin-top:8px}.privacy-admin-note{margin-top:16px}
+@media(max-width:520px){.privacy-summary-grid{grid-template-columns:1fr}.privacy-actions>*{flex:1 1 100%}}
+
+
+/* Build 42 – Kontodialog bleibt auch mit Datenauskunft vollständig scrollbar. */
+.settings-dialog{overflow:auto}
