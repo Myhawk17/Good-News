@@ -1629,7 +1629,7 @@ fetchPublicNews();
 // selbst alle offenen Good-News-Fenster auf den neuen Build führen. So hängt die
 // installierte PWA nicht mehr an einer alten Cache-/Worker-Version fest.
 // Build 35 – adaptive Überschriften (max. 4 Zeilen) und stärkerer Lesbarkeitsverlauf.
-const GOOD_NEWS_BUILD=38;
+const GOOD_NEWS_BUILD=39;
 let goodNewsSwRegistration=null;
 let goodNewsReloading=false;
 
@@ -2417,8 +2417,11 @@ switchAdminTab=function(name){
 // Impressum & Datenschutz
 
 $("legalBtn")?.addEventListener("click",()=>{
-  closeDialog(menuDialog);
-  openDialog($("legalDialog"));
+  // Das Hauptmenü ist kein <dialog>. Deshalb die vorhandene Menüfunktion nutzen
+  // und das Rechtliches-Fenster anschließend direkt als modalen Dialog öffnen.
+  closeMainMenu();
+  const legalDialog=$("legalDialog");
+  if(legalDialog && !legalDialog.open) legalDialog.showModal();
 });
 document.querySelectorAll("[data-legal-tab]").forEach(btn=>btn.addEventListener("click",()=>{
   const key=btn.dataset.legalTab;
