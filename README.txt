@@ -139,3 +139,9 @@ Build 51
 - Rechter Feed-Bereich zeigt nur noch das allgemeine Menü und direkt darunter das Auge.
 - Das zusätzliche Drei-Punkte-Meldungsmenü wurde entfernt.
 - Aktionen für die aktuelle Meldung (merken/aus Favoriten entfernen, teilen, Fehler melden) liegen jetzt im allgemeinen Menü.
+
+BUILD 52 – SYMBOLBILD-KENNZEICHNUNG
+- Redaktion: Symbolbild ist jetzt ein eigener Ja/Nein-Schalter unter den Bildangaben und unabhängig von der Bildart (Foto/KI).
+- Feed: Quellenzeile bleibt dreigeteilt: links Textquelle, mittig nur bei Bedarf „Symbolbild“, rechts Bildquelle.
+- Automatische Entwürfe können is_symbol_image=true/false mitliefern; die App übernimmt die Kennzeichnung beim Import.
+- Supabase: news.is_symbol_image speichert die Kennzeichnung dauerhaft.

@@ -157,6 +157,8 @@ with check (id = 1);
 alter table public.news add column if not exists image_license text;
 alter table public.news add column if not exists image_source_url text;
 alter table public.news add column if not exists image_kind text not null default 'photo';
+alter table public.news add column if not exists is_symbol_image boolean not null default false;
+update public.news set is_symbol_image = true where image_kind = 'symbol' and is_symbol_image = false;
 
 -- 8) Entwürfe - Dreier (Good News 3.0)
 -- Empfangsbox für automatisch erzeugte Dreier. Anonyme Clients dürfen NUR einreichen,

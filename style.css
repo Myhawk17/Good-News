@@ -1386,3 +1386,7 @@ html.main-menu-open .main-menu{pointer-events:auto}
 #slideFavBtn.active{background:#ffffff18}
 #slideFavBtn:disabled,#slideShareBtn:disabled,#slideReportBtn:disabled{opacity:.45;cursor:default}
 .main-menu .menu-action-label{width:auto!important;text-align:left!important;font-size:inherit!important}
+
+/* Build 52 – Symbolbild als eigene redaktionelle Kennzeichnung */
+.symbol-image-toggle{margin-top:10px}
+.symbol-image-toggle span{font-weight:700}

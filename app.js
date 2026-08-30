@@ -387,6 +387,10 @@ function sourcesOf(item) {
   return Array.isArray(item.sources) ? item.sources : [];
 }
 
+function isSymbolImage(item){
+  return Boolean(item?.is_symbol_image || item?.image_kind === "symbol");
+}
+
 const PUBLIC_FEED_CACHE_KEY="goodNewsPublicFeedCacheV2";
 
 function readCachedPublicNews(){
@@ -662,7 +666,7 @@ function buildSlide(item, index, total) {
 
       <div class="slide-source-row">
         <button class="text-source-link" type="button" data-text-source-id="${item.id}">Textquelle</button>
-        <span class="symbol-image-note">${item.image_kind === "symbol" ? "ⓘ Symbolbild" : ""}</span>
+        <span class="symbol-image-note">${isSymbolImage(item) ? "Symbolbild" : ""}</span>
         ${item.image_url ? `<button class="image-source-link" type="button" data-image-source-id="${item.id}">${item.image_kind === "ai" ? "ⓘ KI-Illustration" : "Bildquelle"}</button>` : `<span class="source-spacer"></span>`}
       </div>
     </div>`;
@@ -1535,6 +1539,7 @@ function saveEditorDraft(){
     imageLicense:$("imageLicense")?.value||"",
     imageSourceUrl:$("imageSourceUrl")?.value||"",
     imageKind:$("imageKind")?.value||"photo",
+    imageIsSymbol:Boolean($("imageIsSymbol")?.checked),
     dailySlot:$("dailySlot")?.value||"none",
     yearsAgo:$("yearsAgo")?.value||"",
     feelGoodText:$("feelGoodText")?.value||"",
@@ -1573,7 +1578,8 @@ function restoreEditorDraft(){
     $("imageCredit").value=d.imageCredit||"";
     if($("imageLicense")) $("imageLicense").value=d.imageLicense||"";
     if($("imageSourceUrl")) $("imageSourceUrl").value=d.imageSourceUrl||"";
-    if($("imageKind")) $("imageKind").value=d.imageKind||"photo";
+    if($("imageKind")) $("imageKind").value=d.imageKind==="ai"?"ai":"photo";
+    if($("imageIsSymbol")) $("imageIsSymbol").checked=Boolean(d.imageIsSymbol || d.imageKind==="symbol");
     if($("dailySlot")) $("dailySlot").value=d.dailySlot||"none";
     if($("yearsAgo")) $("yearsAgo").value=d.yearsAgo||"";
     if($("feelGoodText")) $("feelGoodText").value=d.feelGoodText||"";
@@ -1614,6 +1620,7 @@ function resetEditor(){
   if($("feelGoodText")) $("feelGoodText").value="";
   if($("contextText")) $("contextText").value="";
   if($("imageKind")) $("imageKind").value="photo";
+  if($("imageIsSymbol")) $("imageIsSymbol").checked=false;
   const now=new Date();$("publishedDate").value=now.toISOString().slice(0,10);
   $("publishedTime").value=now.toTimeString().slice(0,5);
   $("status").value="draft";$("priority").value="normal";
@@ -1889,6 +1896,7 @@ function formToDraft(){
     image_license:$("imageLicense")?.value.trim()||null,
     image_source_url:$("imageSourceUrl")?.value.trim()||null,
     image_kind:$("imageKind")?.value||"photo",
+    is_symbol_image:Boolean($("imageIsSymbol")?.checked),
     sources:collectSources()
   };
 }
@@ -1923,7 +1931,8 @@ async function editArticle(id){
   $("imageUrl").value=n.image_path?"":(n.image_url||"");$("imageCredit").value=n.image_credit||"";
   if($("imageLicense")) $("imageLicense").value=n.image_license||"";
   if($("imageSourceUrl")) $("imageSourceUrl").value=n.image_source_url||"";
-  if($("imageKind")) $("imageKind").value=n.image_kind||"photo";
+  if($("imageKind")) $("imageKind").value=n.image_kind==="ai"?"ai":"photo";
+  if($("imageIsSymbol")) $("imageIsSymbol").checked=isSymbolImage(n);
   $("existingImagePath").value=n.image_path||"";
   const iv=imageViewOf(n); if($("imageFit")) $("imageFit").value=iv.fit; if($("imageZoom")) $("imageZoom").value=iv.zoom; if($("imagePosX")) $("imagePosX").value=iv.x; if($("imagePosY")) $("imagePosY").value=iv.y;
   $("sourcesEditor").innerHTML="";
@@ -1955,7 +1964,7 @@ $("newsForm").onsubmit=async(e)=>{
       byline_name:d.byline_visible?d.byline_name:null,byline_visible:Boolean(d.byline_visible&&d.byline_name),
       context_text:d.context_text,daily_slot:d.daily_slot,years_ago:d.years_ago,feel_good_text:d.feel_good_text,
       image_url:imageUrl,image_path:imagePath,image_credit:d.image_credit,
-      image_license:d.image_license,image_source_url:d.image_source_url,image_kind:d.image_kind,
+      image_license:d.image_license,image_source_url:d.image_source_url,image_kind:d.image_kind,is_symbol_image:d.is_symbol_image,
       image_fit:d.image_fit,image_zoom:d.image_zoom,image_x:d.image_pos_x,image_y:d.image_pos_y,
       sources:d.sources,publish_at:publishAt,updated_at:new Date().toISOString()
     };
@@ -2036,7 +2045,7 @@ fetchPublicNews({preservePosition:false});
 // selbst alle offenen Good-News-Fenster auf den neuen Build führen. So hängt die
 // installierte PWA nicht mehr an einer alten Cache-/Worker-Version fest.
 // Build 35 – adaptive Überschriften (max. 4 Zeilen) und stärkerer Lesbarkeitsverlauf.
-const GOOD_NEWS_BUILD=51;
+const GOOD_NEWS_BUILD=52;
 let goodNewsSwRegistration=null;
 let goodNewsReloading=false;
 
@@ -2649,6 +2658,7 @@ function normalizeCandidateItem(item,category){
     image_license:item.image_license||null,
     image_source_url:item.image_source_url||item.image_page_url||null,
     image_kind:item.image_kind==="ai"?"ai":"photo",
+    is_symbol_image:Boolean(item.is_symbol_image===true || item.symbol_image===true || item.symbolbild===true || item.image_kind==="symbol"),
     sources:src.filter(x=>x&&x.url).map(x=>({name:x.name||"Quelle",url:x.url}))
   };
 }
@@ -2675,7 +2685,7 @@ function candidateCardHtml(x,group,index){
       <span class="candidate-kicker">Vorschlag ${index===0?"A":"B"}</span>
       <strong>${esc(n.title||"Ohne Überschrift")}</strong>
       <span class="candidate-summary">${esc(n.summary)}</span>
-      <span class="candidate-meta">${n.image_url?(n.image_kind==="ai"?"🖼️ KI-Illustration":"🖼️ Bild vorhanden"):"Kein Bild"} · ${n.sources.length} ${n.sources.length===1?"Quelle":"Quellen"}</span>
+      <span class="candidate-meta">${n.image_url?(n.image_kind==="ai"?"🖼️ KI-Illustration":"🖼️ Bild vorhanden"):"Kein Bild"}${n.is_symbol_image?" · Symbolbild":""} · ${n.sources.length} ${n.sources.length===1?"Quelle":"Quellen"}</span>
     </span>
   </label>`;
 }
@@ -2781,6 +2791,7 @@ function rowFromCandidate(x,group,raw,index){
     image_license:n.image_license,
     image_source_url:n.image_source_url,
     image_kind:n.image_kind,
+    is_symbol_image:n.is_symbol_image,
     image_fit:"cover",
     image_zoom:1,
     image_x:50,
@@ -2826,7 +2837,7 @@ async function importTripleDraft(id){
       published_date:x.draft_date,published_time:times[slot],publish_at:new Date(localDateTime).toISOString(),
       category:n.category,story_key:null,title:n.title,summary:n.summary,context_text:n.context_text,
       status:"draft",priority:"normal",priority_rank:0,image_url:n.image_url,image_path:null,image_credit:n.image_credit,
-      image_license:n.image_license,image_source_url:n.image_source_url,image_kind:n.image_kind,
+      image_license:n.image_license,image_source_url:n.image_source_url,image_kind:n.image_kind,is_symbol_image:n.is_symbol_image,
       image_fit:"cover",image_zoom:1,image_x:50,image_y:50,
       sources:n.sources,daily_slot:slot==="damals"?"damals":"none",years_ago:n.years_ago,feel_good_text:null,
       updated_at:new Date().toISOString()
