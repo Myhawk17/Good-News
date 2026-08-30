@@ -1228,3 +1228,13 @@ html.slide-text-hidden .slide.has-image::before{
 @media (max-width:520px){
   .slide h1{max-width:100%;hyphens:auto;overflow-wrap:anywhere;word-break:normal;text-wrap:balance}
 }
+
+
+/* Build 33 – Displaygrößen-Test im Adminbereich */
+.display-test-buttons{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:14px 0}
+.display-test-buttons button{min-height:48px;text-align:left}
+.display-test-stage{position:relative;width:100%;margin:14px 0 8px;overflow:hidden;border:1px solid var(--line);border-radius:18px;background:#09090a}
+.display-test-scaler{transform-origin:top left}
+.display-test-stage iframe{display:block;border:0;background:#0e0e10}
+.display-test-hint{font-size:.86rem;line-height:1.45}
+@media(max-width:560px){.display-test-buttons{grid-template-columns:1fr}}

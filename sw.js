@@ -1,9 +1,9 @@
-const CACHE="good-news-v70-build32";
+const CACHE="good-news-v71-build33";
 const STATIC=[
   "./",
   "./index.html",
-  "./style.css?v=68",
-  "./app.js?v=56",
+  "./style.css?v=69",
+  "./app.js?v=57",
   "./config.js",
   "./manifest.json",
   "./favicon-32.png",

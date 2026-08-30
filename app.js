@@ -876,6 +876,39 @@ function switchAdminTab(name) {
 }
 document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>switchAdminTab(t.dataset.tab));
 
+// Build 33 – Display-Testmodus. Ein iframe bekommt die echte gewählte CSS-Viewportgröße
+// und wird nur optisch so skaliert, dass er auch auf einem einzelnen Handy sichtbar bleibt.
+const displayTestStage=$("displayTestStage");
+const displayTestScaler=$("displayTestScaler");
+const displayTestFrame=$("displayTestFrame");
+const displayTestInfo=$("displayTestInfo");
+let displayTestSize=null;
+function fitDisplayTest(){
+  if(!displayTestSize||!displayTestStage||!displayTestScaler||!displayTestFrame)return;
+  const {w,h}=displayTestSize;
+  const available=Math.max(240,Math.min(displayTestStage.clientWidth||window.innerWidth-32,window.innerWidth-32));
+  const scale=Math.min(1,available/w);
+  displayTestFrame.style.width=w+"px";
+  displayTestFrame.style.height=h+"px";
+  displayTestScaler.style.width=w+"px";
+  displayTestScaler.style.height=h+"px";
+  displayTestScaler.style.transform=`scale(${scale})`;
+  displayTestStage.style.height=Math.ceil(h*scale)+"px";
+  if(displayTestInfo)displayTestInfo.textContent=`Simulation: ${w} × ${h} CSS-Pixel · Darstellung ${Math.round(scale*100)} %`;
+}
+function openDisplayTest(w,h){
+  displayTestSize={w:Number(w),h:Number(h)};
+  displayTestStage.hidden=false;
+  if(!displayTestFrame.src){
+    const u=new URL(location.href);u.searchParams.set("displayPreview","1");u.hash="";
+    displayTestFrame.src=u.toString();
+  }
+  requestAnimationFrame(fitDisplayTest);
+}
+document.querySelectorAll(".display-test-btn").forEach(btn=>btn.addEventListener("click",()=>openDisplayTest(btn.dataset.w,btn.dataset.h)));
+window.addEventListener("resize",fitDisplayTest);
+
+
 $("adminBtn").onclick = async () => {
   closeMainMenu();
   adminDialog.showModal();
