@@ -1622,10 +1622,14 @@ renderCachedFeed();
 trackDailyActive();
 fetchPublicNews();
 
-// Build 36 – zuverlässige PWA-Updates: Server-Build prüfen, neuen Service Worker
-// aktivieren und erst DANACH neu laden. Dadurch reicht künftig ein Antippen.
+// Build 37 – PWA-Update-Reparatur für installierte Android-Apps.
+// Der Service Worker hat ab jetzt eine STABILE URL (sw.js). Beim manuellen Update
+// werden alte App-Caches entfernt; danach wird mit einer eindeutigen Navigations-URL
+// frisch vom Server geladen. Der neue Service Worker kann beim Aktivieren zusätzlich
+// selbst alle offenen Good-News-Fenster auf den neuen Build führen. So hängt die
+// installierte PWA nicht mehr an einer alten Cache-/Worker-Version fest.
 // Build 35 – adaptive Überschriften (max. 4 Zeilen) und stärkerer Lesbarkeitsverlauf.
-const GOOD_NEWS_BUILD=36;
+const GOOD_NEWS_BUILD=37;
 let goodNewsSwRegistration=null;
 let goodNewsReloading=false;
 
@@ -1636,9 +1640,22 @@ function goodNewsFreshUrl(remoteBuild){
   return url.href;
 }
 
+function cleanGoodNewsUpdateParams(){
+  const url=new URL(location.href);
+  const target=Number(url.searchParams.get("gn_build"));
+  if(Number.isFinite(target) && target<=GOOD_NEWS_BUILD){
+    url.searchParams.delete("gn_build");
+    url.searchParams.delete("gn_refresh");
+    url.searchParams.delete("gn_sw");
+    history.replaceState(null,"",url.pathname+url.search+url.hash);
+  }
+}
+
 async function getRemoteBuild(){
-  const url=`version.json?ts=${Date.now()}`;
-  const response=await fetch(url,{cache:"no-store"});
+  const response=await fetch(`version.json?gn_version=${Date.now()}`,{
+    cache:"no-store",
+    headers:{"Cache-Control":"no-cache"}
+  });
   if(!response.ok) throw new Error(`Version ${response.status}`);
   const data=await response.json();
   const build=Number(data?.build);
@@ -1646,7 +1663,13 @@ async function getRemoteBuild(){
   return build;
 }
 
-function waitForServiceWorkerActivation(reg,expectedBuild,timeoutMs=12000){
+async function clearGoodNewsCaches(){
+  if(!("caches" in window)) return;
+  const keys=await caches.keys();
+  await Promise.all(keys.filter(key=>key.startsWith("good-news-")).map(key=>caches.delete(key)));
+}
+
+function waitForServiceWorkerActivation(reg,timeoutMs=12000){
   return new Promise(resolve=>{
     let settled=false;
     let timer=null;
@@ -1662,28 +1685,23 @@ function waitForServiceWorkerActivation(reg,expectedBuild,timeoutMs=12000){
 
     const watch=worker=>{
       if(!worker)return;
-      const maybeSkip=()=>{
+      const stateChanged=()=>{
         if(worker.state==="installed") worker.postMessage({type:"SKIP_WAITING"});
         if(worker.state==="activated") finish(true);
       };
-      worker.addEventListener("statechange",maybeSkip);
-      maybeSkip();
+      worker.addEventListener("statechange",stateChanged);
+      stateChanged();
     };
 
     watch(reg.installing);
     watch(reg.waiting);
     if(reg.waiting) reg.waiting.postMessage({type:"SKIP_WAITING"});
 
-    // Falls register() die Installation erst kurz nach dem Promise-Resolve anlegt.
-    let checks=0;
     const poll=setInterval(()=>{
       if(settled){clearInterval(poll);return;}
       watch(reg.installing);
-      if(reg.waiting){
-        watch(reg.waiting);
-        reg.waiting.postMessage({type:"SKIP_WAITING"});
-      }
-      if(++checks>=24) clearInterval(poll);
+      watch(reg.waiting);
+      if(reg.waiting) reg.waiting.postMessage({type:"SKIP_WAITING"});
     },250);
 
     timer=setTimeout(()=>{clearInterval(poll);finish(false)},timeoutMs);
@@ -1691,14 +1709,28 @@ function waitForServiceWorkerActivation(reg,expectedBuild,timeoutMs=12000){
 }
 
 async function installRemoteBuild(remoteBuild){
-  // Eigene URL pro Build + Zeitstempel umgeht Browser-/CDN-Zwischencaches auch
-  // bei installierten Android-PWAs.
-  const swUrl=`sw.js?v=${encodeURIComponent(remoteBuild)}&ts=${Date.now()}`;
-  const reg=await navigator.serviceWorker.register(swUrl,{scope:"./",updateViaCache:"none"});
+  // Ab Build 37 bleibt die Worker-URL absichtlich konstant. Dadurch erzeugt ein
+  // Reload nicht direkt wieder eine zweite Worker-Installation mit anderer URL.
+  const reg=await navigator.serviceWorker.register("sw.js",{
+    scope:"./",
+    updateViaCache:"none"
+  });
   goodNewsSwRegistration=reg;
-  await reg.update().catch(()=>{});
-  const activated=await waitForServiceWorkerActivation(reg,remoteBuild);
+  await reg.update();
+
+  if(reg.waiting) reg.waiting.postMessage({type:"SKIP_WAITING"});
+  const activated=await waitForServiceWorkerActivation(reg);
   return activated;
+}
+
+async function forceFreshAppNavigation(remoteBuild){
+  goodNewsReloading=true;
+  try{sessionStorage.setItem("goodNewsUpdateTarget",String(remoteBuild));}catch{}
+
+  // Die Caches löschen, BEVOR navigiert wird. Selbst falls der alte Worker das
+  // aktuelle Fenster noch kontrolliert, muss er danach den Server benutzen.
+  await clearGoodNewsCaches().catch(()=>{});
+  location.replace(goodNewsFreshUrl(remoteBuild));
 }
 
 async function checkForAppUpdate({manual=false}={}){
@@ -1706,48 +1738,60 @@ async function checkForAppUpdate({manual=false}={}){
     if(manual) alert("Auf diesem Gerät ist kein Service Worker verfügbar.");
     return;
   }
+
+  const button=$("checkUpdateBtn");
+  const oldText=button?.innerHTML;
   try{
+    if(manual && button){
+      button.disabled=true;
+      button.innerHTML="<span>↻</span>Update wird geprüft …";
+    }
+
     const remoteBuild=await getRemoteBuild();
     if(remoteBuild<=GOOD_NEWS_BUILD){
-      // Trotzdem den Worker prüfen, falls nur Cache-Dateien geändert wurden.
       const reg=goodNewsSwRegistration || await navigator.serviceWorker.getRegistration();
       if(reg) await reg.update().catch(()=>{});
       if(manual) alert(`Du nutzt bereits die aktuelle Version (Build ${GOOD_NEWS_BUILD}).`);
       return;
     }
 
-    if(manual) $("checkUpdateBtn")?.setAttribute("disabled","");
-    const activated=await installRemoteBuild(remoteBuild);
+    if(manual && button) button.innerHTML="<span>↻</span>Update wird installiert …";
 
-    // Erst nach Aktivierung neu laden. Mit Cache-Buster kommt garantiert die
-    // neue index.html statt noch einmal die alte Build-Anzeige.
-    goodNewsReloading=true;
-    location.replace(goodNewsFreshUrl(remoteBuild));
-
-    // Fallback ist absichtlich erst spät; normalerweise kommt vorher controllerchange.
-    if(!activated) setTimeout(()=>location.replace(goodNewsFreshUrl(remoteBuild)),400);
+    // Worker aktualisieren. Build 37+ navigiert beim Aktivieren zusätzlich selbst
+    // auf eine frische URL; forceFreshAppNavigation bleibt als zuverlässiger Fallback.
+    await installRemoteBuild(remoteBuild).catch(e=>console.warn("Worker-Update:",e));
+    await forceFreshAppNavigation(remoteBuild);
   }catch(e){
     console.warn("App-Update konnte nicht geprüft werden",e);
     if(manual) alert("Die Update-Prüfung hat gerade nicht geklappt. Bitte versuche es erneut.");
   }finally{
-    if(manual) $("checkUpdateBtn")?.removeAttribute("disabled");
+    if(manual && button && !goodNewsReloading){
+      button.disabled=false;
+      if(oldText!=null) button.innerHTML=oldText;
+    }
   }
 }
 
+cleanGoodNewsUpdateParams();
+
 if("serviceWorker" in navigator){
   navigator.serviceWorker.addEventListener("controllerchange",()=>{
-    // Bei normalen Hintergrund-Updates nur dann sofort neu laden, wenn wir gerade
-    // aktiv einen Update-Wechsel durchführen. Sonst bleibt die App ruhig.
-    if(goodNewsReloading)return;
+    // Der aktive Update-Ablauf navigiert selbst. Keine zusätzliche reload()-Kaskade.
   });
+
   addEventListener("load",async()=>{
     try{
-      goodNewsSwRegistration=await navigator.serviceWorker.register(
-        `sw.js?v=${GOOD_NEWS_BUILD}`,
-        {scope:"./",updateViaCache:"none"}
-      );
+      // Stabile URL ab Build 37. updateViaCache:none zwingt die Update-Prüfung
+      // am Browser-HTTP-Cache vorbei.
+      goodNewsSwRegistration=await navigator.serviceWorker.register("sw.js",{
+        scope:"./",
+        updateViaCache:"none"
+      });
+      await goodNewsSwRegistration.update().catch(()=>{});
       await checkForAppUpdate();
-    }catch(e){console.warn("Service Worker konnte nicht aktualisiert werden",e)}
+    }catch(e){
+      console.warn("Service Worker konnte nicht aktualisiert werden",e);
+    }
   });
 }
 $("checkUpdateBtn")?.addEventListener("click",runMenuAction(()=>checkForAppUpdate({manual:true})));
