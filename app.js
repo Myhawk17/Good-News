@@ -1629,7 +1629,7 @@ fetchPublicNews();
 // selbst alle offenen Good-News-Fenster auf den neuen Build führen. So hängt die
 // installierte PWA nicht mehr an einer alten Cache-/Worker-Version fest.
 // Build 35 – adaptive Überschriften (max. 4 Zeilen) und stärkerer Lesbarkeitsverlauf.
-const GOOD_NEWS_BUILD=37;
+const GOOD_NEWS_BUILD=38;
 let goodNewsSwRegistration=null;
 let goodNewsReloading=false;
 
@@ -1812,6 +1812,15 @@ async function loadAppSettings() {
 }
 
 
+const DEFAULT_LEGAL_SETTINGS={
+  provider_name:"Timo Heinrich Grabbe",
+  provider_address:"c/o Online-Impressum 10641\nEuroparing 90\n53757 Sankt Augustin",
+  contact_email:"good-news@mail.online-impressum.de",
+  editorial_name:"Timo Heinrich Grabbe",
+  editorial_address:"c/o Online-Impressum 10641\nEuroparing 90\n53757 Sankt Augustin",
+  privacy_email:"good-news@mail.online-impressum.de"
+};
+
 function legalText(value,fallback){
   const v=String(value||"").trim();
   return v || fallback;
@@ -1824,12 +1833,12 @@ function legalHtmlLines(value,fallback){
 
 function applyLegalSettings(settings={}){
   const l=settings?.legal_settings||{};
-  const name=legalText(l.provider_name,"[Name ergänzen]");
-  const address=legalText(l.provider_address,"[Geschäfts-/Impressumsadresse ergänzen]");
-  const email=legalText(l.contact_email,"[Kontakt-E-Mail ergänzen]");
-  const editorialName=legalText(l.editorial_name,name==="[Name ergänzen]"?"[Angaben vor Veröffentlichung ergänzen]":name);
-  const editorialAddress=legalText(l.editorial_address,address);
-  const privacyEmail=legalText(l.privacy_email,email);
+  const name=legalText(l.provider_name,DEFAULT_LEGAL_SETTINGS.provider_name);
+  const address=legalText(l.provider_address,DEFAULT_LEGAL_SETTINGS.provider_address);
+  const email=legalText(l.contact_email,DEFAULT_LEGAL_SETTINGS.contact_email);
+  const editorialName=legalText(l.editorial_name,DEFAULT_LEGAL_SETTINGS.editorial_name);
+  const editorialAddress=legalText(l.editorial_address,DEFAULT_LEGAL_SETTINGS.editorial_address);
+  const privacyEmail=legalText(l.privacy_email,DEFAULT_LEGAL_SETTINGS.privacy_email);
 
   if($("legalProviderName")) $("legalProviderName").textContent=name;
   if($("legalProviderAddress")) $("legalProviderAddress").innerHTML=legalHtmlLines(address,"[Geschäfts-/Impressumsadresse ergänzen]");
@@ -1848,12 +1857,12 @@ function applyLegalSettings(settings={}){
 function populateLegalSettingsForm(settings={}){
   if(!$("settingLegalName")) return;
   const l=settings?.legal_settings||{};
-  $("settingLegalName").value=l.provider_name||"";
-  $("settingLegalAddress").value=l.provider_address||"";
-  $("settingLegalEmail").value=l.contact_email||"";
-  $("settingLegalEditorialName").value=l.editorial_name||"";
-  $("settingLegalEditorialAddress").value=l.editorial_address||"";
-  $("settingLegalPrivacyEmail").value=l.privacy_email||"";
+  $("settingLegalName").value=l.provider_name||DEFAULT_LEGAL_SETTINGS.provider_name;
+  $("settingLegalAddress").value=l.provider_address||DEFAULT_LEGAL_SETTINGS.provider_address;
+  $("settingLegalEmail").value=l.contact_email||DEFAULT_LEGAL_SETTINGS.contact_email;
+  $("settingLegalEditorialName").value=l.editorial_name||DEFAULT_LEGAL_SETTINGS.editorial_name;
+  $("settingLegalEditorialAddress").value=l.editorial_address||DEFAULT_LEGAL_SETTINGS.editorial_address;
+  $("settingLegalPrivacyEmail").value=l.privacy_email||DEFAULT_LEGAL_SETTINGS.privacy_email;
 }
 
 function readLegalSettingsForm(){

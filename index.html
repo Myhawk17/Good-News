@@ -39,7 +39,7 @@
         <span class="menu-chevron" aria-hidden="true">›</span>
       </button>
         <button id="accountBtn" type="button"><span>↪</span><span id="accountBtnLabel">Anmelden</span></button>
-        <div class="app-build-label" aria-label="App-Version">Good News · Build 37</div>
+        <div class="app-build-label" aria-label="App-Version">Good News · Build 38</div>
       </div>
       <button class="icon-btn quick-toggle-btn" id="quickToggleBtn" type="button" aria-label="Schnellfunktionen öffnen" aria-expanded="false" aria-controls="quickActions">＋</button>
       <div class="quick-actions" id="quickActions" hidden>
@@ -220,19 +220,16 @@
     <div class="legal-scroll">
       <section class="legal-panel active" data-legal-panel="imprint">
         <h3>Impressum</h3>
-        <div class="legal-notice">
-          <strong>Vor Veröffentlichung ergänzen</strong>
-          <p>Die ladungsfähige Anschrift wird ergänzt, sobald die Geschäfts-/Impressumsadresse feststeht. Diese Fassung ist noch nicht für die öffentliche Veröffentlichung bestimmt.</p>
-        </div>
         <h4>Angaben zum Anbieter</h4>
         <p><strong>Good News</strong><br>
-        Verantwortliche Person: <span class="legal-placeholder"><span id="legalProviderName">[Name ergänzen]</span></span><br>
-        Ladungsfähige Anschrift: <span class="legal-placeholder"><span id="legalProviderAddress">[Geschäfts-/Impressumsadresse ergänzen]</span></span></p>
+        Verantwortliche Person: <span id="legalProviderName">Timo Heinrich Grabbe</span><br>
+        Ladungsfähige Anschrift: <span id="legalProviderAddress">c/o Online-Impressum 10641<br>Europaring 90<br>53757 Sankt Augustin</span></p>
         <h4>Kontakt</h4>
-        <p>E-Mail: <span class="legal-placeholder"><span id="legalContactEmail">[Kontakt-E-Mail ergänzen]</span></span></p>
+        <p>E-Mail: <span id="legalContactEmail"><a href="mailto:good-news@mail.online-impressum.de">good-news@mail.online-impressum.de</a></span></p>
         <h4>Redaktionell verantwortlich</h4>
-        <p><span class="legal-placeholder">[Name und Anschrift ergänzen, soweit erforderlich]</span></p>
-        <p class="legal-small">Hinweis: Ein Postfach oder eine reine Kontakt-E-Mail ersetzt eine erforderliche ladungsfähige Anschrift nicht. Vor dem öffentlichen Release müssen die Platzhalter geprüft und vervollständigt werden.</p>
+        <p id="legalEditorialResponsible">Timo Heinrich Grabbe<br>c/o Online-Impressum 10641<br>Europaring 90<br>53757 Sankt Augustin</p>
+        <h4>Zuständige Aufsichtsbehörde</h4>
+        <p>Bremische Landesmedienanstalt<br><span class="legal-small">Sitz: Deutschland</span></p>
       </section>
 
       <section class="legal-panel" data-legal-panel="privacy">
@@ -242,7 +239,7 @@
           <p>Die Kontaktdaten des Verantwortlichen sowie gegebenenfalls Angaben zu Hosting und Auftragsverarbeitung müssen vor Veröffentlichung abschließend geprüft werden.</p>
         </div>
         <h4>1. Verantwortlicher</h4>
-        <p><span class="legal-placeholder">[Name, ladungsfähige Anschrift und Datenschutz-Kontakt ergänzen]</span></p>
+        <p id="legalPrivacyResponsible">Timo Heinrich Grabbe<br>c/o Online-Impressum 10641<br>Europaring 90<br>53757 Sankt Augustin<br><a href="mailto:good-news@mail.online-impressum.de">good-news@mail.online-impressum.de</a></p>
         <h4>2. Bereitstellung der App</h4>
         <p>Good News stellt redaktionell ausgewählte Nachrichten und zugehörige Quellenangaben bereit. Für Datenbank-, Anmelde- und Speicherfunktionen wird Supabase eingesetzt. Beim technischen Abruf können für die Bereitstellung notwendige Verbindungs- und Protokolldaten verarbeitet werden.</p>
         <h4>3. Anmeldung und Konto</h4>
