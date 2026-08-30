@@ -719,33 +719,32 @@ function currentSlideItem(){
   return allNews.find(n=>String(n.id)===String(best.dataset.id))||null;
 }
 function syncSlideQuickActions(){
-  const item=currentSlideItem(), favBtn=$("slideFavBtn"), shareBtn=$("slideShareBtn"), reportBtn=$("slideReportBtn"), menuBtn=$("quickToggleBtn");
+  const item=currentSlideItem(), favBtn=$("slideFavBtn"), shareBtn=$("slideShareBtn"), reportBtn=$("slideReportBtn");
   const available=!!item;
   [favBtn,shareBtn,reportBtn].filter(Boolean).forEach(btn=>btn.disabled=!available);
-  if(menuBtn) menuBtn.style.visibility=available?"visible":"hidden";
   if(!available||!favBtn)return;
   const active=isFavorite(item.id);
   favBtn.classList.toggle("active",active);
-  favBtn.innerHTML=`<span aria-hidden="true">${active?"♥":"♡"}</span><span>${active?"Aus Favoriten entfernen":"Zu Favoriten"}</span>`;
-  favBtn.setAttribute("aria-label",active?"Meldung aus Favoriten entfernen":"Meldung zu Favoriten hinzufügen");
+  favBtn.innerHTML=`<span aria-hidden="true">${active?"♥":"♡"}</span><span class="menu-action-label">${active?"Aus Favoriten entfernen":"Aktuelle Meldung merken"}</span>`;
+  favBtn.setAttribute("aria-label",active?"Aktuelle Meldung aus Favoriten entfernen":"Aktuelle Meldung zu Favoriten hinzufügen");
 }
 $("slideFavBtn")?.addEventListener("click",()=>{
   const item=currentSlideItem(); if(!item)return;
   const active=toggleFavorite(item.id);
   if(active)trackAnalyticsEvent("favorite",item.id);
   syncSlideQuickActions();
-  closeQuickActions();
+  closeMainMenu();
 });
 $("slideShareBtn")?.addEventListener("click",()=>{
   const item=currentSlideItem();if(!item)return;
-  closeQuickActions();
+  closeMainMenu();
   shareItem(item);
 });
 
 let reportNewsId=null;
 $("slideReportBtn")?.addEventListener("click",()=>{
   const item=currentSlideItem();if(!item)return;
-  closeQuickActions();
+  closeMainMenu();
   reportNewsId=item.id;
   $("reportNewsTitle").textContent=item.title||"Aktuelle Meldung";$("reportForm").reset();$("reportMessage").textContent="";markFormClean($("reportForm"));$("reportDialog").showModal();
 });
@@ -883,7 +882,10 @@ function restoreFeedAfterMenu(){
 }
 function setMainMenuOpen(open){
   if(!mainMenu||!menuBtn)return;
-  if(open && feed) mainMenuFeedScrollTop=feed.scrollTop;
+  if(open){
+    syncSlideQuickActions();
+    if(feed) mainMenuFeedScrollTop=feed.scrollTop;
+  }
   mainMenu.hidden=!open;
   menuBtn.setAttribute("aria-expanded",String(open));
   document.documentElement.classList.toggle("main-menu-open",open);
@@ -935,31 +937,6 @@ window.addEventListener("appinstalled",()=>{
   syncInstallButton();
 });
 syncInstallButton();
-
-const quickToggleBtn=$("quickToggleBtn"), quickActions=$("quickActions");
-let quickActionsOpen=false;
-function applyQuickActionsState(){
-  if(!quickToggleBtn||!quickActions)return;
-  quickActions.hidden=!quickActionsOpen;
-  quickToggleBtn.textContent="⋮";
-  quickToggleBtn.classList.toggle("active",quickActionsOpen);
-  quickToggleBtn.setAttribute("aria-expanded",String(quickActionsOpen));
-  quickToggleBtn.setAttribute("aria-label",quickActionsOpen?"Meldungsmenü schließen":"Meldungsmenü öffnen");
-}
-function closeQuickActions(){
-  quickActionsOpen=false;
-  applyQuickActionsState();
-}
-quickToggleBtn?.addEventListener("click",(e)=>{
-  e.stopPropagation();
-  quickActionsOpen=!quickActionsOpen;
-  applyQuickActionsState();
-});
-quickActions?.addEventListener("click",e=>e.stopPropagation());
-document.addEventListener("click",e=>{
-  if(quickActionsOpen && !quickActions?.contains(e.target) && e.target!==quickToggleBtn) closeQuickActions();
-});
-applyQuickActionsState();
 
 let slideTextHidden=false;
 function applySlideFocusMode(){
@@ -2059,7 +2036,7 @@ fetchPublicNews({preservePosition:false});
 // selbst alle offenen Good-News-Fenster auf den neuen Build führen. So hängt die
 // installierte PWA nicht mehr an einer alten Cache-/Worker-Version fest.
 // Build 35 – adaptive Überschriften (max. 4 Zeilen) und stärkerer Lesbarkeitsverlauf.
-const GOOD_NEWS_BUILD=50;
+const GOOD_NEWS_BUILD=51;
 let goodNewsSwRegistration=null;
 let goodNewsReloading=false;
 

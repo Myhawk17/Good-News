@@ -1193,12 +1193,6 @@ html.slide-text-hidden .slide.has-image::before{
 .push-admin-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}
 .push-admin-fieldset .message{margin-top:10px}
 
-/* Good News 28 – einklappbare Schnellfunktionen */
-.quick-toggle-btn{display:grid!important;place-items:center;position:relative;z-index:43;font-size:1.55rem;line-height:1}
-.quick-actions{display:flex;flex-direction:column;align-items:center;gap:4px}
-.quick-actions[hidden]{display:none!important}
-.quick-actions .icon-btn{margin:0}
-.slide-report-quick-btn{display:grid!important;place-items:center;position:relative;z-index:42;font-size:1.25rem;line-height:1}
 .report-dialog{width:min(560px,calc(100% - 24px))}
 .report-dialog form{padding:0 20px 22px}
 #reportList .submission-card{margin-bottom:10px}
@@ -1386,57 +1380,9 @@ html.main-menu-open .main-menu{pointer-events:auto}
 .archive-news-meta{font-size:.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:.045em}
 .archive-news-item strong{font-size:.98rem;line-height:1.35}
 
-/* Build 50 – im Feed nur Auge + Meldungsmenü; Aktionen liegen im Drei-Punkte-Menü */
+/* Build 51 – rechte Leiste: nur allgemeines Menü und darunter das Auge.
+   Meldungsaktionen liegen direkt im allgemeinen Menü. */
 .slide-focus-btn{display:grid!important;place-items:center;position:relative;z-index:43}
-.quick-toggle-btn{
-  display:grid!important;
-  place-items:center;
-  position:relative;
-  z-index:45;
-  font-size:1.7rem;
-  line-height:1;
-  font-weight:800;
-}
-.quick-toggle-btn.active{background:#f5f5f5;color:#111}
-.article-action-menu{
-  position:absolute;
-  right:42px;
-  top:84px;
-  z-index:60;
-  width:max-content;
-  min-width:190px;
-  display:grid;
-  gap:3px;
-  padding:7px;
-  border:1px solid #ffffff24;
-  border-radius:14px;
-  background:#151518f2;
-  box-shadow:0 14px 40px #0009;
-  backdrop-filter:blur(10px);
-}
-.article-action-menu[hidden]{display:none!important}
-.article-action-item{
-  display:grid!important;
-  grid-template-columns:26px 1fr;
-  align-items:center;
-  gap:8px;
-  width:100%;
-  min-height:40px;
-  border:0;
-  border-radius:9px;
-  padding:8px 10px;
-  background:transparent;
-  color:#fff;
-  text-align:left;
-  font:inherit;
-}
-.article-action-item:active,.article-action-item.active{background:#ffffff18}
-.article-action-item:disabled{opacity:.45}
-.article-action-item span:first-child{font-size:1.15rem;text-align:center}
-.slide-fav-quick-btn,.slide-share-quick-btn,.slide-report-quick-btn{
-  visibility:visible!important;
-  position:static!important;
-  z-index:auto!important;
-  font-size:inherit!important;
-  line-height:inherit!important;
-}
+#slideFavBtn.active{background:#ffffff18}
+#slideFavBtn:disabled,#slideShareBtn:disabled,#slideReportBtn:disabled{opacity:.45;cursor:default}
+.main-menu .menu-action-label{width:auto!important;text-align:left!important;font-size:inherit!important}

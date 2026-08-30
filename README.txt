@@ -134,3 +134,8 @@ BUILD 49 – RELOAD-SCHLEIFE BEHOBEN
 - Buildnummern in App, Service Worker, UI und version.json sind wieder identisch.
 - Verhindert die wiederholte automatische Update-Navigation, die sich wie ein Seiten-Refresh alle paar Sekunden auswirkte.
 - Zusätzliche 30-Sekunden-Sicherheitsbremse verhindert Reload-Schleifen bei einem unvollständigen Deployment.
+
+Build 51
+- Rechter Feed-Bereich zeigt nur noch das allgemeine Menü und direkt darunter das Auge.
+- Das zusätzliche Drei-Punkte-Meldungsmenü wurde entfernt.
+- Aktionen für die aktuelle Meldung (merken/aus Favoriten entfernen, teilen, Fehler melden) liegen jetzt im allgemeinen Menü.
