@@ -1318,3 +1318,9 @@ html.user-theme-light .app-notice{background:rgba(255,255,255,.98);color:#111114
   .user-settings-footer #saveUserPreferencesBtn{margin-left:0;flex:1}
   .user-settings-footer #resetUserPreferencesBtn{flex:1}
 }
+
+
+/* Build 45: Konto-Registrierung */
+.account-auth-switch{margin-top:18px;padding-top:16px;border-top:1px solid rgba(127,127,127,.22);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.account-auth-switch .secondary{width:auto;min-width:140px}
+.field-hint{display:block;margin-top:5px;font-size:.82rem;opacity:.72}

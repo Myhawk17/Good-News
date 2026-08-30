@@ -14,7 +14,7 @@
   <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-  <link rel="stylesheet" href="style.css?v=73">
+  <link rel="stylesheet" href="style.css?v=74">
 </head>
 <body>
 <header class="appbar">
@@ -39,7 +39,7 @@
         <span class="menu-chevron" aria-hidden="true">›</span>
       </button>
         <button id="accountBtn" type="button"><span>↪</span><span id="accountBtnLabel">Anmelden</span></button>
-        <div class="app-build-label" aria-label="App-Version">Good News · Build 44</div>
+        <div class="app-build-label" aria-label="App-Version">Good News · Build 45</div>
       </div>
       <button class="icon-btn quick-toggle-btn" id="quickToggleBtn" type="button" aria-label="Schnellfunktionen öffnen" aria-expanded="false" aria-controls="quickActions">＋</button>
       <div class="quick-actions" id="quickActions" hidden>
@@ -307,17 +307,45 @@
 
     <section class="settings-section account-settings">
       <div id="settingsLoggedOut">
-        <p class="muted">Melde dich mit deinem Good-News-Konto an.</p>
-        <form id="settingsLoginForm" class="stack">
-          <label>E-Mail
-            <input id="settingsLoginEmail" type="email" autocomplete="email" required>
-          </label>
-          <label>Passwort
-            <input id="settingsLoginPassword" type="password" autocomplete="current-password" required>
-          </label>
-          <button class="primary" type="submit">Anmelden</button>
-          <div id="settingsLoginMessage" class="message" aria-live="polite"></div>
-        </form>
+        <div id="settingsLoginView">
+          <p class="muted">Melde dich mit deinem Good-News-Konto an.</p>
+          <form id="settingsLoginForm" class="stack">
+            <label>E-Mail
+              <input id="settingsLoginEmail" type="email" autocomplete="email" required>
+            </label>
+            <label>Passwort
+              <input id="settingsLoginPassword" type="password" autocomplete="current-password" required>
+            </label>
+            <button class="primary" type="submit">Anmelden</button>
+            <div id="settingsLoginMessage" class="message" aria-live="polite"></div>
+          </form>
+          <div class="account-auth-switch">
+            <span class="muted">Noch kein Konto?</span>
+            <button class="secondary" id="showRegisterBtn" type="button">Konto erstellen</button>
+          </div>
+        </div>
+
+        <div id="settingsRegisterView" hidden>
+          <p class="muted">Erstelle dein Good-News-Konto. Neue Konten erhalten automatisch normale Nutzerrechte.</p>
+          <form id="settingsRegisterForm" class="stack">
+            <label>E-Mail
+              <input id="settingsRegisterEmail" type="email" autocomplete="email" required>
+            </label>
+            <label>Passwort
+              <input id="settingsRegisterPassword" type="password" autocomplete="new-password" minlength="8" required>
+              <span class="field-hint">Mindestens 8 Zeichen.</span>
+            </label>
+            <label>Passwort bestätigen
+              <input id="settingsRegisterPasswordConfirm" type="password" autocomplete="new-password" minlength="8" required>
+            </label>
+            <button class="primary" type="submit">Konto erstellen</button>
+            <div id="settingsRegisterMessage" class="message" aria-live="polite"></div>
+          </form>
+          <div class="account-auth-switch">
+            <span class="muted">Schon registriert?</span>
+            <button class="secondary" id="showLoginBtn" type="button">Zur Anmeldung</button>
+          </div>
+        </div>
       </div>
 
       <div id="settingsLoggedIn" hidden>
@@ -859,6 +887,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="app.js?v=65"></script>
+  <script src="app.js?v=66"></script>
 </body>
 </html>

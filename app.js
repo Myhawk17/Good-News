@@ -913,6 +913,7 @@ function dialogDirtyForms(dialog){
   if(dialog===$("submissionDialog"))return [$("submissionForm")].filter(Boolean);
   if(dialog===$("reportDialog"))return [$("reportForm")].filter(Boolean);
   if(dialog===adminDialog)return [$("newsForm"),$("settingsForm")].filter(Boolean);
+  if(dialog===settingsDialog && $("settingsRegisterView") && !$("settingsRegisterView").hidden)return [$("settingsRegisterForm")].filter(Boolean);
   return [];
 }
 function discardDialogChanges(dialog){
@@ -941,6 +942,11 @@ function discardDialogChanges(dialog){
       markFormClean($("settingsForm"));
     }
   }
+  if(dialog===settingsDialog && $("settingsRegisterForm")){
+    $("settingsRegisterForm").reset();
+    if($("settingsRegisterMessage"))$("settingsRegisterMessage").textContent="";
+    markFormClean($("settingsRegisterForm"));
+  }
 }
 function dirtyDialogMessage(dialog){
   if(dialog===$("submissionDialog"))return "Du hast eine noch nicht eingesendete Nachricht. Möchtest du den Bereich wirklich verlassen und die Eingaben verwerfen?";
@@ -956,7 +962,7 @@ function requestDialogClose(dialog){
   return true;
 }
 document.querySelectorAll("[data-close]").forEach(b=>b.onclick=()=>requestDialogClose($(b.dataset.close)));
-[userPreferencesDialog,$("submissionDialog"),$("reportDialog"),adminDialog].filter(Boolean).forEach(dialog=>{
+[userPreferencesDialog,$("submissionDialog"),$("reportDialog"),settingsDialog,adminDialog].filter(Boolean).forEach(dialog=>{
   dialog.addEventListener("cancel",e=>{
     if(dialogDirtyForms(dialog).some(formIsDirty)){
       e.preventDefault();
@@ -968,7 +974,7 @@ document.querySelectorAll("[data-close]").forEach(b=>b.onclick=()=>requestDialog
   });
 });
 window.addEventListener("beforeunload",e=>{
-  const forms=[$("userPreferencesForm"),$("submissionForm"),$("reportForm"),$("newsForm"),$("settingsForm")].filter(Boolean);
+  const forms=[$("userPreferencesForm"),$("submissionForm"),$("reportForm"),$("settingsRegisterForm"),$("newsForm"),$("settingsForm")].filter(Boolean);
   if(forms.some(formIsDirty)){e.preventDefault();e.returnValue="";}
 });
 let quickActionScrollTimer;
@@ -983,6 +989,7 @@ setTimeout(syncSlideQuickActions,250);
 
 const userPreferencesForm=$("userPreferencesForm");
 trackFormState(userPreferencesForm,"Einstellungen");
+trackFormState($("settingsRegisterForm"),"Registrierung");
 ["prefAppearance","prefTextSize","prefDataSaver","prefAnalytics","prefNotifyMorning","prefNotifyEvening"].forEach(id=>{
   $(id)?.addEventListener("change",()=>{});
 });
@@ -1129,8 +1136,35 @@ $("adminBtn").onclick = async () => {
   await refreshAuth();
 };
 
+function setSettingsAuthMode(mode="login"){
+  const register=mode==="register";
+  if($("settingsLoginView")) $("settingsLoginView").hidden=register;
+  if($("settingsRegisterView")) $("settingsRegisterView").hidden=!register;
+  if($("accountDialogTitle")) $("accountDialogTitle").textContent=register?"Konto erstellen":"Anmelden";
+  if(register){
+    const email=$("settingsLoginEmail")?.value?.trim()||"";
+    if(email && $("settingsRegisterEmail") && !$("settingsRegisterEmail").value) $("settingsRegisterEmail").value=email;
+    markFormClean($("settingsRegisterForm"));
+    if($("settingsRegisterMessage")) $("settingsRegisterMessage").textContent="";
+  }else{
+    markFormClean($("settingsRegisterForm"));
+  }
+}
+
+$("showRegisterBtn")?.addEventListener("click",()=>setSettingsAuthMode("register"));
+$("showLoginBtn")?.addEventListener("click",()=>{
+  const form=$("settingsRegisterForm");
+  if(formIsDirty(form) && !confirmDiscard("Du hast die Registrierung noch nicht abgeschlossen. Möchtest du die Eingaben verwerfen und zur Anmeldung zurückkehren?"))return;
+  if(formIsDirty(form)){
+    form.reset();
+    markFormClean(form);
+  }
+  setSettingsAuthMode("login");
+});
+
 $("accountBtn").onclick = async () => {
   closeMainMenu();
+  setSettingsAuthMode("login");
   settingsDialog.showModal();
   await refreshSettingsAccount();
 };
@@ -1152,7 +1186,10 @@ async function refreshSettingsAccount(){
   loggedIn.hidden=!session;
   $("adminBtn").hidden=!currentUserIsAdmin;
   if($("accountBtnLabel")) $("accountBtnLabel").textContent=session?"Konto":"Anmelden";
-  if($("accountDialogTitle")) $("accountDialogTitle").textContent=session?"Konto":"Anmelden";
+  if($("accountDialogTitle")){
+    const registering=$("settingsRegisterView") && !$("settingsRegisterView").hidden;
+    $("accountDialogTitle").textContent=session?"Konto":(registering?"Konto erstellen":"Anmelden");
+  }
   if(message&&!session)message.textContent="";
   if(session){
     $("settingsWhoAmI").textContent=session.user.email||"Good-News-Konto";
@@ -1174,6 +1211,40 @@ $("settingsLoginForm").onsubmit=async(e)=>{
   await refreshSettingsAccount();
   await fetchPublicNews();
 };
+
+$("settingsRegisterForm")?.addEventListener("submit",async(e)=>{
+  e.preventDefault();
+  const msg=$("settingsRegisterMessage");
+  const email=$("settingsRegisterEmail")?.value.trim()||"";
+  const password=$("settingsRegisterPassword")?.value||"";
+  const confirmPassword=$("settingsRegisterPasswordConfirm")?.value||"";
+  if(!configured){if(msg)msg.textContent="Die Registrierung ist noch nicht verbunden.";return}
+  if(password.length<8){if(msg)msg.textContent="Das Passwort muss mindestens 8 Zeichen lang sein.";return}
+  if(password!==confirmPassword){if(msg)msg.textContent="Die Passwörter stimmen nicht überein.";return}
+  const submitBtn=$("settingsRegisterForm")?.querySelector('button[type="submit"]');
+  if(submitBtn)submitBtn.disabled=true;
+  if(msg)msg.textContent="Konto wird erstellt …";
+  try{
+    const {data,error}=await db.auth.signUp({email,password});
+    if(error)throw error;
+    $("settingsRegisterPassword").value="";
+    $("settingsRegisterPasswordConfirm").value="";
+    markFormClean($("settingsRegisterForm"));
+    if(data?.session){
+      if(msg)msg.textContent="Konto erstellt. Du bist jetzt angemeldet.";
+      showAppNotice("Konto erstellt.");
+      await refreshSettingsAccount();
+      await fetchPublicNews();
+    }else{
+      if(msg)msg.textContent="Konto erstellt. Bitte bestätige jetzt deine E-Mail-Adresse über den Link in deinem Postfach. Danach kannst du dich anmelden.";
+      showAppNotice("Konto erstellt.");
+    }
+  }catch(err){
+    if(msg)msg.textContent=err?.message||String(err);
+  }finally{
+    if(submitBtn)submitBtn.disabled=false;
+  }
+});
 
 $("settingsLogoutBtn").onclick=async()=>{
   if(db)await db.auth.signOut();
@@ -1825,7 +1896,7 @@ fetchPublicNews();
 // selbst alle offenen Good-News-Fenster auf den neuen Build führen. So hängt die
 // installierte PWA nicht mehr an einer alten Cache-/Worker-Version fest.
 // Build 35 – adaptive Überschriften (max. 4 Zeilen) und stärkerer Lesbarkeitsverlauf.
-const GOOD_NEWS_BUILD=44;
+const GOOD_NEWS_BUILD=45;
 let goodNewsSwRegistration=null;
 let goodNewsReloading=false;
 
