@@ -1,9 +1,9 @@
-const CACHE="good-news-v71-build33";
+const CACHE="good-news-v72-build34";
 const STATIC=[
   "./",
   "./index.html",
-  "./style.css?v=69",
-  "./app.js?v=57",
+  "./style.css?v=70",
+  "./app.js?v=58",
   "./config.js",
   "./manifest.json",
   "./favicon-32.png",
@@ -22,6 +22,10 @@ self.addEventListener("install",e=>{
   e.waitUntil(caches.open(CACHE).then(c=>c.addAll(STATIC)));
 });
 
+self.addEventListener("message",event=>{
+  if(event.data?.type==="SKIP_WAITING") self.skipWaiting();
+});
+
 self.addEventListener("activate",e=>{
   e.waitUntil(Promise.all([
     caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))),
@@ -37,7 +41,7 @@ self.addEventListener("fetch",e=>{
   if(u.hostname.includes("supabase.co"))return;
 
   e.respondWith(
-    fetch(e.request).then(response=>{
+    fetch(new Request(e.request,{cache:"no-store"})).then(response=>{
       const copy=response.clone();
       caches.open(CACHE).then(c=>c.put(e.request,copy)).catch(()=>{});
       return response;

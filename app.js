@@ -1590,18 +1590,46 @@ renderCachedFeed();
 trackDailyActive();
 fetchPublicNews();
 
+// Build 34 – PWA-Updates sollen sofort statt erst Stunden später ankommen.
+let goodNewsSwRegistration=null;
+let goodNewsReloading=false;
+async function checkForAppUpdate({manual=false}={}){
+  if(!("serviceWorker" in navigator)){
+    if(manual) alert("Auf diesem Gerät ist kein Service Worker verfügbar.");
+    return;
+  }
+  try{
+    const reg=goodNewsSwRegistration || await navigator.serviceWorker.getRegistration();
+    if(!reg){
+      if(manual) alert("Die Update-Prüfung ist noch nicht bereit. Bitte öffne die App gleich noch einmal.");
+      return;
+    }
+    await reg.update();
+    if(reg.waiting) reg.waiting.postMessage({type:"SKIP_WAITING"});
+    if(manual){
+      // Kurz Zeit für Installation/Aktivierung geben. Falls kein controllerchange kommt,
+      // laden wir trotzdem frisch vom Server.
+      setTimeout(()=>{ if(!goodNewsReloading) location.reload(); },900);
+    }
+  }catch(e){
+    console.warn("App-Update konnte nicht geprüft werden",e);
+    if(manual) alert("Die Update-Prüfung hat gerade nicht geklappt. Bitte versuche es erneut.");
+  }
+}
 if("serviceWorker" in navigator){
+  navigator.serviceWorker.addEventListener("controllerchange",()=>{
+    if(goodNewsReloading)return;
+    goodNewsReloading=true;
+    location.reload();
+  });
   addEventListener("load",async()=>{
     try{
-      const reg=await navigator.serviceWorker.register("sw.js");
-      await reg.update();
-      let reloading=false;
-      navigator.serviceWorker.addEventListener("controllerchange",()=>{
-        if(reloading)return;reloading=true;location.reload();
-      });
+      goodNewsSwRegistration=await navigator.serviceWorker.register("sw.js",{updateViaCache:"none"});
+      await checkForAppUpdate();
     }catch(e){console.warn("Service Worker konnte nicht aktualisiert werden",e)}
   });
 }
+$("checkUpdateBtn")?.addEventListener("click",runMenuAction(()=>checkForAppUpdate({manual:true})));
 
 
 // ---------------- DESIGN & APP SETTINGS ----------------
