@@ -1,11 +1,12 @@
-const CACHE="good-news-v73-build35";
+const CACHE="good-news-v74-build36";
 const STATIC=[
   "./",
   "./index.html",
-  "./style.css?v=70",
-  "./app.js?v=58",
+  "./style.css?v=71",
+  "./app.js?v=59",
   "./config.js",
   "./manifest.json",
+  "./version.json",
   "./favicon-32.png",
   "./apple-touch-icon.png",
   "./icons/icon-192.png",
@@ -17,9 +18,10 @@ const STATIC=[
   "./notification-badge.png"
 ];
 
-self.addEventListener("install",e=>{
+self.addEventListener("install",()=>{
+  // Nicht auf das Vorladen aller Dateien warten: so kann auch ein älterer
+  // Update-Sucher den neuen Worker innerhalb seines kurzen Zeitfensters aktivieren.
   self.skipWaiting();
-  e.waitUntil(caches.open(CACHE).then(c=>c.addAll(STATIC)));
 });
 
 self.addEventListener("message",event=>{

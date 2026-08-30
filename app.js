@@ -1622,42 +1622,130 @@ renderCachedFeed();
 trackDailyActive();
 fetchPublicNews();
 
+// Build 36 – zuverlässige PWA-Updates: Server-Build prüfen, neuen Service Worker
+// aktivieren und erst DANACH neu laden. Dadurch reicht künftig ein Antippen.
 // Build 35 – adaptive Überschriften (max. 4 Zeilen) und stärkerer Lesbarkeitsverlauf.
-// Build 34 – PWA-Updates sollen sofort statt erst Stunden später ankommen.
+const GOOD_NEWS_BUILD=36;
 let goodNewsSwRegistration=null;
 let goodNewsReloading=false;
+
+function goodNewsFreshUrl(remoteBuild){
+  const url=new URL(location.href);
+  url.searchParams.set("gn_build",String(remoteBuild||GOOD_NEWS_BUILD));
+  url.searchParams.set("gn_refresh",String(Date.now()));
+  return url.href;
+}
+
+async function getRemoteBuild(){
+  const url=`version.json?ts=${Date.now()}`;
+  const response=await fetch(url,{cache:"no-store"});
+  if(!response.ok) throw new Error(`Version ${response.status}`);
+  const data=await response.json();
+  const build=Number(data?.build);
+  if(!Number.isFinite(build)) throw new Error("Ungültige Build-Nummer");
+  return build;
+}
+
+function waitForServiceWorkerActivation(reg,expectedBuild,timeoutMs=12000){
+  return new Promise(resolve=>{
+    let settled=false;
+    let timer=null;
+    const finish=value=>{
+      if(settled)return;
+      settled=true;
+      clearTimeout(timer);
+      navigator.serviceWorker.removeEventListener("controllerchange",onControllerChange);
+      resolve(value);
+    };
+    const onControllerChange=()=>finish(true);
+    navigator.serviceWorker.addEventListener("controllerchange",onControllerChange);
+
+    const watch=worker=>{
+      if(!worker)return;
+      const maybeSkip=()=>{
+        if(worker.state==="installed") worker.postMessage({type:"SKIP_WAITING"});
+        if(worker.state==="activated") finish(true);
+      };
+      worker.addEventListener("statechange",maybeSkip);
+      maybeSkip();
+    };
+
+    watch(reg.installing);
+    watch(reg.waiting);
+    if(reg.waiting) reg.waiting.postMessage({type:"SKIP_WAITING"});
+
+    // Falls register() die Installation erst kurz nach dem Promise-Resolve anlegt.
+    let checks=0;
+    const poll=setInterval(()=>{
+      if(settled){clearInterval(poll);return;}
+      watch(reg.installing);
+      if(reg.waiting){
+        watch(reg.waiting);
+        reg.waiting.postMessage({type:"SKIP_WAITING"});
+      }
+      if(++checks>=24) clearInterval(poll);
+    },250);
+
+    timer=setTimeout(()=>{clearInterval(poll);finish(false)},timeoutMs);
+  });
+}
+
+async function installRemoteBuild(remoteBuild){
+  // Eigene URL pro Build + Zeitstempel umgeht Browser-/CDN-Zwischencaches auch
+  // bei installierten Android-PWAs.
+  const swUrl=`sw.js?v=${encodeURIComponent(remoteBuild)}&ts=${Date.now()}`;
+  const reg=await navigator.serviceWorker.register(swUrl,{scope:"./",updateViaCache:"none"});
+  goodNewsSwRegistration=reg;
+  await reg.update().catch(()=>{});
+  const activated=await waitForServiceWorkerActivation(reg,remoteBuild);
+  return activated;
+}
+
 async function checkForAppUpdate({manual=false}={}){
   if(!("serviceWorker" in navigator)){
     if(manual) alert("Auf diesem Gerät ist kein Service Worker verfügbar.");
     return;
   }
   try{
-    const reg=goodNewsSwRegistration || await navigator.serviceWorker.getRegistration();
-    if(!reg){
-      if(manual) alert("Die Update-Prüfung ist noch nicht bereit. Bitte öffne die App gleich noch einmal.");
+    const remoteBuild=await getRemoteBuild();
+    if(remoteBuild<=GOOD_NEWS_BUILD){
+      // Trotzdem den Worker prüfen, falls nur Cache-Dateien geändert wurden.
+      const reg=goodNewsSwRegistration || await navigator.serviceWorker.getRegistration();
+      if(reg) await reg.update().catch(()=>{});
+      if(manual) alert(`Du nutzt bereits die aktuelle Version (Build ${GOOD_NEWS_BUILD}).`);
       return;
     }
-    await reg.update();
-    if(reg.waiting) reg.waiting.postMessage({type:"SKIP_WAITING"});
-    if(manual){
-      // Kurz Zeit für Installation/Aktivierung geben. Falls kein controllerchange kommt,
-      // laden wir trotzdem frisch vom Server.
-      setTimeout(()=>{ if(!goodNewsReloading) location.reload(); },900);
-    }
+
+    if(manual) $("checkUpdateBtn")?.setAttribute("disabled","");
+    const activated=await installRemoteBuild(remoteBuild);
+
+    // Erst nach Aktivierung neu laden. Mit Cache-Buster kommt garantiert die
+    // neue index.html statt noch einmal die alte Build-Anzeige.
+    goodNewsReloading=true;
+    location.replace(goodNewsFreshUrl(remoteBuild));
+
+    // Fallback ist absichtlich erst spät; normalerweise kommt vorher controllerchange.
+    if(!activated) setTimeout(()=>location.replace(goodNewsFreshUrl(remoteBuild)),400);
   }catch(e){
     console.warn("App-Update konnte nicht geprüft werden",e);
     if(manual) alert("Die Update-Prüfung hat gerade nicht geklappt. Bitte versuche es erneut.");
+  }finally{
+    if(manual) $("checkUpdateBtn")?.removeAttribute("disabled");
   }
 }
+
 if("serviceWorker" in navigator){
   navigator.serviceWorker.addEventListener("controllerchange",()=>{
+    // Bei normalen Hintergrund-Updates nur dann sofort neu laden, wenn wir gerade
+    // aktiv einen Update-Wechsel durchführen. Sonst bleibt die App ruhig.
     if(goodNewsReloading)return;
-    goodNewsReloading=true;
-    location.reload();
   });
   addEventListener("load",async()=>{
     try{
-      goodNewsSwRegistration=await navigator.serviceWorker.register("sw.js",{updateViaCache:"none"});
+      goodNewsSwRegistration=await navigator.serviceWorker.register(
+        `sw.js?v=${GOOD_NEWS_BUILD}`,
+        {scope:"./",updateViaCache:"none"}
+      );
       await checkForAppUpdate();
     }catch(e){console.warn("Service Worker konnte nicht aktualisiert werden",e)}
   });

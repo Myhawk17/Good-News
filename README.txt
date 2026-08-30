@@ -94,6 +94,12 @@ Neu in der Redaktion: „Entwürfe - Dreier“. Automatisch eingehende Dreier we
 
 WICHTIG: Nach dem Update den neuen Abschnitt aus SUPABASE_SETUP.sql im Supabase SQL Editor ausführen, damit die Tabelle triple_drafts existiert.
 
+BUILD 36 – UPDATE-SUCHE
+- Update-Suche wartet jetzt auf die Aktivierung des neuen Service Workers und lädt erst danach neu.
+- version.json liefert die aktuelle Build-Nummer cachefrei.
+- Cache-Buster verhindert, dass nach dem Neustart nochmals die alte index.html erscheint.
+- Service-Worker-Installation blockiert nicht mehr am Vorladen aller Dateien; dadurch funktioniert auch der Wechsel von Build 35 schneller.
+
 BUILD 35 – MOBILE NEWS-SLIDES
 -----------------------------
 - Referenzansicht im Displaytest: 360 × 640 (auf dem verwendeten Testgerät etwa 77 % Vorschaugröße)
