@@ -687,11 +687,47 @@ function buildSlide(item, index, total) {
   return article;
 }
 
-function scrollToNews(id) {
+function clearSearchHighlights(){
+  feed.querySelectorAll("mark.search-hit-mark").forEach(mark=>{
+    const parent=mark.parentNode;
+    mark.replaceWith(document.createTextNode(mark.textContent||""));
+    parent?.normalize?.();
+  });
+}
+function escapeRegExp(value){return String(value).replace(/[.*+?^${}()|[\]\\]/g,"\\$&")}
+function highlightSearchTerm(target,term){
+  clearSearchHighlights();
+  const q=String(term||"").trim();
+  if(!target||!q)return;
+  const re=new RegExp(escapeRegExp(q),"gi");
+  target.querySelectorAll("h1,.summary,.pill,.news-byline").forEach(el=>{
+    const nodes=[];
+    const walker=document.createTreeWalker(el,NodeFilter.SHOW_TEXT);
+    while(walker.nextNode())nodes.push(walker.currentNode);
+    nodes.forEach(node=>{
+      const text=node.nodeValue||"";
+      re.lastIndex=0;
+      if(!re.test(text))return;
+      re.lastIndex=0;
+      const frag=document.createDocumentFragment();
+      let last=0,match;
+      while((match=re.exec(text))){
+        if(match.index>last)frag.append(document.createTextNode(text.slice(last,match.index)));
+        const mark=document.createElement("mark");mark.className="search-hit-mark";mark.textContent=match[0];frag.append(mark);
+        last=match.index+match[0].length;
+        if(match[0].length===0)break;
+      }
+      if(last<text.length)frag.append(document.createTextNode(text.slice(last)));
+      node.replaceWith(frag);
+    });
+  });
+}
+function scrollToNews(id,{highlightTerm=""}={}) {
   const target = feed.querySelector(`[data-id="${CSS.escape(String(id))}"]`);
   if (target) {
     readerDialog.open && readerDialog.close();
     target.scrollIntoView({behavior:"smooth",block:"start"});
+    setTimeout(()=>highlightSearchTerm(target,highlightTerm),280);
   }
 }
 
@@ -723,41 +759,58 @@ function currentSlideItem(){
   return allNews.find(n=>String(n.id)===String(best.dataset.id))||null;
 }
 function syncSlideQuickActions(){
-  const item=currentSlideItem(), favBtn=$("slideFavBtn"), shareBtn=$("slideShareBtn"), reportBtn=$("slideReportBtn");
+  const item=currentSlideItem(), favBtn=$("slideFavQuickBtn"), shareBtn=$("slideShareQuickBtn"), reportBtn=$("slideReportQuickBtn");
   const available=!!item;
   [favBtn,shareBtn,reportBtn].filter(Boolean).forEach(btn=>btn.disabled=!available);
   if(!available||!favBtn)return;
   const active=isFavorite(item.id);
   favBtn.classList.toggle("active",active);
-  favBtn.innerHTML=`<span aria-hidden="true">${active?"♥":"♡"}</span><span class="menu-action-label">${active?"Aus Favoriten entfernen":"Aktuelle Meldung merken"}</span>`;
+  favBtn.textContent=active?"♥":"♡";
   favBtn.setAttribute("aria-label",active?"Aktuelle Meldung aus Favoriten entfernen":"Aktuelle Meldung zu Favoriten hinzufügen");
+  favBtn.title=active?"Aus Favoriten entfernen":"Favorit";
 }
-$("slideFavBtn")?.addEventListener("click",()=>{
+function setSlideQuickActionsOpen(open){
+  const panel=$("slideQuickActions"), toggle=$("slideActionsToggleBtn");
+  if(!panel||!toggle)return;
+  if(open){
+    closeMainMenu();
+    syncSlideQuickActions();
+  }
+  panel.hidden=!open;
+  toggle.setAttribute("aria-expanded",String(open));
+  toggle.classList.toggle("active",open);
+}
+$("slideActionsToggleBtn")?.addEventListener("click",e=>{
+  e.preventDefault();e.stopPropagation();
+  setSlideQuickActionsOpen($("slideQuickActions")?.hidden!==false);
+});
+$("slideFavQuickBtn")?.addEventListener("click",()=>{
   const item=currentSlideItem(); if(!item)return;
   const active=toggleFavorite(item.id);
   if(active)trackAnalyticsEvent("favorite",item.id);
   syncSlideQuickActions();
-  closeMainMenu();
 });
-$("slideShareBtn")?.addEventListener("click",()=>{
+$("slideShareQuickBtn")?.addEventListener("click",()=>{
   const item=currentSlideItem();if(!item)return;
-  closeMainMenu();
   shareItem(item);
 });
 
 let reportNewsId=null;
-$("slideReportBtn")?.addEventListener("click",()=>{
+function openReportForCurrentSlide(){
   const item=currentSlideItem();if(!item)return;
-  closeMainMenu();
+  setSlideQuickActionsOpen(false);
   reportNewsId=item.id;
   $("reportNewsTitle").textContent=item.title||"Aktuelle Meldung";$("reportForm").reset();$("reportMessage").textContent="";markFormClean($("reportForm"));$("reportDialog").showModal();
-});
+}
+$("slideReportQuickBtn")?.addEventListener("click",openReportForCurrentSlide);
 $("reportForm")?.addEventListener("submit",async e=>{
   e.preventDefault();const msg=$("reportMessage");if(!configured||!reportNewsId){msg.textContent="Meldung konnte nicht gesendet werden.";return;}
+  const comment=$("reportComment").value.trim();
+  if(comment.length<5){msg.textContent="Bitte beschreibe kurz, was genau falsch ist (mindestens 5 Zeichen).";$("reportComment").focus();return;}
   msg.textContent="Wird gesendet …";
   try{
     const {data:{user}}=await db.auth.getUser();
-    const {error}=await db.from("news_reports").insert({news_id:reportNewsId,reporter_user_id:user?.id||null,report_type:$("reportType").value,comment:$("reportComment").value.trim()||null});
+    const {error}=await db.from("news_reports").insert({news_id:reportNewsId,reporter_user_id:user?.id||null,report_type:$("reportType").value,comment});
     if(error)throw error;msg.textContent="Danke! Dein Hinweis ist bei der Redaktion angekommen. 💛";markFormClean($("reportForm"));setTimeout(()=>$("reportDialog").open&&$("reportDialog").close(),1400);
   }catch(err){msg.textContent="Das hat leider nicht geklappt: "+(err.message||String(err));}
 });
@@ -821,7 +874,7 @@ function openSearch() {
         <div class="result-meta">${esc(fmtDateShort(n.published_date))} · ${esc(n.category)}</div>
         <h4>${esc(n.title)}</h4>
       </button></div>`).join("") || `<p class="muted">Keine Treffer.</p>`;
-    result.querySelectorAll("[data-jump]").forEach(b=>b.onclick=()=>scrollToNews(b.dataset.jump));
+    result.querySelectorAll("[data-jump]").forEach(b=>b.onclick=()=>scrollToNews(b.dataset.jump,{highlightTerm:input.value.trim()}));
   };
   input.oninput = run;
   $("readerContent").querySelectorAll("[data-cat]").forEach(btn=>btn.onclick=()=>{
@@ -849,14 +902,15 @@ function openArchive() {
         </summary>
         <div class="archive-items">
           ${sorted.map(n=>`
-            <button class="archive-news-item" type="button" data-jump="${n.id}">
-              <span class="archive-news-meta">${esc(n.published_time?.slice(0,5)||"")} · ${esc(displayCategory(n))}</span>
-              <strong>${esc(displayTitle(n))}</strong>
+            <button class="compact-news-item archive-news-item" type="button" data-jump="${n.id}" title="${esc(displayTitle(n))}">
+              <span class="compact-news-meta"><b>${esc(n.published_time?.slice(0,5)||"")}</b><small>${esc(displayCategory(n))}</small></span>
+              <strong class="compact-list-title">${esc(displayTitle(n))}</strong>
+              <span class="compact-list-chevron" aria-hidden="true">›</span>
             </button>`).join("")}
         </div>
       </details>`;
   }).join("");
-  openReader("Archiv","Tippe auf einen Tag, um die Meldungen aufzuklappen.",html || "<p>Noch kein Archiv vorhanden.</p>");
+  openReader("Archiv","Nach Tagen geordnet – antippen zum Aufklappen.",html || "<p>Noch kein Archiv vorhanden.</p>");
   $("readerContent").querySelectorAll("[data-jump]").forEach(btn=>btn.onclick=()=>scrollToNews(btn.dataset.jump));
 }
 
@@ -864,11 +918,14 @@ function openFavorites() {
   const ids = getFavorites().map(String);
   const items = allNews.filter(n=>ids.includes(String(n.id)));
   const html = items.map(n=>`
-    <div class="favorite-item"><button data-jump="${n.id}">
-      <div class="result-meta">${esc(fmtDateShort(n.published_date))} · ${esc(n.category)}</div>
-      <h4>${esc(n.title)}</h4>
-    </button></div>`).join("");
-  openReader("Gespeichert","Deine Favoriten",html || `<p class="muted">Du hast noch keine Nachrichten gespeichert.</p>`);
+    <div class="favorite-item compact-favorite-item">
+      <button class="compact-news-item" data-jump="${n.id}" title="${esc(displayTitle(n))}">
+        <span class="compact-news-meta"><b>${esc(fmtDateShort(n.published_date))}</b><small>${esc(displayCategory(n))}</small></span>
+        <strong class="compact-list-title">${esc(displayTitle(n))}</strong>
+        <span class="compact-list-chevron" aria-hidden="true">›</span>
+      </button>
+    </div>`).join("");
+  openReader("Meine Favoriten","Von dir gespeicherte Meldungen",html || `<p class="muted">Du hast noch keine Nachrichten gespeichert.</p>`);
   $("readerContent").querySelectorAll("[data-jump]").forEach(b=>b.onclick=()=>scrollToNews(b.dataset.jump));
 }
 
@@ -887,6 +944,7 @@ function restoreFeedAfterMenu(){
 function setMainMenuOpen(open){
   if(!mainMenu||!menuBtn)return;
   if(open){
+    setSlideQuickActionsOpen(false);
     syncSlideQuickActions();
     if(feed) mainMenuFeedScrollTop=feed.scrollTop;
   }
@@ -967,6 +1025,8 @@ $("userPreferencesBtn").onclick = runMenuAction(async()=>{
 });
 document.addEventListener("click",(e)=>{
   if(!mainMenu.hidden && !mainMenu.contains(e.target) && e.target!==menuBtn) closeMainMenu();
+  const quick=$("slideQuickActions"), quickToggle=$("slideActionsToggleBtn");
+  if(quick && !quick.hidden && !quick.contains(e.target) && e.target!==quickToggle) setSlideQuickActionsOpen(false);
 });
 document.addEventListener("keydown",(e)=>{if(e.key==="Escape")closeMainMenu()});
 $("homeBtn").onclick = () => {closeMainMenu();feed.scrollTo({top:0,behavior:"smooth"});}
@@ -2045,7 +2105,7 @@ fetchPublicNews({preservePosition:false});
 // selbst alle offenen Good-News-Fenster auf den neuen Build führen. So hängt die
 // installierte PWA nicht mehr an einer alten Cache-/Worker-Version fest.
 // Build 35 – adaptive Überschriften (max. 4 Zeilen) und stärkerer Lesbarkeitsverlauf.
-const GOOD_NEWS_BUILD=52;
+const GOOD_NEWS_BUILD=53;
 let goodNewsSwRegistration=null;
 let goodNewsReloading=false;
 

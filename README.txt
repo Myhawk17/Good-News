@@ -145,3 +145,10 @@ BUILD 52 – SYMBOLBILD-KENNZEICHNUNG
 - Feed: Quellenzeile bleibt dreigeteilt: links Textquelle, mittig nur bei Bedarf „Symbolbild“, rechts Bildquelle.
 - Automatische Entwürfe können is_symbol_image=true/false mitliefern; die App übernimmt die Kennzeichnung beim Import.
 - Supabase: news.is_symbol_image speichert die Kennzeichnung dauerhaft.
+
+BUILD 53 – PLUS-MENÜ, SUCHE & KOMPAKTE LISTEN
+- Rechter Slide-Bereich: Menüzeichen und Plus sind dauerhaft sichtbar. Das Plus klappt Auge, Favorit, Teilen und Fehler melden untereinander auf.
+- Hauptmenü: „Favoriten“ heißt jetzt „Meine Favoriten“.
+- Suche: Beim Öffnen eines Suchtreffers wird der eingegebene Begriff im Slide sichtbar markiert.
+- Archiv und Meine Favoriten: kompaktere Zeilen mit kleiner Meta-Spalte, zweizeilig begrenzter Überschrift und Pfeil statt großer Titelblöcke.
+- Fehlermeldungen: Beschreibung ist Pflicht (mindestens 5 Zeichen); die Datenbank erzwingt dies ebenfalls.

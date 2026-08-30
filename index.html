@@ -14,7 +14,7 @@
   <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-  <link rel="stylesheet" href="style.css?v=76">
+  <link rel="stylesheet" href="style.css?v=77">
 </head>
 <body>
 <header class="appbar">
@@ -27,12 +27,8 @@
       <div class="main-menu" id="mainMenu" hidden>
         <button id="searchBtn" type="button"><span>⌕</span>Suche</button>
         <button id="archiveBtn" type="button"><span>▦</span>Archiv</button>
-        <button id="favoritesBtn" type="button"><span>♡</span>Favoriten</button>
+        <button id="favoritesBtn" type="button"><span>♡</span>Meine Favoriten</button>
         <button id="submitNewsBtn" type="button"><span>＋</span>Nachricht einreichen</button>
-        <div class="menu-separator" aria-hidden="true"></div>
-        <button id="slideFavBtn" type="button" aria-label="Aktuelle Meldung zu Favoriten hinzufügen"><span aria-hidden="true">♡</span><span class="menu-action-label">Aktuelle Meldung merken</span></button>
-        <button id="slideShareBtn" type="button" aria-label="Aktuelle Meldung teilen"><span aria-hidden="true">↗</span><span class="menu-action-label">Aktuelle Meldung teilen</span></button>
-        <button id="slideReportBtn" type="button" aria-label="Fehler in aktueller Meldung melden"><span aria-hidden="true">⚑</span><span class="menu-action-label">Fehler melden</span></button>
         <div class="menu-separator" aria-hidden="true"></div>
         <button id="userPreferencesBtn" type="button"><span>⚙</span>Einstellungen</button>
         <button id="installAppBtn" type="button" hidden><span>⇩</span>App installieren</button>
@@ -43,14 +39,20 @@
         <span class="menu-chevron" aria-hidden="true">›</span>
       </button>
         <button id="accountBtn" type="button"><span>↪</span><span id="accountBtnLabel">Anmelden</span></button>
-        <div class="app-build-label" aria-label="App-Version">Good News · Build 52</div>
+        <div class="app-build-label" aria-label="App-Version">Good News · Build 53</div>
       </div>
-      <button class="icon-btn slide-focus-btn" id="slideFocusBtn" type="button" aria-label="Slide-Text ausblenden" aria-pressed="false" title="Text ausblenden">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"></path>
-          <circle cx="12" cy="12" r="2.6"></circle>
-        </svg>
-      </button>
+      <button class="icon-btn slide-actions-toggle-btn" id="slideActionsToggleBtn" type="button" aria-label="Meldungsaktionen öffnen" aria-expanded="false" aria-controls="slideQuickActions">＋</button>
+      <div class="slide-quick-actions" id="slideQuickActions" hidden>
+        <button class="icon-btn slide-focus-btn" id="slideFocusBtn" type="button" aria-label="Slide-Text ausblenden" aria-pressed="false" title="Text ausblenden">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"></path>
+            <circle cx="12" cy="12" r="2.6"></circle>
+          </svg>
+        </button>
+        <button class="icon-btn slide-fav-quick-btn" id="slideFavQuickBtn" type="button" aria-label="Aktuelle Meldung zu Favoriten hinzufügen" title="Favorit">♡</button>
+        <button class="icon-btn slide-share-quick-btn" id="slideShareQuickBtn" type="button" aria-label="Aktuelle Meldung teilen" title="Teilen">↗</button>
+        <button class="icon-btn slide-report-quick-btn" id="slideReportQuickBtn" type="button" aria-label="Fehler in aktueller Meldung melden" title="Fehler melden">⚑</button>
+      </div>
       <button class="icon-btn admin-quick-btn" id="adminBtn" aria-label="Redaktion öffnen" hidden>⚙</button>
     </div>
   </header>
@@ -88,7 +90,7 @@
           <option value="content">Inhaltlicher Fehler</option><option value="source">Quelle / Link fehlerhaft</option><option value="image">Bild / Bildquelle fehlerhaft</option><option value="spelling">Rechtschreibfehler</option><option value="other">Sonstiges</option>
         </select>
       </label>
-      <label>Hinweis (optional)<textarea id="reportComment" rows="4" maxlength="1000" placeholder="Was sollten wir prüfen?"></textarea></label>
+      <label>Was genau ist falsch?<textarea id="reportComment" rows="4" minlength="5" maxlength="1000" required placeholder="Beschreibe bitte kurz, was genau geprüft oder korrigiert werden soll."></textarea></label>
       <button class="primary" type="submit">Meldung senden</button><div id="reportMessage" class="message"></div>
     </form>
   </dialog>
@@ -275,7 +277,7 @@
         <p>Push-Benachrichtigungen sind freiwillig. Sie werden nur aktiviert, wenn du sie in den Einstellungen einschaltest und die Berechtigung deines Browsers bzw. Betriebssystems erteilst. Für den Versand werden ein Push-Endpunkt, die dafür technisch erforderlichen Verschlüsselungsschlüssel, eine zufällig erzeugte technische Gerätekennung zur Vermeidung doppelter Abonnements sowie deine gewählten Benachrichtigungszeiten und Kategorien bei Supabase gespeichert. Die Verarbeitung beruht auf deiner Einwilligung nach Art. 6 Abs. 1 lit. a DSGVO. Du kannst Push-Benachrichtigungen jederzeit in Good News oder in den Geräteeinstellungen deaktivieren.</p>
 
         <h4>8. Gute Nachricht einreichen und Fehler melden</h4>
-        <p>Wenn du eine gute Nachricht einreichst, werden Überschrift, Text, Quellenlink, Kategorie sowie freiwillige Angaben wie Ort und Name/Pseudonym gespeichert und redaktionell geprüft. Ein Name oder Pseudonym wird nur veröffentlicht, wenn du die dafür vorgesehene Zustimmung ausdrücklich aktivierst. Bei einer Fehlermeldung zu einem Beitrag werden die Art des Hinweises, ein freiwilliger Kommentar und die betroffene Meldung gespeichert; bei angemeldeten Nutzern kann zusätzlich die Nutzerkennung zugeordnet werden.</p>
+        <p>Wenn du eine gute Nachricht einreichst, werden Überschrift, Text, Quellenlink, Kategorie sowie freiwillige Angaben wie Ort und Name/Pseudonym gespeichert und redaktionell geprüft. Ein Name oder Pseudonym wird nur veröffentlicht, wenn du die dafür vorgesehene Zustimmung ausdrücklich aktivierst. Bei einer Fehlermeldung zu einem Beitrag werden die Art des Hinweises, die Beschreibung des Fehlers und die betroffene Meldung gespeichert; bei angemeldeten Nutzern kann zusätzlich die Nutzerkennung zugeordnet werden.</p>
         <p>Die redaktionelle Bearbeitung freiwillig übermittelter Hinweise erfolgt auf Grundlage von Art. 6 Abs. 1 lit. f DSGVO. Eine Veröffentlichung eines freiwillig angegebenen Namens/Pseudonyms erfolgt nur auf Grundlage deiner Einwilligung nach Art. 6 Abs. 1 lit. a DSGVO.</p>
 
         <h4>9. Externe Quellen und Links</h4>
@@ -888,6 +890,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="app.js?v=70"></script>
+  <script src="app.js?v=71"></script>
 </body>
 </html>

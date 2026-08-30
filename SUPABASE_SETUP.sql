@@ -474,3 +474,10 @@ alter table public.push_subscriptions
   add column if not exists device_key text null;
 create index if not exists push_subscriptions_device_key_idx
   on public.push_subscriptions(device_key);
+
+
+-- BUILD 53: Fehlermeldungen benötigen immer eine konkrete Beschreibung.
+-- Im bereits verbundenen Projekt wurde diese Migration bereits ausgeführt.
+alter table public.news_reports alter column comment set not null;
+alter table public.news_reports drop constraint if exists news_reports_comment_required;
+alter table public.news_reports add constraint news_reports_comment_required check (char_length(btrim(comment)) >= 5);
