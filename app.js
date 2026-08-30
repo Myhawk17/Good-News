@@ -418,7 +418,7 @@ function setupState() {
   </div></section>`;
 }
 
-async function fetchPublicNews() {
+async function fetchPublicNews({preservePosition=true}={}) {
   if(!backendConfigured)return setupState();
 
   const cachedWasShown=allNews.length>0 || renderCachedFeed();
@@ -447,7 +447,7 @@ async function fetchPublicNews() {
     writeCachedPublicNews(allNews);
 
     const deepId=new URL(location.href).searchParams.get("news");
-    renderFeed({startId:deepId});
+    renderFeed({startId:deepId,preservePosition:!deepId && preservePosition});
 
     // Reaktionen sind derzeit nicht Bestandteil der sichtbaren App und werden deshalb nicht geladen.
   }catch(err){
@@ -489,7 +489,7 @@ function datePlus(d,n){let x=new Date(d);x.setDate(x.getDate()+n);return x}
 function isoLocal(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`}
 function germanHolidayMap(y){let e=easterSunday(y),m={},add=(d,i,t)=>m[isoLocal(d)]=[i,t];add(new Date(y,0,1,12),"🎆","Neujahr");add(datePlus(e,-2),"✝️","Karfreitag");add(datePlus(e,1),"🌷","Ostermontag");add(new Date(y,4,1,12),"🌼","Tag der Arbeit");add(datePlus(e,39),"☁️","Christi Himmelfahrt");add(datePlus(e,50),"🕊️","Pfingstmontag");add(new Date(y,9,3,12),"🇩🇪","Tag der Deutschen Einheit");add(new Date(y,11,25,12),"🎄","1. Weihnachtstag");add(new Date(y,11,26,12),"🎄","2. Weihnachtstag");return m}
 function specialDayFor(s){let d=new Date(`${s}T12:00:00`),h=germanHolidayMap(d.getFullYear());return h[s]||SPECIAL_DAYS[s.slice(5)]||null}
-function buildDateSlide(s){let today=isoLocal(new Date()),past=s<today,d=new Date(`${s}T12:00:00`),wd=new Intl.DateTimeFormat("de-DE",{weekday:"long"}).format(d).toUpperCase(),dm=new Intl.DateTimeFormat("de-DE",{day:"2-digit",month:"long"}).format(d),sp=specialDayFor(s),sec=document.createElement("section");sec.className=`date-slide${past?" past":""}`;sec.innerHTML=`<img class="date-slide-art" src="date-slide-background-v2.png" alt="" aria-hidden="true"><div class="date-slide-overlay"></div><div class="date-slide-bottom"><div class="date-slide-weekday">${esc(wd)}</div><div class="date-slide-date">${esc(dm)}</div><div class="date-slide-year">${d.getFullYear()}</div>${sp?`<div class="date-slide-special"><span>HEUTE IST</span><strong>${esc(sp[0])} ${esc(sp[1])}</strong></div>`:""}<div class="date-slide-hint">↓ Zu den Good News</div></div>`;return sec}
+function buildDateSlide(s){let today=isoLocal(new Date()),past=s<today,d=new Date(`${s}T12:00:00`),wd=new Intl.DateTimeFormat("de-DE",{weekday:"long"}).format(d).toUpperCase(),dm=new Intl.DateTimeFormat("de-DE",{day:"2-digit",month:"long"}).format(d),sp=specialDayFor(s),sec=document.createElement("section");sec.className=`date-slide${past?" past":""}`;sec.dataset.feedKey=`date:${s}`;sec.innerHTML=`<img class="date-slide-art" src="date-slide-background-v2.png" alt="" aria-hidden="true"><div class="date-slide-overlay"></div><div class="date-slide-bottom"><div class="date-slide-weekday">${esc(wd)}</div><div class="date-slide-date">${esc(dm)}</div><div class="date-slide-year">${d.getFullYear()}</div>${sp?`<div class="date-slide-special"><span>HEUTE IST</span><strong>${esc(sp[0])} ${esc(sp[1])}</strong></div>`:""}<div class="date-slide-hint">↓ Zu den Good News</div></div>`;return sec}
 
 
 function headlineLineCount(headline){
@@ -545,7 +545,36 @@ function scheduleSlideFit(){
   requestAnimationFrame(()=>requestAnimationFrame(fitSlidesToViewport));
 }
 
-function renderFeed({startId=null}={}) {
+function captureFeedPosition(){
+  if(!feed || !feed.children.length)return null;
+  const feedRect=feed.getBoundingClientRect();
+  let best=null,bestDistance=Infinity;
+  for(const el of feed.querySelectorAll("[data-feed-key]")){
+    const rect=el.getBoundingClientRect();
+    const distance=Math.abs(rect.top-feedRect.top);
+    if(distance<bestDistance){
+      bestDistance=distance;
+      best={key:el.dataset.feedKey,offset:rect.top-feedRect.top,scrollTop:feed.scrollTop};
+    }
+  }
+  return best||{key:null,offset:0,scrollTop:feed.scrollTop};
+}
+function restoreFeedPosition(anchor){
+  if(!anchor||!feed)return;
+  const apply=()=>{
+    const el=anchor.key?[...feed.querySelectorAll("[data-feed-key]")].find(x=>x.dataset.feedKey===anchor.key):null;
+    if(el){
+      const feedRect=feed.getBoundingClientRect();
+      const rect=el.getBoundingClientRect();
+      feed.scrollTop += (rect.top-feedRect.top)-anchor.offset;
+    }else{
+      feed.scrollTop=Math.min(anchor.scrollTop||0,Math.max(0,feed.scrollHeight-feed.clientHeight));
+    }
+  };
+  requestAnimationFrame(()=>requestAnimationFrame(apply));
+}
+function renderFeed({startId=null,preservePosition=false}={}) {
+  const anchor=preservePosition?captureFeedPosition():null;
   const data = activeCategory === "Alle" ? allNews : allNews.filter(n => categoryBucket(n) === activeCategory);
   feed.innerHTML = "";
   if (!data.length) {
@@ -560,6 +589,7 @@ function renderFeed({startId=null}={}) {
   });
   scheduleSlideFit();
   if (startId) setTimeout(() => scrollToNews(startId), 30);
+  else if(anchor) restoreFeedPosition(anchor);
 }
 
 window.addEventListener("resize",scheduleSlideFit,{passive:true});
@@ -611,6 +641,7 @@ function buildSlide(item, index, total) {
   const article = document.createElement("article");
   article.className = `slide${item.image_url ? " has-image" : ""}`;
   article.dataset.id = item.id;
+  article.dataset.feedKey = `news:${item.id}`;
 
   const primarySource = sourcesOf(item)[0];
   const fav = isFavorite(item.id);
@@ -823,15 +854,18 @@ function openFavorites() {
 
 const mainMenu=$("mainMenu");
 const menuBtn=$("menuBtn");
-function closeMainMenu(){
-  mainMenu.hidden=true;
-  menuBtn.setAttribute("aria-expanded","false");
+function setMainMenuOpen(open){
+  if(!mainMenu||!menuBtn)return;
+  mainMenu.hidden=!open;
+  menuBtn.setAttribute("aria-expanded",String(open));
+  document.documentElement.classList.toggle("main-menu-open",open);
+  if(open) mainMenu.scrollTop=0;
 }
+function closeMainMenu(){setMainMenuOpen(false)}
 menuBtn.onclick=(e)=>{
+  e.preventDefault();
   e.stopPropagation();
-  const willOpen=mainMenu.hidden;
-  mainMenu.hidden=!willOpen;
-  menuBtn.setAttribute("aria-expanded",String(willOpen));
+  setMainMenuOpen(mainMenu.hidden);
 };
 function runMenuAction(fn){return (...args)=>{closeMainMenu();return fn(...args)}}
 $("searchBtn").onclick = runMenuAction(openSearch);
@@ -895,7 +929,8 @@ $("slideFocusBtn")?.addEventListener("click",()=>{
 });
 applySlideFocusMode();
 
-$("userPreferencesBtn").onclick = runMenuAction(()=>{
+$("userPreferencesBtn").onclick = runMenuAction(async()=>{
+  await syncPushPreferencesForCurrentAccount().catch(()=>{});
   populateUserPreferences();
   markFormClean($("userPreferencesForm"));
   if($("userPreferencesMessage")) $("userPreferencesMessage").textContent="";
@@ -1018,8 +1053,12 @@ userPreferencesForm?.addEventListener("submit",async e=>{
       else await savePushSubscription(existing,next);
       localStorage.setItem("goodnews_push_enabled","1");
     }else{
-      const existing=await getPushSubscription();
-      if(existing)await disablePush();
+      // Nur ein für dieses Konto zuvor aktives Push-Abo abschalten. So kann ein
+      // neues/anderes Konto nicht versehentlich das Abo des vorherigen Kontos löschen.
+      if(previous.notifications){
+        const existing=await getPushSubscription();
+        if(existing)await disablePush();
+      }
       localStorage.setItem("goodnews_push_enabled","0");
     }
 
@@ -1032,7 +1071,7 @@ userPreferencesForm?.addEventListener("submit",async e=>{
     }else if(!previous.analytics){
       await trackDailyActive();
     }
-    if(allNews.length)renderFeed();
+    if(allNews.length)renderFeed({preservePosition:true});
     markFormClean(userPreferencesForm);
     setShortMessage(msg,"Gespeichert.");
     showAppNotice("Gespeichert.");
@@ -1209,7 +1248,7 @@ $("settingsLoginForm").onsubmit=async(e)=>{
   msg.textContent="";
   $("settingsLoginPassword").value="";
   await refreshSettingsAccount();
-  await fetchPublicNews();
+  await syncPushPreferencesForCurrentAccount().catch(()=>{});
 };
 
 $("settingsRegisterForm")?.addEventListener("submit",async(e)=>{
@@ -1248,7 +1287,7 @@ $("settingsRegisterForm")?.addEventListener("submit",async(e)=>{
       if(msg)msg.textContent="Konto erstellt. Du bist jetzt angemeldet.";
       showAppNotice("Konto erstellt.");
       await refreshSettingsAccount();
-      await fetchPublicNews();
+      await syncPushPreferencesForCurrentAccount().catch(()=>{});
     }else{
       if(msg)msg.textContent="Konto erstellt. Bitte bestätige jetzt deine E-Mail-Adresse über den Link in deinem Postfach. Danach kannst du dich anmelden.";
       showAppNotice("Konto erstellt.");
@@ -1261,9 +1300,14 @@ $("settingsRegisterForm")?.addEventListener("submit",async(e)=>{
 });
 
 $("settingsLogoutBtn").onclick=async()=>{
-  if(db)await db.auth.signOut();
+  // Push ist kontobezogen: Beim Abmelden dieser Installation das aktuelle Abo
+  // sauber lösen, damit das nächste Konto keine Benachrichtigungen erbt.
+  if(db){
+    if(userPrefs.notifications) await disablePush().catch(()=>{});
+    await db.auth.signOut();
+  }
   await refreshSettingsAccount();
-  await fetchPublicNews();
+  await syncPushPreferencesForCurrentAccount().catch(()=>{});
 };
 
 
@@ -1882,7 +1926,7 @@ if(db){
       $("adminBtn").hidden=!currentUserIsAdmin;
       if(adminDialog.open)await refreshAuth();
       if(settingsDialog.open)await refreshSettingsAccount();
-      await fetchPublicNews();
+      await syncPushPreferencesForCurrentAccount(session).catch(()=>{});
     },0);
   });
 }else{
@@ -1901,7 +1945,7 @@ if(localStorage.getItem("goodNewsAdminTab")==="editor"){
 // Sofort den letzten bekannten Feed zeigen; danach im Hintergrund aktualisieren.
 renderCachedFeed();
 trackDailyActive();
-fetchPublicNews();
+fetchPublicNews({preservePosition:false});
 
 // Build 37 – PWA-Update-Reparatur für installierte Android-Apps.
 // Der Service Worker hat ab jetzt eine STABILE URL (sw.js). Beim manuellen Update
@@ -2810,24 +2854,55 @@ async function disablePush(){
   }
   return true;
 }
-async function reconcilePushPreference(){
+async function syncPushPreferencesForCurrentAccount(sessionOverride=null){
   const input=$("prefNotifications");
-  if(!input)return;
+  if(!configured||!pushSupported())return false;
   try{
+    const session=sessionOverride || (await db.auth.getSession()).data.session;
     const sub=await getPushSubscription();
-    const reallyEnabled=Boolean(sub && Notification.permission==="granted");
-    localStorage.setItem("goodnews_push_enabled",reallyEnabled?"1":"0");
-    // Eine gespeicherte Aktivierung ohne Browser-Abo kann z. B. nach Löschen der
-    // Browserdaten entstehen. Dann zeigen wir beim nächsten Öffnen den echten Zustand.
-    if(userPrefs.notifications&&!reallyEnabled){
-      userPrefs.notifications=false;
-      saveUserPreferences({...userPrefs,notifications:false});
-      if(!userPreferencesDialog.open){input.checked=false;updateNotificationPreferencesVisibility();}
-    }else if(reallyEnabled){
-      // Filterwerte bestehender Abos bei jedem Start auf den aktuellen Stand bringen.
-      await savePushSubscription(sub,userPrefs).catch(()=>{});
+    let enabled=false,row=null,ownershipChecked=false;
+    if(session?.user && sub && Notification.permission==="granted"){
+      const result=await db.from("push_subscriptions")
+        .select("enabled,notify_morning,notify_evening,notify_categories")
+        .eq("user_id",session.user.id)
+        .eq("endpoint",sub.endpoint)
+        .eq("enabled",true)
+        .maybeSingle();
+      if(!result.error){
+        ownershipChecked=true;
+        if(result.data){row=result.data;enabled=true;}
+      }
     }
-  }catch{}
+    // Ein Web-Push-Endpunkt gehört immer genau zu der aktuellen Installation.
+    // Ist er nicht dem gerade angemeldeten Konto zugeordnet, darf dieses Konto
+    // ihn nicht als "aktiv" erben. Lokal abmelden; der alte Servereintrag wird
+    // beim nächsten Versand als ungültig erkannt und automatisch bereinigt.
+    if(sub && Notification.permission==="granted" && ((session?.user && ownershipChecked && !enabled) || !session?.user)){
+      await sub.unsubscribe().catch(()=>{});
+    }
+    const next={
+      ...userPrefs,
+      notifications:enabled,
+      notifyMorning:enabled ? row?.notify_morning!==false : true,
+      notifyEvening:enabled ? row?.notify_evening!==false : true,
+      notifyCategories:enabled && Array.isArray(row?.notify_categories)
+        ? row.notify_categories.map(migrateNotifyCategoryLabel).filter(x=>GOOD_NEWS_CATEGORIES.includes(x))
+        : [...GOOD_NEWS_CATEGORIES]
+    };
+    userPrefs={...USER_PREF_DEFAULTS,...next,notifyCategories:[...(next.notifyCategories||GOOD_NEWS_CATEGORIES)]};
+    try{localStorage.setItem(USER_PREFS_KEY,JSON.stringify(userPrefs));}catch{}
+    localStorage.setItem("goodnews_push_enabled",enabled?"1":"0");
+    if(input && !userPreferencesDialog?.open){
+      input.checked=enabled;
+      updateNotificationPreferencesVisibility();
+    }
+    return enabled;
+  }catch{
+    return false;
+  }
+}
+async function reconcilePushPreference(){
+  await syncPushPreferencesForCurrentAccount().catch(()=>{});
 }
 window.addEventListener("DOMContentLoaded",reconcilePushPreference);
 
