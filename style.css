@@ -1239,3 +1239,27 @@ html.slide-text-hidden .slide.has-image::before{
 .display-test-stage iframe{display:block;border:0;background:#0e0e10}
 .display-test-hint{font-size:.86rem;line-height:1.45}
 @media(max-width:560px){.display-test-buttons{grid-template-columns:1fr}}
+
+
+/* Build 41 – Rechtliches auf kleinen Displays zuverlässig scrollbar.
+   Der Scrollbereich bekommt den tatsächlich verbleibenden Platz statt einer
+   festen Höhenberechnung, damit zweizeilige Überschriften nichts abschneiden. */
+.legal-dialog[open]{
+  display:flex;
+  flex-direction:column;
+  width:min(720px,calc(100% - 24px));
+  height:min(88dvh,900px);
+  max-height:88dvh;
+  overflow:hidden;
+}
+.legal-dialog .dialog-head,.legal-dialog .legal-tabs{flex:0 0 auto}
+.legal-dialog .legal-scroll{
+  flex:1 1 auto;
+  min-height:0;
+  max-height:none;
+  overflow-y:auto;
+  overflow-x:hidden;
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+  padding-bottom:max(28px,env(safe-area-inset-bottom));
+}

@@ -1657,7 +1657,7 @@ fetchPublicNews();
 // selbst alle offenen Good-News-Fenster auf den neuen Build führen. So hängt die
 // installierte PWA nicht mehr an einer alten Cache-/Worker-Version fest.
 // Build 35 – adaptive Überschriften (max. 4 Zeilen) und stärkerer Lesbarkeitsverlauf.
-const GOOD_NEWS_BUILD=40;
+const GOOD_NEWS_BUILD=41;
 let goodNewsSwRegistration=null;
 let goodNewsReloading=false;
 
@@ -2450,11 +2450,21 @@ $("legalBtn")?.addEventListener("click",()=>{
   closeMainMenu();
   const legalDialog=$("legalDialog");
   if(legalDialog && !legalDialog.open) legalDialog.showModal();
+  // Beim erneuten Öffnen immer am Anfang beginnen. Native Dialoge behalten sonst
+  // auf manchen mobilen Browsern die alte Scrollposition bei.
+  requestAnimationFrame(()=>{
+    const scroll=legalDialog?.querySelector(".legal-scroll");
+    if(scroll) scroll.scrollTop=0;
+  });
 });
 document.querySelectorAll("[data-legal-tab]").forEach(btn=>btn.addEventListener("click",()=>{
   const key=btn.dataset.legalTab;
   document.querySelectorAll("[data-legal-tab]").forEach(x=>x.classList.toggle("active",x===btn));
   document.querySelectorAll("[data-legal-panel]").forEach(x=>x.classList.toggle("active",x.dataset.legalPanel===key));
+  // Impressum und Datenschutz sind unterschiedlich lang. Beim Wechsel deshalb
+  // die gemeinsame Scrollposition zurücksetzen, damit kein Text oben fehlt.
+  const scroll=$("legalDialog")?.querySelector(".legal-scroll");
+  if(scroll) scroll.scrollTop=0;
 }));
 
 
