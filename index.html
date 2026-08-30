@@ -14,7 +14,7 @@
   <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-  <link rel="stylesheet" href="style.css?v=72">
+  <link rel="stylesheet" href="style.css?v=73">
 </head>
 <body>
 <header class="appbar">
@@ -39,7 +39,7 @@
         <span class="menu-chevron" aria-hidden="true">›</span>
       </button>
         <button id="accountBtn" type="button"><span>↪</span><span id="accountBtnLabel">Anmelden</span></button>
-        <div class="app-build-label" aria-label="App-Version">Good News · Build 42</div>
+        <div class="app-build-label" aria-label="App-Version">Good News · Build 43</div>
       </div>
       <button class="icon-btn quick-toggle-btn" id="quickToggleBtn" type="button" aria-label="Schnellfunktionen öffnen" aria-expanded="false" aria-controls="quickActions">＋</button>
       <div class="quick-actions" id="quickActions" hidden>
@@ -135,6 +135,7 @@
       <button class="icon-btn dialog-close" data-close="userPreferencesDialog">✕</button>
     </div>
 
+    <form id="userPreferencesForm" class="user-preferences-form">
     <div class="user-settings-list">
       <section class="user-setting-card">
         <div class="user-setting-copy">
@@ -185,7 +186,7 @@
         <div class="user-setting-toggle-row">
           <div class="user-setting-copy">
             <strong>Benachrichtigungen</strong>
-            <span>Die Auswahl wird schon gespeichert. Aktiviere Benachrichtigungen, um informiert zu werden, wenn neue Good News veröffentlicht wurden. Dein Browser fragt einmal nach der Erlaubnis.</span>
+            <span>Stelle Zeiten und Kategorien frei zusammen. Erst mit „Speichern“ wird die komplette Auswahl übernommen. Beim ersten Aktivieren fragt dein Browser nach der Erlaubnis.</span>
           </div>
           <label class="switch-control" aria-label="Benachrichtigungen vormerken">
             <input id="prefNotifications" type="checkbox">
@@ -213,9 +214,11 @@
     </div>
 
     <div class="user-settings-footer">
-      <button class="secondary" id="resetUserPreferencesBtn" type="button">Standard wiederherstellen</button>
+      <button class="secondary" id="resetUserPreferencesBtn" type="button">Standard einstellen</button>
+      <button class="primary" id="saveUserPreferencesBtn" type="submit">Speichern</button>
       <div id="userPreferencesMessage" class="message" aria-live="polite"></div>
     </div>
+    </form>
   </dialog>
 
 
@@ -271,7 +274,7 @@
         <p>Rechtsgrundlage ist deine Einwilligung nach Art. 6 Abs. 1 lit. a DSGVO und – soweit Informationen auf deinem Gerät gespeichert oder ausgelesen werden – § 25 Abs. 1 TDDDG. Du kannst die Einwilligung jederzeit in den Einstellungen widerrufen. Danach werden keine neuen Statistikereignisse mehr übertragen und die lokale Statistikkennung wird vom Gerät gelöscht. Die Rechtmäßigkeit der bis zum Widerruf erfolgten Verarbeitung bleibt unberührt.</p>
 
         <h4>7. Push-Benachrichtigungen</h4>
-        <p>Push-Benachrichtigungen sind freiwillig. Sie werden nur aktiviert, wenn du sie in den Einstellungen einschaltest und die Berechtigung deines Browsers bzw. Betriebssystems erteilst. Für den Versand werden ein Push-Endpunkt und die dafür technisch erforderlichen Verschlüsselungsschlüssel bei Supabase gespeichert. Die Verarbeitung beruht auf deiner Einwilligung nach Art. 6 Abs. 1 lit. a DSGVO. Du kannst Push-Benachrichtigungen jederzeit in Good News oder in den Geräteeinstellungen deaktivieren.</p>
+        <p>Push-Benachrichtigungen sind freiwillig. Sie werden nur aktiviert, wenn du sie in den Einstellungen einschaltest und die Berechtigung deines Browsers bzw. Betriebssystems erteilst. Für den Versand werden ein Push-Endpunkt, die dafür technisch erforderlichen Verschlüsselungsschlüssel sowie deine gewählten Benachrichtigungszeiten und Kategorien bei Supabase gespeichert. Die Verarbeitung beruht auf deiner Einwilligung nach Art. 6 Abs. 1 lit. a DSGVO. Du kannst Push-Benachrichtigungen jederzeit in Good News oder in den Geräteeinstellungen deaktivieren.</p>
 
         <h4>8. Gute Nachricht einreichen und Fehler melden</h4>
         <p>Wenn du eine gute Nachricht einreichst, werden Überschrift, Text, Quellenlink, Kategorie sowie freiwillige Angaben wie Ort und Name/Pseudonym gespeichert und redaktionell geprüft. Ein Name oder Pseudonym wird nur veröffentlicht, wenn du die dafür vorgesehene Zustimmung ausdrücklich aktivierst. Bei einer Fehlermeldung zu einem Beitrag werden die Art des Hinweises, ein freiwilliger Kommentar und die betroffene Meldung gespeichert; bei angemeldeten Nutzern kann zusätzlich die Nutzerkennung zugeordnet werden.</p>
@@ -856,6 +859,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="app.js?v=63"></script>
+  <script src="app.js?v=64"></script>
 </body>
 </html>

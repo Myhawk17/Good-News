@@ -1288,3 +1288,33 @@ html.slide-text-hidden .slide.has-image::before{
 
 /* Build 42 – Kontodialog bleibt auch mit Datenauskunft vollständig scrollbar. */
 .settings-dialog{overflow:auto}
+
+/* Build 43 – explizites Speichern & kurze Bestätigung */
+.user-preferences-form{display:block}
+.user-settings-footer{flex-wrap:wrap}
+.user-settings-footer #saveUserPreferencesBtn{margin-left:auto}
+.user-settings-footer .message{flex-basis:100%;margin-left:0;text-align:right;min-height:1.2em}
+.app-notice{
+  position:fixed;
+  left:50%;
+  bottom:max(22px,calc(env(safe-area-inset-bottom) + 14px));
+  transform:translate(-50%,18px);
+  z-index:99999;
+  padding:10px 16px;
+  border-radius:999px;
+  background:rgba(24,24,28,.96);
+  color:#fff;
+  border:1px solid rgba(255,255,255,.16);
+  box-shadow:0 10px 32px rgba(0,0,0,.34);
+  font-weight:750;
+  font-size:.9rem;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .16s ease,transform .16s ease;
+}
+.app-notice.show{opacity:1;transform:translate(-50%,0)}
+html.user-theme-light .app-notice{background:rgba(255,255,255,.98);color:#111114;border-color:#d8d8dc}
+@media(max-width:620px){
+  .user-settings-footer #saveUserPreferencesBtn{margin-left:0;flex:1}
+  .user-settings-footer #resetUserPreferencesBtn{flex:1}
+}

@@ -98,16 +98,16 @@ function applyUserPreferences(){
   root.classList.toggle("user-data-saver",Boolean(userPrefs.dataSaver));
   root.dataset.dataSaver=userPrefs.dataSaver?"true":"false";
 }
-function populateUserPreferences(){
-  if($("prefAppearance"))$("prefAppearance").value=userPrefs.appearance;
-  if($("prefTextSize"))$("prefTextSize").value=userPrefs.textSize;
-  if($("prefDataSaver"))$("prefDataSaver").checked=Boolean(userPrefs.dataSaver);
-  if($("prefNotifications"))$("prefNotifications").checked=Boolean(userPrefs.notifications);
-  if($("prefAnalytics"))$("prefAnalytics").checked=Boolean(userPrefs.analytics);
-  if($("prefNotifyMorning"))$("prefNotifyMorning").checked=Boolean(userPrefs.notifyMorning);
-  if($("prefNotifyEvening"))$("prefNotifyEvening").checked=Boolean(userPrefs.notifyEvening);
+function populateUserPreferences(prefs=userPrefs){
+  if($("prefAppearance"))$("prefAppearance").value=prefs.appearance;
+  if($("prefTextSize"))$("prefTextSize").value=prefs.textSize;
+  if($("prefDataSaver"))$("prefDataSaver").checked=Boolean(prefs.dataSaver);
+  if($("prefNotifications"))$("prefNotifications").checked=Boolean(prefs.notifications);
+  if($("prefAnalytics"))$("prefAnalytics").checked=Boolean(prefs.analytics);
+  if($("prefNotifyMorning"))$("prefNotifyMorning").checked=Boolean(prefs.notifyMorning);
+  if($("prefNotifyEvening"))$("prefNotifyEvening").checked=Boolean(prefs.notifyEvening);
   document.querySelectorAll("[data-notify-category]").forEach(input=>{
-    input.checked=userPrefs.notifyCategories.includes(input.dataset.notifyCategory);
+    input.checked=(prefs.notifyCategories||[]).includes(input.dataset.notifyCategory);
   });
   updateNotificationPreferencesVisibility();
 }
@@ -130,16 +130,67 @@ function updateNotificationPreferencesVisibility(){
   details.classList.toggle("disabled",!enabled);
   details.querySelectorAll("input").forEach(input=>input.disabled=!enabled);
 }
-function commitUserPreferences({rerender=false}={}){
-  saveUserPreferences(collectUserPreferences());
-  updateNotificationPreferencesVisibility();
-  const msg=$("userPreferencesMessage");
-  if(msg){
-    msg.textContent="Gespeichert";
-    clearTimeout(commitUserPreferences._timer);
-    commitUserPreferences._timer=setTimeout(()=>{if(msg)msg.textContent=""},1200);
+// Formulare werden erst beim expliziten Speichern übernommen. Für alle bearbeitbaren
+// Bereiche merken wir einen Ausgangszustand und warnen beim Verlassen mit Änderungen.
+const trackedFormStates=new WeakMap();
+function serializeFormState(form){
+  if(!form)return "";
+  return [...form.querySelectorAll("input,select,textarea")].map((el,index)=>{
+    const key=el.id||el.name||`${el.tagName}:${index}`;
+    let value="";
+    if(el.type==="checkbox"||el.type==="radio") value=el.checked?"1":"0";
+    else if(el.type==="file") value=[...(el.files||[])].map(f=>`${f.name}:${f.size}:${f.lastModified}`).join("|");
+    else value=el.value||"";
+    return `${key}=${value}`;
+  }).join("¦");
+}
+function trackFormState(form,label="Änderungen"){
+  if(!form)return;
+  trackedFormStates.set(form,{baseline:serializeFormState(form),forced:false,label});
+}
+function markFormClean(form){
+  if(!form)return;
+  const state=trackedFormStates.get(form)||{label:"Änderungen"};
+  state.baseline=serializeFormState(form);
+  state.forced=false;
+  trackedFormStates.set(form,state);
+}
+function markFormDirty(form){
+  if(!form)return;
+  const state=trackedFormStates.get(form)||{baseline:serializeFormState(form),label:"Änderungen"};
+  state.forced=true;
+  trackedFormStates.set(form,state);
+}
+function formIsDirty(form){
+  if(!form)return false;
+  const state=trackedFormStates.get(form);
+  if(!state)return false;
+  return Boolean(state.forced||serializeFormState(form)!==state.baseline);
+}
+function confirmDiscard(message="Du hast nicht gespeicherte Änderungen. Möchtest du diesen Bereich wirklich ohne Speichern verlassen?"){
+  return window.confirm(message);
+}
+let appNoticeTimer=null;
+function showAppNotice(text="Gespeichert."){
+  let box=$("appNotice");
+  if(!box){
+    box=document.createElement("div");
+    box.id="appNotice";
+    box.className="app-notice";
+    box.setAttribute("role","status");
+    box.setAttribute("aria-live","polite");
+    document.body.appendChild(box);
   }
-  if(rerender && allNews.length)renderFeed();
+  box.textContent=text;
+  box.classList.add("show");
+  clearTimeout(appNoticeTimer);
+  appNoticeTimer=setTimeout(()=>box.classList.remove("show"),1600);
+}
+function setShortMessage(element,text="Gespeichert."){
+  if(!element)return;
+  element.textContent=text;
+  clearTimeout(element._goodNewsMessageTimer);
+  element._goodNewsMessageTimer=setTimeout(()=>{if(element.textContent===text)element.textContent=""},1600);
 }
 
 userPrefs=readUserPreferences();
@@ -659,7 +710,7 @@ $("slideShareBtn")?.addEventListener("click",()=>{const item=currentSlideItem();
 let reportNewsId=null;
 $("slideReportBtn")?.addEventListener("click",()=>{
   const item=currentSlideItem();if(!item)return;reportNewsId=item.id;
-  $("reportNewsTitle").textContent=item.title||"Aktuelle Meldung";$("reportForm").reset();$("reportMessage").textContent="";$("reportDialog").showModal();
+  $("reportNewsTitle").textContent=item.title||"Aktuelle Meldung";$("reportForm").reset();$("reportMessage").textContent="";markFormClean($("reportForm"));$("reportDialog").showModal();
 });
 $("reportForm")?.addEventListener("submit",async e=>{
   e.preventDefault();const msg=$("reportMessage");if(!configured||!reportNewsId){msg.textContent="Meldung konnte nicht gesendet werden.";return;}
@@ -667,7 +718,7 @@ $("reportForm")?.addEventListener("submit",async e=>{
   try{
     const {data:{user}}=await db.auth.getUser();
     const {error}=await db.from("news_reports").insert({news_id:reportNewsId,reporter_user_id:user?.id||null,report_type:$("reportType").value,comment:$("reportComment").value.trim()||null});
-    if(error)throw error;msg.textContent="Danke! Dein Hinweis ist bei der Redaktion angekommen. 💛";setTimeout(()=>$("reportDialog").open&&$("reportDialog").close(),1400);
+    if(error)throw error;msg.textContent="Danke! Dein Hinweis ist bei der Redaktion angekommen. 💛";markFormClean($("reportForm"));setTimeout(()=>$("reportDialog").open&&$("reportDialog").close(),1400);
   }catch(err){msg.textContent="Das hat leider nicht geklappt: "+(err.message||String(err));}
 });
 
@@ -846,6 +897,8 @@ applySlideFocusMode();
 
 $("userPreferencesBtn").onclick = runMenuAction(()=>{
   populateUserPreferences();
+  markFormClean($("userPreferencesForm"));
+  if($("userPreferencesMessage")) $("userPreferencesMessage").textContent="";
   userPreferencesDialog.showModal();
 });
 document.addEventListener("click",(e)=>{
@@ -853,7 +906,71 @@ document.addEventListener("click",(e)=>{
 });
 document.addEventListener("keydown",(e)=>{if(e.key==="Escape")closeMainMenu()});
 $("homeBtn").onclick = () => {closeMainMenu();feed.scrollTo({top:0,behavior:"smooth"});}
-document.querySelectorAll("[data-close]").forEach(b=>b.onclick=()=>$(b.dataset.close).close());
+
+function dialogDirtyForms(dialog){
+  if(!dialog)return [];
+  if(dialog===userPreferencesDialog)return [$("userPreferencesForm")].filter(Boolean);
+  if(dialog===$("submissionDialog"))return [$("submissionForm")].filter(Boolean);
+  if(dialog===$("reportDialog"))return [$("reportForm")].filter(Boolean);
+  if(dialog===adminDialog)return [$("newsForm"),$("settingsForm")].filter(Boolean);
+  return [];
+}
+function discardDialogChanges(dialog){
+  if(dialog===userPreferencesDialog){
+    populateUserPreferences();
+    markFormClean($("userPreferencesForm"));
+    return;
+  }
+  if(dialog===$("submissionDialog")){
+    $("submissionForm")?.reset();
+    if($("submissionMessage"))$("submissionMessage").textContent="";
+    markFormClean($("submissionForm"));
+    return;
+  }
+  if(dialog===$("reportDialog")){
+    $("reportForm")?.reset();
+    if($("reportMessage"))$("reportMessage").textContent="";
+    markFormClean($("reportForm"));
+    return;
+  }
+  if(dialog===adminDialog){
+    if(formIsDirty($("newsForm"))){clearEditorDraft();resetEditor();}
+    if(formIsDirty($("settingsForm"))&&appSettings){
+      populateSettingsForm(appSettings);
+      if($("settingLogoFile"))$("settingLogoFile").value="";
+      markFormClean($("settingsForm"));
+    }
+  }
+}
+function dirtyDialogMessage(dialog){
+  if(dialog===$("submissionDialog"))return "Du hast eine noch nicht eingesendete Nachricht. Möchtest du den Bereich wirklich verlassen und die Eingaben verwerfen?";
+  if(dialog===$("reportDialog"))return "Du hast eine noch nicht gesendete Fehlermeldung. Möchtest du den Bereich wirklich verlassen und die Eingaben verwerfen?";
+  return "Du hast nicht gespeicherte Änderungen. Möchtest du diesen Bereich wirklich ohne Speichern verlassen?";
+}
+function requestDialogClose(dialog){
+  if(!dialog)return false;
+  const dirty=dialogDirtyForms(dialog).some(formIsDirty);
+  if(dirty&&!confirmDiscard(dirtyDialogMessage(dialog)))return false;
+  if(dirty)discardDialogChanges(dialog);
+  dialog.close();
+  return true;
+}
+document.querySelectorAll("[data-close]").forEach(b=>b.onclick=()=>requestDialogClose($(b.dataset.close)));
+[userPreferencesDialog,$("submissionDialog"),$("reportDialog"),adminDialog].filter(Boolean).forEach(dialog=>{
+  dialog.addEventListener("cancel",e=>{
+    if(dialogDirtyForms(dialog).some(formIsDirty)){
+      e.preventDefault();
+      if(confirmDiscard(dirtyDialogMessage(dialog))){
+        discardDialogChanges(dialog);
+        dialog.close();
+      }
+    }
+  });
+});
+window.addEventListener("beforeunload",e=>{
+  const forms=[$("userPreferencesForm"),$("submissionForm"),$("reportForm"),$("newsForm"),$("settingsForm")].filter(Boolean);
+  if(forms.some(formIsDirty)){e.preventDefault();e.returnValue="";}
+});
 let quickActionScrollTimer;
 feed.addEventListener("scroll",()=>{
   if(feed.scrollTop>100)$("swipeHint").style.display="none";
@@ -864,36 +981,59 @@ window.addEventListener("resize",syncSlideQuickActions);
 setTimeout(syncSlideQuickActions,250);
 
 
-["prefAppearance","prefTextSize"].forEach(id=>$(id)?.addEventListener("change",()=>commitUserPreferences({rerender:id==="prefTextSize"})));
-$("prefDataSaver")?.addEventListener("change",()=>commitUserPreferences({rerender:true}));
-$("prefAnalytics")?.addEventListener("change",async()=>{
-  const enabled=Boolean($("prefAnalytics")?.checked);
-  commitUserPreferences();
-  if(!enabled){
-    try{
-      localStorage.removeItem("goodNewsDeviceId");
-      localStorage.removeItem("goodNewsAnalyticsActiveDay");
-    }catch{}
-  }else{
-    await trackDailyActive();
-  }
+const userPreferencesForm=$("userPreferencesForm");
+trackFormState(userPreferencesForm,"Einstellungen");
+["prefAppearance","prefTextSize","prefDataSaver","prefAnalytics","prefNotifyMorning","prefNotifyEvening"].forEach(id=>{
+  $(id)?.addEventListener("change",()=>{});
 });
-// prefNotifications is handled by bindPushPreference() so browser permission and subscription stay in sync.
-$("prefNotifyMorning")?.addEventListener("change",()=>commitUserPreferences());
-$("prefNotifyEvening")?.addEventListener("change",()=>commitUserPreferences());
-document.querySelectorAll("[data-notify-category]").forEach(input=>input.addEventListener("change",()=>commitUserPreferences()));
+$("prefNotifications")?.addEventListener("change",()=>updateNotificationPreferencesVisibility());
+document.querySelectorAll("[data-notify-category]").forEach(input=>input.addEventListener("change",()=>{}));
+
 $("resetUserPreferencesBtn")?.addEventListener("click",()=>{
-  userPrefs={...USER_PREF_DEFAULTS,notifyCategories:[...USER_PREF_DEFAULTS.notifyCategories]};
-  try{
-    localStorage.removeItem(USER_PREFS_KEY);
-    localStorage.removeItem("goodNewsDeviceId");
-    localStorage.removeItem("goodNewsAnalyticsActiveDay");
-  }catch{}
-  applyUserPreferences();
-  populateUserPreferences();
-  if(allNews.length)renderFeed();
+  populateUserPreferences({...USER_PREF_DEFAULTS,notifyCategories:[...USER_PREF_DEFAULTS.notifyCategories]});
+  markFormDirty(userPreferencesForm);
   const msg=$("userPreferencesMessage");
-  if(msg)msg.textContent="Standard wiederhergestellt";
+  if(msg)msg.textContent="Standard ausgewählt – zum Übernehmen noch speichern.";
+});
+
+userPreferencesForm?.addEventListener("submit",async e=>{
+  e.preventDefault();
+  const msg=$("userPreferencesMessage");
+  const saveBtn=$("saveUserPreferencesBtn");
+  const next=collectUserPreferences();
+  const previous={...userPrefs,notifyCategories:[...(userPrefs.notifyCategories||[])]};
+  if(saveBtn)saveBtn.disabled=true;
+  if(msg)msg.textContent="Speichern …";
+  try{
+    if(next.notifications){
+      const existing=await getPushSubscription();
+      if(!existing || Notification.permission!=="granted") await enablePush(next);
+      else await savePushSubscription(existing,next);
+      localStorage.setItem("goodnews_push_enabled","1");
+    }else{
+      const existing=await getPushSubscription();
+      if(existing)await disablePush();
+      localStorage.setItem("goodnews_push_enabled","0");
+    }
+
+    saveUserPreferences(next);
+    if(!next.analytics){
+      try{
+        localStorage.removeItem("goodNewsDeviceId");
+        localStorage.removeItem("goodNewsAnalyticsActiveDay");
+      }catch{}
+    }else if(!previous.analytics){
+      await trackDailyActive();
+    }
+    if(allNews.length)renderFeed();
+    markFormClean(userPreferencesForm);
+    setShortMessage(msg,"Gespeichert.");
+    showAppNotice("Gespeichert.");
+  }catch(err){
+    if(msg)msg.textContent=err?.message||String(err);
+  }finally{
+    if(saveBtn)saveBtn.disabled=false;
+  }
 });
 
 // ---------------- ADMIN ----------------
@@ -926,7 +1066,28 @@ function switchAdminTab(name) {
   // Der bevorzugte Referenz-Viewport ist 360 × 640 (auf dem Testgerät ca. 77 % Vorschau).
   if(name==="display-tests" && !displayTestSize) openDisplayTest(360,640);
 }
-document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>switchAdminTab(t.dataset.tab));
+function activeAdminTab(){return document.querySelector(".tab.active")?.dataset.tab||"dashboard";}
+function discardAdminTabChanges(name){
+  if(name==="editor"&&formIsDirty($("newsForm"))){
+    clearEditorDraft();
+    resetEditor();
+  }
+  if(name==="settings"&&formIsDirty($("settingsForm"))&&appSettings){
+    populateSettingsForm(appSettings);
+    if($("settingLogoFile"))$("settingLogoFile").value="";
+    markFormClean($("settingsForm"));
+  }
+}
+function guardedSwitchAdminTab(name){
+  const current=activeAdminTab();
+  if(current===name)return;
+  if((current==="editor"&&formIsDirty($("newsForm")))||(current==="settings"&&formIsDirty($("settingsForm")))){
+    if(!confirmDiscard())return;
+    discardAdminTabChanges(current);
+  }
+  switchAdminTab(name);
+}
+document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>guardedSwitchAdminTab(t.dataset.tab));
 
 // Build 35 – Display-Testmodus; Referenzansicht 360 × 640 als bevorzugter Standard.
 // Build 33 – Display-Testmodus. Ein iframe bekommt die echte gewählte CSS-Viewportgröße
@@ -1232,6 +1393,7 @@ function restoreEditorDraft(){
     $("saveBtn").textContent=d.newsId?"Änderungen speichern":"Speichern";
     $("cancelEditBtn").hidden=!d.newsId;
     $("editorMessage").textContent="Nicht gespeicherter Entwurf wiederhergestellt.";
+    markFormDirty($("newsForm"));
     return true;
   }catch(e){
     console.warn("Lokaler Redaktionsentwurf konnte nicht geladen werden",e);
@@ -1264,8 +1426,12 @@ function resetEditor(){
   if($("imageFit")) $("imageFit").value="cover"; if($("imageZoom")) $("imageZoom").value="1"; if($("imagePosX")) $("imagePosX").value="50"; if($("imagePosY")) $("imagePosY").value="50";
   applyImageEditorState();
   $("editorMessage").textContent="";
+  markFormClean($("newsForm"));
 }
-$("cancelEditBtn").onclick=()=>{clearEditorDraft();resetEditor();switchAdminTab("dashboard")};
+$("cancelEditBtn").onclick=()=>{
+  if(formIsDirty($("newsForm"))&&!confirmDiscard())return;
+  clearEditorDraft();resetEditor();switchAdminTab("dashboard");
+};
 
 let editorCroppedFile=null;
 let editorOriginalPreviewSrc=null;
@@ -1474,6 +1640,8 @@ async function cropVisibleImage(){
   $("imagePosY").value="50";
   applyImageEditorState();
   if($("imageCropMessage"))$("imageCropMessage").textContent="Handy-Ausschnitt übernommen. Beim Speichern wird genau dieses 9:16-Bild verwendet.";
+  markFormDirty($("newsForm"));
+  saveEditorDraft();
 }
 
 $("imageCropBtn")?.addEventListener("click",async()=>{
@@ -1492,6 +1660,8 @@ $("imageUndoCropBtn")?.addEventListener("click",()=>{
   editorCroppedFile=null;
   setEditorImage(editorOriginalPreviewSrc,{preserveOriginal:false});
   if($("imageCropMessage"))$("imageCropMessage").textContent="";
+  markFormDirty($("newsForm"));
+  saveEditorDraft();
 });
 
 async function uploadImage(file){
@@ -1564,6 +1734,7 @@ async function editArticle(id){
   (sourcesOf(n).length?sourcesOf(n):[{name:"",url:""}]).forEach(s=>addSourceRow(s.name,s.url));
   editorCroppedFile=null; editorOriginalPreviewSrc=null; if(n.image_url){setEditorImage(n.image_url)}else $("imagePreviewBox").hidden=true; applyImageEditorState();
   $("saveBtn").textContent="Änderungen speichern";$("cancelEditBtn").hidden=false;
+  markFormClean($("newsForm"));
   switchAdminTab("editor");
   saveEditorDraft();
 }
@@ -1598,6 +1769,7 @@ $("newsForm").onsubmit=async(e)=>{
     $("editorMessage").textContent="Gespeichert.";
     clearEditorDraft();
     resetEditor();
+    showAppNotice("Gespeichert.");
     await Promise.all([loadAdminNews(),fetchPublicNews()]);
     switchAdminTab("dashboard");
   }catch(err){$("editorMessage").textContent=err.message||String(err)}
@@ -1633,6 +1805,9 @@ if(db){
   currentUserIsAdmin=false;
   $("adminBtn").hidden=true;
 }
+trackFormState($("newsForm"),"Beitrag");
+trackFormState($("submissionForm"),"Einsendung");
+trackFormState($("reportForm"),"Fehlermeldung");
 resetEditor();
 setupEditorAutosave();
 if(localStorage.getItem("goodNewsAdminTab")==="editor"){
@@ -1650,7 +1825,7 @@ fetchPublicNews();
 // selbst alle offenen Good-News-Fenster auf den neuen Build führen. So hängt die
 // installierte PWA nicht mehr an einer alten Cache-/Worker-Version fest.
 // Build 35 – adaptive Überschriften (max. 4 Zeilen) und stärkerer Lesbarkeitsverlauf.
-const GOOD_NEWS_BUILD=42;
+const GOOD_NEWS_BUILD=43;
 let goodNewsSwRegistration=null;
 let goodNewsReloading=false;
 
@@ -1828,7 +2003,7 @@ async function loadAppSettings() {
   if(data){
     appSettings=data;
     applyAppSettings(data);
-    if(currentAdminSession) populateSettingsForm(data);
+    if(currentAdminSession){populateSettingsForm(data);markFormClean($("settingsForm"));}
   }
 }
 
@@ -2002,6 +2177,7 @@ async function uploadLogo(file){
   return {path,url:data.publicUrl};
 }
 
+trackFormState($("settingsForm"),"App-Einstellungen");
 if($("settingLogoFile")){
   $("settingLogoFile").onchange=()=>{
     const f=$("settingLogoFile").files?.[0];
@@ -2040,7 +2216,10 @@ if($("settingLogoFile")){
       appSettings=data;
       applyAppSettings(data);
       populateSettingsForm(data);
-      $("settingsMessage").textContent="Änderungen gespeichert.";
+      if($("settingLogoFile"))$("settingLogoFile").value="";
+      markFormClean($("settingsForm"));
+      setShortMessage($("settingsMessage"),"Gespeichert.");
+      showAppNotice("Gespeichert.");
     }catch(err){
       $("settingsMessage").textContent=err.message||String(err);
     }
@@ -2055,6 +2234,8 @@ if($("settingLogoFile")){
     });
     $("settingLogoUrl").value="";
     $("settingLogoFile").value="";
+    markFormDirty($("settingsForm"));
+    if($("settingsMessage"))$("settingsMessage").textContent="Standard ausgewählt – zum Übernehmen noch speichern.";
   };
 }
 
@@ -2062,7 +2243,12 @@ if($("settingLogoFile")){
 const originalSwitchAdminTab = switchAdminTab;
 switchAdminTab = function(name){
   originalSwitchAdminTab(name);
-  if(name==="settings" && appSettings) populateSettingsForm(appSettings);
+  if(name==="settings" && appSettings){
+    populateSettingsForm(appSettings);
+    if($("settingLogoFile"))$("settingLogoFile").value="";
+    markFormClean($("settingsForm"));
+    if($("settingsMessage"))$("settingsMessage").textContent="";
+  }
 };
 
 // load public design immediately
@@ -2076,6 +2262,7 @@ $("submitNewsBtn").onclick=()=>{
   closeMainMenu();
   $("submissionForm").reset();
   $("submissionMessage").textContent="";
+  markFormClean($("submissionForm"));
   submissionDialog.showModal();
 };
 
@@ -2109,6 +2296,7 @@ $("submissionForm").onsubmit=async(e)=>{
   if(error){msg.textContent="Das hat leider nicht geklappt: "+error.message;return}
   msg.textContent="Danke! 💛 Deine gute Nachricht ist bei der Redaktion angekommen.";
   e.target.reset();
+  markFormClean(e.target);
   setTimeout(()=>{if(submissionDialog.open)submissionDialog.close()},1800);
 };
 
@@ -2478,23 +2666,27 @@ async function getPushSubscription(){
   const reg=await navigator.serviceWorker.ready;
   return reg.pushManager.getSubscription();
 }
-async function savePushSubscription(sub){
+async function savePushSubscription(sub,prefs=userPrefs){
   if(!sub) return;
   const j=sub.toJSON();
-  const {data:{user},error:userError}=await db.auth.getUser();
-  if(userError) throw userError;
+  const {data:{session}}=await db.auth.getSession();
+  const user=session?.user||null;
+  const categories=Array.isArray(prefs?.notifyCategories)?prefs.notifyCategories.map(migrateNotifyCategoryLabel).filter(x=>GOOD_NEWS_CATEGORIES.includes(x)):[...GOOD_NEWS_CATEGORIES];
   const payload={
     user_id:user?.id||null,
     endpoint:j.endpoint,
     p256dh:j.keys?.p256dh||"",
     auth:j.keys?.auth||"",
     enabled:true,
+    notify_morning:prefs?.notifyMorning!==false,
+    notify_evening:prefs?.notifyEvening!==false,
+    notify_categories:categories,
     updated_at:new Date().toISOString()
   };
   const {error}=await db.from("push_subscriptions").upsert(payload,{onConflict:"endpoint"});
   if(error) throw error;
 }
-async function enablePush(){
+async function enablePush(prefs=userPrefs){
   if(!pushSupported()) throw new Error("Push-Benachrichtigungen werden von diesem Browser nicht unterstützt.");
   if(!PUSH_PUBLIC_KEY) throw new Error("Push ist vorbereitet, aber der Versand-Schlüssel muss vor dem öffentlichen Release noch eingerichtet werden.");
   const permission=await Notification.requestPermission();
@@ -2502,7 +2694,7 @@ async function enablePush(){
   const reg=await navigator.serviceWorker.ready;
   let sub=await reg.pushManager.getSubscription();
   if(!sub) sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlBase64ToUint8Array(PUSH_PUBLIC_KEY)});
-  await savePushSubscription(sub);
+  await savePushSubscription(sub,prefs);
   return true;
 }
 async function disablePush(){
@@ -2513,54 +2705,26 @@ async function disablePush(){
   }
   return true;
 }
-async function syncPushPreference(checked){
-  try{
-    if(checked) await enablePush(); else await disablePush();
-    localStorage.setItem("goodnews_push_enabled",checked?"1":"0");
-    toast(checked?"Benachrichtigungen aktiviert.":"Benachrichtigungen deaktiviert.");
-  }catch(e){
-    const input=$("prefPush")||$("settingPush")||document.querySelector('input[type="checkbox"][name*="push" i]');
-    if(input) input.checked=false;
-    localStorage.setItem("goodnews_push_enabled","0");
-    toast(e?.message||"Push konnte nicht aktiviert werden.");
-  }
-}
-function bindPushPreference(){
+async function reconcilePushPreference(){
   const input=$("prefNotifications");
-  if(!input) return;
-
-  // Existing user preference remains the single source of truth in the UI.
-  input.addEventListener("change",async()=>{
-    if(input.checked){
-      await syncPushPreference(true);
-      if(input.checked){
-        userPrefs.notifications=true;
-        saveUserPreferences({...userPrefs,notifications:true});
-      }
-    }else{
-      await syncPushPreference(false);
+  if(!input)return;
+  try{
+    const sub=await getPushSubscription();
+    const reallyEnabled=Boolean(sub && Notification.permission==="granted");
+    localStorage.setItem("goodnews_push_enabled",reallyEnabled?"1":"0");
+    // Eine gespeicherte Aktivierung ohne Browser-Abo kann z. B. nach Löschen der
+    // Browserdaten entstehen. Dann zeigen wir beim nächsten Öffnen den echten Zustand.
+    if(userPrefs.notifications&&!reallyEnabled){
       userPrefs.notifications=false;
       saveUserPreferences({...userPrefs,notifications:false});
+      if(!userPreferencesDialog.open){input.checked=false;updateNotificationPreferencesVisibility();}
+    }else if(reallyEnabled){
+      // Filterwerte bestehender Abos bei jedem Start auf den aktuellen Stand bringen.
+      await savePushSubscription(sub,userPrefs).catch(()=>{});
     }
-    updateNotificationPreferencesVisibility();
-  });
-
-  // If the app says push is active, verify that a browser subscription really exists.
-  (async()=>{
-    try{
-      const sub=await getPushSubscription();
-      const reallyEnabled=Boolean(sub && Notification.permission==="granted");
-      localStorage.setItem("goodnews_push_enabled",reallyEnabled?"1":"0");
-      if(userPrefs.notifications && !reallyEnabled){
-        userPrefs.notifications=false;
-        saveUserPreferences({...userPrefs,notifications:false});
-        input.checked=false;
-        updateNotificationPreferencesVisibility();
-      }
-    }catch{}
-  })();
+  }catch{}
 }
-window.addEventListener("DOMContentLoaded",bindPushPreference);
+window.addEventListener("DOMContentLoaded",reconcilePushPreference);
 
 
 // Admin-Test für echten Web Push
@@ -2723,7 +2887,11 @@ function renderPrivacyExport(target,data,{showEmail=true,localData=null}={}){
     ? `<ul class="privacy-compact-list">${reports.map(r=>`<li><strong>Fehlermeldung #${esc(r.id)}</strong> · Meldung ${esc(r.news_id)} · ${esc(r.report_type||"")}<br><span class="muted">${esc(fmtPrivacyDate(r.created_at))}${r.comment?` · ${esc(r.comment)}`:""}</span></li>`).join("")}</ul>`
     : `<p class="muted">Keine deinem Konto zugeordneten Fehlermeldungen.</p>`;
   const pushRows=pushes.length
-    ? `<ul class="privacy-compact-list">${pushes.map(p=>`<li><strong>Push-Abo #${esc(p.id)}</strong> · ${p.enabled?"aktiv":"inaktiv"}<br><span class="muted">angelegt ${esc(fmtPrivacyDate(p.created_at))}</span></li>`).join("")}</ul>`
+    ? `<ul class="privacy-compact-list">${pushes.map(p=>{
+        const times=[p.notify_morning!==false?"morgens":null,p.notify_evening!==false?"abends":null].filter(Boolean).join(" & ")||"keine Zeit ausgewählt";
+        const cats=Array.isArray(p.notify_categories)&&p.notify_categories.length?p.notify_categories.join(", "):"keine Kategorie ausgewählt";
+        return `<li><strong>Push-Abo #${esc(p.id)}</strong> · ${p.enabled?"aktiv":"inaktiv"}<br><span class="muted">${esc(times)} · ${esc(cats)}<br>angelegt ${esc(fmtPrivacyDate(p.created_at))}</span></li>`;
+      }).join("")}</ul>`
     : `<p class="muted">Keine Push-Abonnements gespeichert.</p>`;
   target.innerHTML=`
     <div class="privacy-summary-grid">

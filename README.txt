@@ -114,3 +114,11 @@ BUILD 42 – DATENSCHUTZ-SELBSTAUSKUNFT
 - Redaktion: neuer Menüpunkt „DSGVO-Auskunft“ mit gezielter Suche nach Konto-E-Mail und JSON-Export.
 - Die dafür verwendete Supabase Edge Function `good-news-privacy` ist im verbundenen Supabase-Projekt deployed und verlangt ein gültiges Login; Admin-Suchen werden serverseitig zusätzlich auf die Adminrolle geprüft.
 - Lokale Favoriten/Einstellungen werden beim Selbsexport auf dem jeweiligen Gerät ergänzt; anonyme Statistikdaten sind absichtlich nicht mit dem Konto verknüpft.
+
+BUILD 43
+- Nutzer-Einstellungen werden erst mit dem neuen Speichern-Button vollständig übernommen.
+- Push-Zeiten und Kategorien sind während der Bearbeitung frei auswählbar und werden pro Push-Abo gespeichert.
+- Nicht gespeicherte Änderungen werden beim Schließen, Tabwechsel und Seitenverlassen abgefragt.
+- Redaktionelle App-Einstellungen und Beitragseditor nutzen denselben Verlassensschutz.
+- Nach erfolgreichem Speichern erscheint kurz „Gespeichert.“.
+- Supabase-Push-Abos unterstützen notify_morning, notify_evening und notify_categories.

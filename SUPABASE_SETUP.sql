@@ -448,3 +448,18 @@ create policy "Admins update reports" on public.news_reports for update to authe
 revoke execute on function public.create_default_user_role() from public, anon, authenticated;
 -- is_admin() wird von RLS-Policies für angemeldete Nutzer benötigt, aber nicht anonym.
 revoke execute on function public.is_admin() from anon;
+
+-- =========================================================
+-- GOOD NEWS BUILD 43 – Push-Filter pro Gerät
+-- =========================================================
+alter table public.push_subscriptions
+  add column if not exists notify_morning boolean not null default true,
+  add column if not exists notify_evening boolean not null default true,
+  add column if not exists notify_categories text[] not null default array[
+    'Was war....',
+    'Tiere',
+    'Sport',
+    'Wirtschaft & Politik',
+    'Fortschritt, Medizin & Technologie',
+    'Kultur/Natur'
+  ]::text[];
