@@ -1225,7 +1225,21 @@ $("settingsRegisterForm")?.addEventListener("submit",async(e)=>{
   if(submitBtn)submitBtn.disabled=true;
   if(msg)msg.textContent="Konto wird erstellt …";
   try{
-    const {data,error}=await db.auth.signUp({email,password});
+    const redirectUrl=(()=>{
+      try{
+        const url=new URL(window.location.href);
+        url.hash="";
+        ["gn_build","gn_sw","gn_refresh"].forEach(key=>url.searchParams.delete(key));
+        return url.href;
+      }catch{
+        return window.location.origin + window.location.pathname;
+      }
+    })();
+    const {data,error}=await db.auth.signUp({
+      email,
+      password,
+      options:{emailRedirectTo:redirectUrl}
+    });
     if(error)throw error;
     $("settingsRegisterPassword").value="";
     $("settingsRegisterPasswordConfirm").value="";
