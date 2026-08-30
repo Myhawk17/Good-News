@@ -15,6 +15,7 @@ const userPreferencesDialog = $("userPreferencesDialog");
 const settingsDialog = $("settingsDialog");
 const adminDialog = $("adminDialog");
 const previewDialog = $("previewDialog");
+const aboutDialog = $("aboutDialog");
 
 let allNews = [];
 let adminNews = [];
@@ -971,6 +972,39 @@ $("searchBtn").onclick = runMenuAction(openSearch);
 $("archiveBtn").onclick = runMenuAction(openArchive);
 $("favoritesBtn").onclick = runMenuAction(openFavorites);
 
+// ---------------- ÜBER UNS / ERSTSTART ----------------
+function aboutSeenKey(){
+  // Browser und installierte PWA bekommen jeweils genau einen eigenen Erststart.
+  return isStandaloneApp()?"goodNewsAboutSeenPwaV1":"goodNewsAboutSeenWebV1";
+}
+let aboutIsOnboarding=false;
+function openAboutUs({onboarding=false}={}){
+  if(!aboutDialog)return;
+  aboutIsOnboarding=Boolean(onboarding);
+  aboutDialog.classList.toggle("onboarding",aboutIsOnboarding);
+  const closeBtn=$("aboutCloseBtn");
+  const continueBtn=$("aboutContinueBtn");
+  if(closeBtn)closeBtn.hidden=aboutIsOnboarding;
+  if(continueBtn)continueBtn.textContent=aboutIsOnboarding?"Good News entdecken":"Schließen";
+  document.documentElement.classList.toggle("about-onboarding-active",aboutIsOnboarding);
+  if(!aboutDialog.open)aboutDialog.showModal();
+  requestAnimationFrame(()=>{const scroller=aboutDialog.querySelector(".about-scroll");if(scroller)scroller.scrollTop=0;});
+}
+function closeAboutUs({markSeen=false}={}){
+  if(markSeen){try{localStorage.setItem(aboutSeenKey(),"1")}catch{}}
+  aboutIsOnboarding=false;
+  document.documentElement.classList.remove("about-onboarding-active");
+  aboutDialog?.classList.remove("onboarding");
+  if(aboutDialog?.open)aboutDialog.close();
+}
+$("aboutBtn")?.addEventListener("click",runMenuAction(()=>openAboutUs({onboarding:false})));
+$("aboutContinueBtn")?.addEventListener("click",()=>closeAboutUs({markSeen:true}));
+$("aboutCloseBtn")?.addEventListener("click",()=>closeAboutUs({markSeen:false}));
+aboutDialog?.addEventListener("cancel",e=>{
+  if(aboutIsOnboarding){e.preventDefault();return;}
+  e.preventDefault();closeAboutUs({markSeen:false});
+});
+
 
 // ---------------- PWA INSTALLATION ----------------
 let deferredInstallPrompt=null;
@@ -1036,7 +1070,7 @@ function dialogDirtyForms(dialog){
   if(dialog===userPreferencesDialog)return [$("userPreferencesForm")].filter(Boolean);
   if(dialog===$("submissionDialog"))return [$("submissionForm")].filter(Boolean);
   if(dialog===$("reportDialog"))return [$("reportForm")].filter(Boolean);
-  if(dialog===adminDialog)return [$("newsForm"),$("settingsForm")].filter(Boolean);
+  if(dialog===adminDialog)return [$("newsForm"),$("settingsForm"),$("legalSettingsForm")].filter(Boolean);
   if(dialog===settingsDialog && $("settingsRegisterView") && !$("settingsRegisterView").hidden)return [$("settingsRegisterForm")].filter(Boolean);
   return [];
 }
@@ -1064,6 +1098,10 @@ function discardDialogChanges(dialog){
       populateSettingsForm(appSettings);
       if($("settingLogoFile"))$("settingLogoFile").value="";
       markFormClean($("settingsForm"));
+    }
+    if(formIsDirty($("legalSettingsForm"))&&appSettings){
+      populateLegalSettingsForm(appSettings);
+      markFormClean($("legalSettingsForm"));
     }
   }
   if(dialog===settingsDialog && $("settingsRegisterForm")){
@@ -1098,7 +1136,7 @@ document.querySelectorAll("[data-close]").forEach(b=>b.onclick=()=>requestDialog
   });
 });
 window.addEventListener("beforeunload",e=>{
-  const forms=[$("userPreferencesForm"),$("submissionForm"),$("reportForm"),$("settingsRegisterForm"),$("newsForm"),$("settingsForm")].filter(Boolean);
+  const forms=[$("userPreferencesForm"),$("submissionForm"),$("reportForm"),$("settingsRegisterForm"),$("newsForm"),$("settingsForm"),$("legalSettingsForm")].filter(Boolean);
   if(forms.some(formIsDirty)){e.preventDefault();e.returnValue="";}
 });
 let quickActionScrollTimer;
@@ -1192,16 +1230,16 @@ async function sessionIsAdmin(session){
 
 
 function switchAdminTab(name) {
-  localStorage.setItem("goodNewsAdminTab", name);
-  document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("active",t.dataset.tab===name));
-  document.querySelectorAll(".tab-panel").forEach(p=>p.hidden = p.id !== `tab-${name}`);
-  if(name==="dashboard"){renderDashboard();loadAnalyticsSummary();}
-  if(name==="manage") renderAdminList();
-  if(name==="reports") loadNewsReports();
+  const target=name||"home";
+  localStorage.setItem("goodNewsAdminTab", target);
+  document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("active",target!=="home"&&t.dataset.tab===target));
+  document.querySelectorAll(".tab-panel").forEach(p=>p.hidden = target==="home" || p.id !== `tab-${target}`);
+  if(target==="manage") renderAdminList();
+  if(target==="reports") loadNewsReports();
   // Der bevorzugte Referenz-Viewport ist 360 × 640 (auf dem Testgerät ca. 77 % Vorschau).
-  if(name==="display-tests" && !displayTestSize) openDisplayTest(360,640);
+  if(target==="display-tests" && !displayTestSize) openDisplayTest(360,640);
 }
-function activeAdminTab(){return document.querySelector(".tab.active")?.dataset.tab||"dashboard";}
+function activeAdminTab(){return document.querySelector(".tab.active")?.dataset.tab||"home";}
 function discardAdminTabChanges(name){
   if(name==="editor"&&formIsDirty($("newsForm"))){
     clearEditorDraft();
@@ -1212,11 +1250,15 @@ function discardAdminTabChanges(name){
     if($("settingLogoFile"))$("settingLogoFile").value="";
     markFormClean($("settingsForm"));
   }
+  if(name==="legal-admin"&&formIsDirty($("legalSettingsForm"))&&appSettings){
+    populateLegalSettingsForm(appSettings);
+    markFormClean($("legalSettingsForm"));
+  }
 }
 function guardedSwitchAdminTab(name){
   const current=activeAdminTab();
   if(current===name)return;
-  if((current==="editor"&&formIsDirty($("newsForm")))||(current==="settings"&&formIsDirty($("settingsForm")))){
+  if((current==="editor"&&formIsDirty($("newsForm")))||(current==="settings"&&formIsDirty($("settingsForm")))||(current==="legal-admin"&&formIsDirty($("legalSettingsForm")))){
     if(!confirmDiscard())return;
     discardAdminTabChanges(current);
   }
@@ -1429,9 +1471,8 @@ async function refreshAuth() {
   await loadSubmissions();
   await loadTripleDrafts();
   await loadAppSettings();
-  await loadAnalyticsSummary();
-  const lastTab = localStorage.getItem("goodNewsAdminTab") || "dashboard";
-  switchAdminTab(lastTab);
+  // Redaktion startet immer auf der kompakten Hauptmaske mit Beiträge/Einstellungen.
+  switchAdminTab("home");
 }
 
 $("loginForm").onsubmit = async (e)=>{
@@ -1454,6 +1495,7 @@ async function loadAdminNews() {
 }
 
 function renderDashboard() {
+  if(!$("dashboardCards") || !$("todayList")) return;
   const today=new Date().toISOString().slice(0,10);
   const todayItems=adminNews.filter(n=>n.published_date===today);
   const published=adminNews.filter(n=>n.status==="published").length;
@@ -1693,7 +1735,7 @@ function resetEditor(){
 }
 $("cancelEditBtn").onclick=()=>{
   if(formIsDirty($("newsForm"))&&!confirmDiscard())return;
-  clearEditorDraft();resetEditor();switchAdminTab("dashboard");
+  clearEditorDraft();resetEditor();switchAdminTab("manage");
 };
 
 let editorCroppedFile=null;
@@ -2051,7 +2093,7 @@ $("newsForm").onsubmit=async(e)=>{
     resetEditor();
     showAppNotice(saveNotice);
     await Promise.all([loadAdminNews(),fetchPublicNews()]);
-    switchAdminTab("dashboard");
+    switchAdminTab("manage");
   }catch(err){$("editorMessage").textContent=err.message||String(err)}
 };
 
@@ -2097,6 +2139,16 @@ if(localStorage.getItem("goodNewsAdminTab")==="editor"){
 renderCachedFeed();
 trackDailyActive();
 fetchPublicNews({preservePosition:false});
+// Beim ersten Start dieser Installation erscheint „Über uns“ einmal vor dem Lesen.
+queueMicrotask(()=>{
+  let seen=false;
+  let displayPreview=false;
+  try{
+    seen=localStorage.getItem(aboutSeenKey())==="1";
+    displayPreview=new URL(location.href).searchParams.get("displayPreview")==="1";
+  }catch{}
+  if(!seen && !displayPreview)openAboutUs({onboarding:true});
+});
 
 // Build 37 – PWA-Update-Reparatur für installierte Android-Apps.
 // Der Service Worker hat ab jetzt eine STABILE URL (sw.js). Beim manuellen Update
@@ -2105,7 +2157,7 @@ fetchPublicNews({preservePosition:false});
 // selbst alle offenen Good-News-Fenster auf den neuen Build führen. So hängt die
 // installierte PWA nicht mehr an einer alten Cache-/Worker-Version fest.
 // Build 35 – adaptive Überschriften (max. 4 Zeilen) und stärkerer Lesbarkeitsverlauf.
-const GOOD_NEWS_BUILD=53;
+const GOOD_NEWS_BUILD=54;
 let goodNewsSwRegistration=null;
 let goodNewsReloading=false;
 
@@ -2298,7 +2350,11 @@ async function loadAppSettings() {
   if(data){
     appSettings=data;
     applyAppSettings(data);
-    if(currentAdminSession){populateSettingsForm(data);markFormClean($("settingsForm"));}
+    if(currentAdminSession){
+      populateSettingsForm(data);
+      markFormClean($("settingsForm"));
+      markFormClean($("legalSettingsForm"));
+    }
   }
 }
 
@@ -2534,6 +2590,29 @@ if($("settingLogoFile")){
   };
 }
 
+const legalSettingsForm=$("legalSettingsForm");
+trackFormState(legalSettingsForm,"Rechtliche Angaben");
+if(legalSettingsForm){
+  legalSettingsForm.onsubmit=async(e)=>{
+    e.preventDefault();
+    const msg=$("legalSettingsMessage");
+    if(msg)msg.textContent="Änderungen werden gespeichert …";
+    try{
+      const {data,error}=await db.from("app_settings").update({
+        legal_settings:readLegalSettingsForm(),
+        updated_at:new Date().toISOString()
+      }).eq("id",1).select().single();
+      if(error)throw error;
+      appSettings=data;
+      applyAppSettings(data);
+      populateLegalSettingsForm(data);
+      markFormClean(legalSettingsForm);
+      setShortMessage(msg,"Gespeichert.");
+      showAppNotice("Gespeichert.");
+    }catch(err){if(msg)msg.textContent=err?.message||String(err);}
+  };
+}
+
 // Extend admin tab switching to refresh settings when opened.
 const originalSwitchAdminTab = switchAdminTab;
 switchAdminTab = function(name){
@@ -2543,6 +2622,11 @@ switchAdminTab = function(name){
     if($("settingLogoFile"))$("settingLogoFile").value="";
     markFormClean($("settingsForm"));
     if($("settingsMessage"))$("settingsMessage").textContent="";
+  }
+  if(name==="legal-admin" && appSettings){
+    populateLegalSettingsForm(appSettings);
+    markFormClean($("legalSettingsForm"));
+    if($("legalSettingsMessage"))$("legalSettingsMessage").textContent="";
   }
 };
 

@@ -14,7 +14,7 @@
   <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-  <link rel="stylesheet" href="style.css?v=77">
+  <link rel="stylesheet" href="style.css?v=78">
 </head>
 <body>
 <header class="appbar">
@@ -30,16 +30,16 @@
         <button id="favoritesBtn" type="button"><span>♡</span>Meine Favoriten</button>
         <button id="submitNewsBtn" type="button"><span>＋</span>Nachricht einreichen</button>
         <div class="menu-separator" aria-hidden="true"></div>
+        <button id="aboutBtn" type="button"><span>ⓘ</span>Über uns</button>
         <button id="userPreferencesBtn" type="button"><span>⚙</span>Einstellungen</button>
         <button id="installAppBtn" type="button" hidden><span>⇩</span>App installieren</button>
-        <button id="checkUpdateBtn" type="button"><span>↻</span>Nach Update suchen</button>
       <button class="menu-item" id="legalBtn" type="button">
         <span class="menu-icon" aria-hidden="true">ⓘ</span>
         <span class="legal-menu-label"><span>Impressum &amp;</span><span>Datenschutz</span></span>
         <span class="menu-chevron" aria-hidden="true">›</span>
       </button>
         <button id="accountBtn" type="button"><span>↪</span><span id="accountBtnLabel">Anmelden</span></button>
-        <div class="app-build-label" aria-label="App-Version">Good News · Build 53</div>
+        <div class="app-build-label" aria-label="App-Version">Good News · Build 54</div>
       </div>
       <button class="icon-btn slide-actions-toggle-btn" id="slideActionsToggleBtn" type="button" aria-label="Meldungsaktionen öffnen" aria-expanded="false" aria-controls="slideQuickActions">＋</button>
       <div class="slide-quick-actions" id="slideQuickActions" hidden>
@@ -182,6 +182,14 @@
         </label>
       </section>
 
+      <section class="user-setting-card update-check-card">
+        <div class="user-setting-copy">
+          <strong>App-Update</strong>
+          <span>Prüft, ob eine neuere Good-News-Version verfügbar ist.</span>
+        </div>
+        <button class="secondary" id="checkUpdateBtn" type="button"><span>↻</span> Nach Update suchen</button>
+      </section>
+
       <section class="user-setting-card user-notification-card">
         <div class="user-setting-toggle-row">
           <div class="user-setting-copy">
@@ -221,6 +229,35 @@
     </form>
   </dialog>
 
+
+  <dialog id="aboutDialog" class="about-dialog">
+    <div class="dialog-head about-dialog-head">
+      <div>
+        <div class="eyebrow">Good News</div>
+        <h2>Über uns</h2>
+      </div>
+      <button class="icon-btn dialog-close" id="aboutCloseBtn" type="button" aria-label="Über uns schließen">✕</button>
+    </div>
+    <div class="about-scroll">
+      <section class="about-hero">
+        <img src="good-news-logo.png" alt="Good News Logo">
+        <div>
+          <span class="about-kicker">Warum Good News?</span>
+          <h3>Mehr Raum für das, was gelingt.</h3>
+          <p>Good News ist entstanden, weil Nachrichten nicht nur zeigen sollen, was schiefläuft, sondern auch, wo Menschen etwas verbessern, Forschung vorankommt, Natur geschützt wird und besondere Geschichten passieren.</p>
+        </div>
+      </section>
+      <div class="about-values">
+        <article><strong>Redaktionell ausgewählt</strong><span>Keine automatische Veröffentlichung: Beiträge und Einsendungen werden geprüft.</span></article>
+        <article><strong>Quellen transparent</strong><span>Text- und Bildquellen werden direkt an der Meldung sichtbar gemacht.</span></article>
+        <article><strong>Positiv, ohne schönzureden</strong><span>Wir suchen echte Fortschritte und gute Entwicklungen – nicht bloß gute Schlagzeilen.</span></article>
+      </div>
+      <p class="about-placeholder-note">Dieser „Über uns“-Bereich ist als Platzhalter angelegt und wird vor dem öffentlichen Start noch final redaktionell ausgearbeitet.</p>
+    </div>
+    <div class="about-footer">
+      <button class="primary" id="aboutContinueBtn" type="button">Good News entdecken</button>
+    </div>
+  </dialog>
 
   <dialog id="legalDialog" class="legal-dialog">
     <div class="dialog-head">
@@ -412,101 +449,31 @@
         <button class="secondary" id="logoutBtn">Abmelden</button>
       </div>
 
-      <!-- Kompakte Statistik direkt unter dem Login -->
-      <div id="dashboardCards" class="metric-grid metric-grid-compact"></div>
+      <!-- Build 54: Die Redaktion startet bewusst nur mit zwei Bereichen. -->
+      <nav class="admin-hub" aria-label="Redaktion">
+        <details class="admin-nav-group">
+          <summary><span class="admin-nav-summary-icon">📰</span><span><strong>Beiträge</strong><small>Entwürfe, neue Beiträge und Einsendungen</small></span><span class="admin-nav-chevron">⌄</span></summary>
+          <div class="admin-nav-items">
+            <button class="tab admin-menu-item" data-tab="triple-drafts"><span class="admin-menu-icon">📝</span><span class="admin-menu-copy"><strong>ChatGPT Entwürfe <span id="tripleDraftBadge" class="badge" hidden></span></strong><small>Vorschläge von ChatGPT prüfen</small></span></button>
+            <button class="tab admin-menu-item" data-tab="editor"><span class="admin-menu-icon">✏️</span><span class="admin-menu-copy"><strong>Neuer Beitrag</strong><small>Eine neue Good News erstellen</small></span></button>
+            <button class="tab admin-menu-item" data-tab="manage"><span class="admin-menu-icon">📰</span><span class="admin-menu-copy"><strong>Beiträge</strong><small>Beiträge bearbeiten und verwalten</small></span></button>
+            <button class="tab admin-menu-item" data-tab="submissions"><span class="admin-menu-icon">📬</span><span class="admin-menu-copy"><strong>Einsendungen <span id="submissionBadge" class="badge" hidden></span></strong><small>Vorschläge der Leser prüfen</small></span></button>
+          </div>
+        </details>
 
-      <section class="analytics-panel analytics-panel-compact" aria-label="Nutzerstatistik">
-        <div class="analytics-grid analytics-grid-compact" id="analyticsCards">
-          <button class="metric analytics-metric" type="button" data-analytics="active" aria-expanded="false">
-            <strong>–</strong><span>aktiv heute</span>
-          </button>
-          <button class="metric analytics-metric" type="button" data-analytics="favorite" aria-expanded="false">
-            <strong>–</strong><span>favorisiert heute</span>
-          </button>
-          <button class="metric analytics-metric" type="button" data-analytics="share" aria-expanded="false">
-            <strong>–</strong><span>geteilt heute</span>
-          </button>
-        </div>
-        <div id="analyticsDetails" class="analytics-details" hidden></div>
-      </section>
-
-      <!-- Funktionen der Redaktion untereinander -->
-      <nav class="tabs admin-menu" aria-label="Redaktion">
-        <button class="tab admin-menu-item active" data-tab="dashboard">
-          <span class="admin-menu-icon">🏠</span>
-          <span class="admin-menu-copy">
-            <strong>Übersicht</strong>
-            <small>Täglichen Dreier ansehen</small>
-          </span>
-        </button>
-
-        <button class="tab admin-menu-item" data-tab="triple-drafts">
-          <span class="admin-menu-icon">📝</span>
-          <span class="admin-menu-copy">
-            <strong>Entwürfe – Auswahl <span id="tripleDraftBadge" class="badge" hidden></span></strong>
-            <small>Morgen- und Abendvorschläge prüfen</small>
-          </span>
-        </button>
-
-        <button class="tab admin-menu-item" data-tab="editor">
-          <span class="admin-menu-icon">✏️</span>
-          <span class="admin-menu-copy">
-            <strong>Neuer Beitrag</strong>
-            <small>Eine neue Good News erstellen</small>
-          </span>
-        </button>
-
-        <button class="tab admin-menu-item" data-tab="manage">
-          <span class="admin-menu-icon">📰</span>
-          <span class="admin-menu-copy">
-            <strong>Beiträge</strong>
-            <small>Beiträge bearbeiten und verwalten</small>
-          </span>
-        </button>
-
-        <button class="tab admin-menu-item" data-tab="submissions">
-          <span class="admin-menu-icon">📬</span>
-          <span class="admin-menu-copy">
-            <strong>Einsendungen <span id="submissionBadge" class="badge" hidden></span></strong>
-            <small>Vorschläge der Leser prüfen</small>
-          </span>
-        </button>
-
-        <button class="tab admin-menu-item" data-tab="reports">
-          <span class="admin-menu-icon">⚑</span><span class="admin-menu-copy"><strong>Fehlermeldungen <span id="reportBadge" class="badge" hidden></span></strong><small>Hinweise der Nutzer prüfen</small></span>
-        </button>
-
-        <button class="tab admin-menu-item" data-tab="error-tests">
-          <span class="admin-menu-icon">🧪</span>
-          <span class="admin-menu-copy"><strong>Fehlerzustände testen</strong><small>Offline, Server, Bild &amp; weitere Zustände simulieren</small></span>
-        </button>
-
-        <button class="tab admin-menu-item" data-tab="display-tests">
-          <span class="admin-menu-icon">📱</span>
-          <span class="admin-menu-copy"><strong>Displaygrößen testen</strong><small>Typische Handy-Displays direkt simulieren</small></span>
-        </button>
-
-        <button class="tab admin-menu-item" data-tab="privacy-admin">
-          <span class="admin-menu-icon">🔐</span>
-          <span class="admin-menu-copy">
-            <strong>DSGVO-Auskunft</strong>
-            <small>Nutzerdaten gezielt per E-Mail abrufen</small>
-          </span>
-        </button>
-
-        <button class="tab admin-menu-item" data-tab="settings">
-          <span class="admin-menu-icon">🎨</span>
-          <span class="admin-menu-copy">
-            <strong>Design der App</strong>
-            <small>Farben, Logo und Darstellung</small>
-          </span>
-        </button>
+        <details class="admin-nav-group">
+          <summary><span class="admin-nav-summary-icon">⚙</span><span><strong>Einstellungen</strong><small>Design, Datenschutz, Tests und Rechtliches</small></span><span class="admin-nav-chevron">⌄</span></summary>
+          <div class="admin-nav-items">
+            <button class="tab admin-menu-item" data-tab="settings"><span class="admin-menu-icon">🎨</span><span class="admin-menu-copy"><strong>Design der App</strong><small>Farben, Logo und Darstellung</small></span></button>
+            <button class="tab admin-menu-item" data-tab="privacy-admin"><span class="admin-menu-icon">🔐</span><span class="admin-menu-copy"><strong>DSGVO-Auskunft</strong><small>Nutzerdaten gezielt per E-Mail abrufen</small></span></button>
+            <button class="tab admin-menu-item" data-tab="reports"><span class="admin-menu-icon">⚑</span><span class="admin-menu-copy"><strong>Fehlermeldungen <span id="reportBadge" class="badge" hidden></span></strong><small>Hinweise der Nutzer prüfen</small></span></button>
+            <button class="tab admin-menu-item" data-tab="error-tests"><span class="admin-menu-icon">🧪</span><span class="admin-menu-copy"><strong>Fehlerzustände testen</strong><small>Offline, Server, Bild und weitere Zustände simulieren</small></span></button>
+            <button class="tab admin-menu-item" data-tab="display-tests"><span class="admin-menu-icon">📱</span><span class="admin-menu-copy"><strong>Displaygrößen testen</strong><small>Typische Handy-Displays simulieren</small></span></button>
+            <button class="tab admin-menu-item" data-tab="push-test"><span class="admin-menu-icon">🔔</span><span class="admin-menu-copy"><strong>Test-Push</strong><small>Push-Versand auf diesem Gerät prüfen</small></span></button>
+            <button class="tab admin-menu-item" data-tab="legal-admin"><span class="admin-menu-icon">⚖</span><span class="admin-menu-copy"><strong>Rechtliches</strong><small>Impressum und Datenschutzangaben pflegen</small></span></button>
+          </div>
+        </details>
       </nav>
-
-      <section id="tab-dashboard" class="tab-panel">
-        <h3>Heute</h3>
-        <div id="todayList"></div>
-      </section>
 
       <section id="tab-triple-drafts" class="tab-panel" hidden>
         <div class="section-head"><div><h3>📝 Entwürfe – Auswahl</h3><p class="muted">Morgens und abends kommen je sechs Vorschläge: zwei pro Rubrik. Wähle aus jeder Rubrik genau einen Beitrag aus und übernimm anschließend deine drei Favoriten als Entwürfe.</p></div></div>
@@ -736,6 +703,45 @@
         <p class="muted privacy-admin-note">Hinweis: Lokale Favoriten und App-Einstellungen liegen nur auf dem jeweiligen Gerät. Die freiwillige Nutzungsstatistik ist nicht mit dem Benutzerkonto verknüpft. Lesereinsendungen besitzen derzeit keine Konto-ID und können deshalb nicht automatisch zugeordnet werden.</p>
       </section>
 
+      <section id="tab-push-test" class="tab-panel" hidden>
+        <div class="section-head"><div><h3>🔔 Test-Push</h3><p class="muted">Prüfe, ob der Push-Versand auf deinem Gerät und mit deinem aktuellen Konto funktioniert.</p></div></div>
+        <div class="push-admin-actions">
+          <button class="secondary" type="button" id="sendTestPushBtn">🔔 Test-Push an dieses Konto senden</button>
+        </div>
+        <div id="pushAdminMessage" class="message" aria-live="polite"></div>
+      </section>
+
+      <section id="tab-legal-admin" class="tab-panel" hidden>
+        <div class="section-head"><div><h3>⚖ Rechtliches</h3><p class="muted">Diese Angaben werden automatisch im Menü unter „Impressum &amp; Datenschutz“ angezeigt.</p></div></div>
+        <form id="legalSettingsForm" class="stack">
+          <label>Name / Anbieter
+            <input id="settingLegalName" maxlength="160" placeholder="Vor- und Nachname oder Unternehmen">
+          </label>
+          <label>Ladungsfähige Geschäfts-/Impressumsadresse
+            <textarea id="settingLegalAddress" rows="3" maxlength="400" placeholder="Straße Hausnummer&#10;PLZ Ort"></textarea>
+          </label>
+          <label>Kontakt-E-Mail
+            <input id="settingLegalEmail" type="email" maxlength="180" placeholder="kontakt@…">
+          </label>
+          <div class="form-grid two">
+            <label>Redaktionell verantwortlich
+              <input id="settingLegalEditorialName" maxlength="160" placeholder="Name">
+            </label>
+            <label>Datenschutz-Kontakt
+              <input id="settingLegalPrivacyEmail" type="email" maxlength="180" placeholder="datenschutz@…">
+            </label>
+          </div>
+          <label>Anschrift redaktionell verantwortlich
+            <textarea id="settingLegalEditorialAddress" rows="3" maxlength="400" placeholder="Nur ausfüllen, wenn abweichend"></textarea>
+          </label>
+          <div class="legal-admin-note">Die ladungsfähige Anschrift bleibt bis zu deinem öffentlichen Release leer bzw. als Platzhalter sichtbar. Trage hier später einfach die Adresse deines Impressumsservices oder deiner Geschäftsanschrift ein.</div>
+          <div class="sticky-actions">
+            <button class="primary" type="submit">Änderungen speichern</button>
+          </div>
+          <div id="legalSettingsMessage" class="message"></div>
+        </form>
+      </section>
+
       <section id="tab-settings" class="tab-panel" hidden>
         <form id="settingsForm" class="stack">
           <fieldset>
@@ -810,56 +816,6 @@
 
 
 
-          <fieldset class="push-admin-fieldset">
-            <legend>Push-Benachrichtigungen</legend>
-            <p class="muted">Hier kannst du prüfen, ob der Push-Versand auf deinem Gerät funktioniert.</p>
-            <div class="push-admin-actions">
-              <button class="secondary" type="button" id="sendTestPushBtn">🔔 Test-Push an dieses Konto senden</button>
-            </div>
-            <div id="pushAdminMessage" class="message" aria-live="polite"></div>
-          </fieldset>
-
-          <fieldset class="legal-admin-fieldset">
-            <legend>Rechtliches</legend>
-            <p class="muted">Diese Angaben werden automatisch im Menü unter „Impressum &amp; Datenschutz“ angezeigt.</p>
-
-            <label>Name / Anbieter
-              <input id="settingLegalName" maxlength="160" placeholder="Vor- und Nachname oder Unternehmen">
-            </label>
-
-            <label>Ladungsfähige Geschäfts-/Impressumsadresse
-              <textarea id="settingLegalAddress" rows="3" maxlength="400" placeholder="Straße Hausnummer&#10;PLZ Ort"></textarea>
-            </label>
-
-            <label>Kontakt-E-Mail
-              <input id="settingLegalEmail" type="email" maxlength="180" placeholder="kontakt@…">
-            </label>
-
-            <div class="form-grid two">
-              <label>Redaktionell verantwortlich
-                <input id="settingLegalEditorialName" maxlength="160" placeholder="Name">
-              </label>
-              <label>Datenschutz-Kontakt
-                <input id="settingLegalPrivacyEmail" type="email" maxlength="180" placeholder="datenschutz@…">
-              </label>
-            </div>
-
-            <label>Anschrift redaktionell verantwortlich
-              <textarea id="settingLegalEditorialAddress" rows="3" maxlength="400" placeholder="Nur ausfüllen, wenn abweichend"></textarea>
-            </label>
-
-            <div class="legal-admin-note">Die ladungsfähige Anschrift bleibt bis zu deinem öffentlichen Release leer bzw. als Platzhalter sichtbar. Trage hier später einfach die Adresse deines Impressumsservices oder deiner Geschäftsanschrift ein.</div>
-          </fieldset>
-
-          <fieldset>
-            <legend>Vorschau</legend>
-            <div id="themePreview" class="theme-preview">
-              <div class="preview-kicker">Politik · 23.08.2026</div>
-              <div class="preview-headline">So sieht deine App aus</div>
-              <div class="preview-copy">Farben, Abstände und Bilddarstellung kannst du hier verändern.</div>
-            </div>
-          </fieldset>
-
           <div class="sticky-actions">
             <button class="primary" type="submit">Änderungen speichern</button>
             <button class="secondary" type="button" id="resetThemeBtn">Standard wiederherstellen</button>
@@ -890,6 +846,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="app.js?v=71"></script>
+  <script src="app.js?v=72"></script>
 </body>
 </html>
