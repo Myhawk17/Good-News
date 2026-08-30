@@ -128,3 +128,9 @@ BUILD 44
 - Push-Abos erhalten eine zufällige Installationskennung (device_key).
 - Mehrere alte Push-Endpunkte derselben Installation werden beim Speichern bereinigt.
 - Der Versand kann pro Installation entdoppeln, ohne andere Geräte desselben Kontos zu verlieren.
+
+
+BUILD 49 – RELOAD-SCHLEIFE BEHOBEN
+- Buildnummern in App, Service Worker, UI und version.json sind wieder identisch.
+- Verhindert die wiederholte automatische Update-Navigation, die sich wie ein Seiten-Refresh alle paar Sekunden auswirkte.
+- Zusätzliche 30-Sekunden-Sicherheitsbremse verhindert Reload-Schleifen bei einem unvollständigen Deployment.

@@ -1972,7 +1972,7 @@ fetchPublicNews({preservePosition:false});
 // selbst alle offenen Good-News-Fenster auf den neuen Build führen. So hängt die
 // installierte PWA nicht mehr an einer alten Cache-/Worker-Version fest.
 // Build 35 – adaptive Überschriften (max. 4 Zeilen) und stärkerer Lesbarkeitsverlauf.
-const GOOD_NEWS_BUILD=45;
+const GOOD_NEWS_BUILD=49;
 let goodNewsSwRegistration=null;
 let goodNewsReloading=false;
 
@@ -2067,13 +2067,28 @@ async function installRemoteBuild(remoteBuild){
 }
 
 async function forceFreshAppNavigation(remoteBuild){
+  // Sicherheitsbremse gegen Reload-Schleifen: Falls version.json bereits einen
+  // neueren Build meldet, aber HTML/JS auf dem Host noch nicht vollständig
+  // aktualisiert sind, darf dieselbe App nicht alle paar Sekunden neu laden.
+  // Ein automatischer Frischlade-Versuch pro Ziel-Build und 30 Sekunden reicht.
+  try{
+    const now=Date.now();
+    const previous=JSON.parse(sessionStorage.getItem("goodNewsUpdateAttempt")||"null");
+    if(previous && Number(previous.build)===Number(remoteBuild) && now-Number(previous.at||0)<30000){
+      console.warn("Good News: erneuten Update-Reload verhindert",remoteBuild);
+      return false;
+    }
+    sessionStorage.setItem("goodNewsUpdateAttempt",JSON.stringify({build:Number(remoteBuild),at:now}));
+    sessionStorage.setItem("goodNewsUpdateTarget",String(remoteBuild));
+  }catch{}
+
   goodNewsReloading=true;
-  try{sessionStorage.setItem("goodNewsUpdateTarget",String(remoteBuild));}catch{}
 
   // Die Caches löschen, BEVOR navigiert wird. Selbst falls der alte Worker das
   // aktuelle Fenster noch kontrolliert, muss er danach den Server benutzen.
   await clearGoodNewsCaches().catch(()=>{});
   location.replace(goodNewsFreshUrl(remoteBuild));
+  return true;
 }
 
 async function checkForAppUpdate({manual=false}={}){
