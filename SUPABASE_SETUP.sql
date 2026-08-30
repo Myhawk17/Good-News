@@ -463,3 +463,12 @@ alter table public.push_subscriptions
     'Fortschritt, Medizin & Technologie',
     'Kultur/Natur'
   ]::text[];
+
+
+-- =========================================================
+-- GOOD NEWS BUILD 44 – Push-Abos pro Installation entdoppeln
+-- =========================================================
+alter table public.push_subscriptions
+  add column if not exists device_key text null;
+create index if not exists push_subscriptions_device_key_idx
+  on public.push_subscriptions(device_key);

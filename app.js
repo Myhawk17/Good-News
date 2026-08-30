@@ -1825,7 +1825,7 @@ fetchPublicNews();
 // selbst alle offenen Good-News-Fenster auf den neuen Build führen. So hängt die
 // installierte PWA nicht mehr an einer alten Cache-/Worker-Version fest.
 // Build 35 – adaptive Überschriften (max. 4 Zeilen) und stärkerer Lesbarkeitsverlauf.
-const GOOD_NEWS_BUILD=43;
+const GOOD_NEWS_BUILD=44;
 let goodNewsSwRegistration=null;
 let goodNewsReloading=false;
 
@@ -2666,14 +2666,25 @@ async function getPushSubscription(){
   const reg=await navigator.serviceWorker.ready;
   return reg.pushManager.getSubscription();
 }
+const PUSH_DEVICE_KEY_STORAGE="goodnews_push_device_key";
+function getPushDeviceKey(){
+  let key=localStorage.getItem(PUSH_DEVICE_KEY_STORAGE);
+  if(!key){
+    key=(window.crypto?.randomUUID?.()||`gn-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+    localStorage.setItem(PUSH_DEVICE_KEY_STORAGE,key);
+  }
+  return key;
+}
 async function savePushSubscription(sub,prefs=userPrefs){
   if(!sub) return;
   const j=sub.toJSON();
   const {data:{session}}=await db.auth.getSession();
   const user=session?.user||null;
   const categories=Array.isArray(prefs?.notifyCategories)?prefs.notifyCategories.map(migrateNotifyCategoryLabel).filter(x=>GOOD_NEWS_CATEGORIES.includes(x)):[...GOOD_NEWS_CATEGORIES];
+  const deviceKey=getPushDeviceKey();
   const payload={
     user_id:user?.id||null,
+    device_key:deviceKey,
     endpoint:j.endpoint,
     p256dh:j.keys?.p256dh||"",
     auth:j.keys?.auth||"",
@@ -2685,6 +2696,15 @@ async function savePushSubscription(sub,prefs=userPrefs){
   };
   const {error}=await db.from("push_subscriptions").upsert(payload,{onConflict:"endpoint"});
   if(error) throw error;
+  // Falls sich der Browser-/PWA-Push-Endpunkt auf derselben Installation ändert,
+  // bleibt nur der aktuelle Endpunkt aktiv. Andere Geräte behalten ihre eigene device_key.
+  if(user?.id && deviceKey){
+    await db.from("push_subscriptions")
+      .delete()
+      .eq("user_id",user.id)
+      .eq("device_key",deviceKey)
+      .neq("endpoint",j.endpoint);
+  }
 }
 async function enablePush(prefs=userPrefs){
   if(!pushSupported()) throw new Error("Push-Benachrichtigungen werden von diesem Browser nicht unterstützt.");

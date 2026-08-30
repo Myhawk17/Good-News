@@ -122,3 +122,9 @@ BUILD 43
 - Redaktionelle App-Einstellungen und Beitragseditor nutzen denselben Verlassensschutz.
 - Nach erfolgreichem Speichern erscheint kurz „Gespeichert.“.
 - Supabase-Push-Abos unterstützen notify_morning, notify_evening und notify_categories.
+
+
+BUILD 44
+- Push-Abos erhalten eine zufällige Installationskennung (device_key).
+- Mehrere alte Push-Endpunkte derselben Installation werden beim Speichern bereinigt.
+- Der Versand kann pro Installation entdoppeln, ohne andere Geräte desselben Kontos zu verlieren.
