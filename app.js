@@ -854,12 +854,27 @@ function openFavorites() {
 
 const mainMenu=$("mainMenu");
 const menuBtn=$("menuBtn");
+let mainMenuFeedScrollTop=null;
+function restoreFeedAfterMenu(){
+  if(mainMenuFeedScrollTop==null||!feed)return;
+  const saved=mainMenuFeedScrollTop;
+  // Android/PWA-WebViews können beim Umschalten von Menü-/Dialogzuständen
+  // den Scroll-Container versetzen. Deshalb die Position sofort und nach dem
+  // nächsten Layout-Zyklus nochmals herstellen.
+  feed.scrollTop=saved;
+  requestAnimationFrame(()=>{ if(feed) feed.scrollTop=saved; });
+}
 function setMainMenuOpen(open){
   if(!mainMenu||!menuBtn)return;
+  if(open && feed) mainMenuFeedScrollTop=feed.scrollTop;
   mainMenu.hidden=!open;
   menuBtn.setAttribute("aria-expanded",String(open));
   document.documentElement.classList.toggle("main-menu-open",open);
-  if(open) mainMenu.scrollTop=0;
+  if(open){
+    mainMenu.scrollTop=0;
+  }else{
+    restoreFeedAfterMenu();
+  }
 }
 function closeMainMenu(){setMainMenuOpen(false)}
 menuBtn.onclick=(e)=>{
@@ -867,6 +882,9 @@ menuBtn.onclick=(e)=>{
   e.stopPropagation();
   setMainMenuOpen(mainMenu.hidden);
 };
+mainMenu?.addEventListener("pointerdown",e=>e.stopPropagation());
+mainMenu?.addEventListener("touchmove",e=>e.stopPropagation(),{passive:true});
+mainMenu?.addEventListener("wheel",e=>e.stopPropagation(),{passive:true});
 function runMenuAction(fn){return (...args)=>{closeMainMenu();return fn(...args)}}
 $("searchBtn").onclick = runMenuAction(openSearch);
 $("archiveBtn").onclick = runMenuAction(openArchive);

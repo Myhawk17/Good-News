@@ -1334,9 +1334,9 @@ html.user-theme-light .app-notice{background:rgba(255,255,255,.98);color:#111114
   touch-action:pan-y;
 }
 html.main-menu-open .feed{
-  overflow:hidden!important;
-  overscroll-behavior:none!important;
-  touch-action:none!important;
+  /* Kein overflow/touch-action-Umschalten: das kann in Android-PWAs den
+     Scrollstand des Feeds auf den Anfang zurücksetzen. */
+  pointer-events:none!important;
 }
 html.main-menu-open .main-menu{pointer-events:auto}
 @media (max-width:700px){
