@@ -27,6 +27,7 @@ const USER_PREF_DEFAULTS={
   textSize:"normal",
   dataSaver:false,
   notifications:false,
+  analytics:false,
   notifyMorning:true,
   notifyEvening:true,
   notifyCategories:[
@@ -94,6 +95,7 @@ function populateUserPreferences(){
   if($("prefTextSize"))$("prefTextSize").value=userPrefs.textSize;
   if($("prefDataSaver"))$("prefDataSaver").checked=Boolean(userPrefs.dataSaver);
   if($("prefNotifications"))$("prefNotifications").checked=Boolean(userPrefs.notifications);
+  if($("prefAnalytics"))$("prefAnalytics").checked=Boolean(userPrefs.analytics);
   if($("prefNotifyMorning"))$("prefNotifyMorning").checked=Boolean(userPrefs.notifyMorning);
   if($("prefNotifyEvening"))$("prefNotifyEvening").checked=Boolean(userPrefs.notifyEvening);
   document.querySelectorAll("[data-notify-category]").forEach(input=>{
@@ -107,6 +109,7 @@ function collectUserPreferences(){
     textSize:$("prefTextSize")?.value||"normal",
     dataSaver:Boolean($("prefDataSaver")?.checked),
     notifications:Boolean($("prefNotifications")?.checked),
+    analytics:Boolean($("prefAnalytics")?.checked),
     notifyMorning:Boolean($("prefNotifyMorning")?.checked),
     notifyEvening:Boolean($("prefNotifyEvening")?.checked),
     notifyCategories:[...document.querySelectorAll("[data-notify-category]:checked")].map(x=>x.dataset.notifyCategory)
@@ -133,6 +136,14 @@ function commitUserPreferences({rerender=false}={}){
 
 userPrefs=readUserPreferences();
 applyUserPreferences();
+// Frühere Test-Builds legten eine Analyse-ID ohne eigene Opt-in-Einstellung an.
+// Ab Build 40 wird sie entfernt, solange die Nutzungsstatistik nicht freiwillig aktiviert ist.
+if(!userPrefs.analytics){
+  try{
+    localStorage.removeItem("goodNewsDeviceId");
+    localStorage.removeItem("goodNewsAnalyticsActiveDay");
+  }catch{}
+}
 
 const esc = (value="") => String(value).replace(/[&<>"']/g, c => ({
   "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
@@ -204,7 +215,8 @@ const getDeviceId = () => {
 // ---------------- PRIVATE ADMIN ANALYTICS ----------------
 // Pseudonymous local device ID only; no name/e-mail is attached to public usage events.
 async function trackAnalyticsEvent(eventType, newsId=null){
-  if(!configured || !db) return false;
+  // Nutzungsstatistik ist freiwillig und standardmäßig ausgeschaltet.
+  if(!userPrefs.analytics || !configured || !db) return false;
   try{
     const row={event_type:eventType,visitor_id:getDeviceId()};
     if(newsId!==null && newsId!==undefined) row.news_id=newsId;
@@ -861,13 +873,29 @@ setTimeout(syncSlideQuickActions,250);
 
 ["prefAppearance","prefTextSize"].forEach(id=>$(id)?.addEventListener("change",()=>commitUserPreferences({rerender:id==="prefTextSize"})));
 $("prefDataSaver")?.addEventListener("change",()=>commitUserPreferences({rerender:true}));
+$("prefAnalytics")?.addEventListener("change",async()=>{
+  const enabled=Boolean($("prefAnalytics")?.checked);
+  commitUserPreferences();
+  if(!enabled){
+    try{
+      localStorage.removeItem("goodNewsDeviceId");
+      localStorage.removeItem("goodNewsAnalyticsActiveDay");
+    }catch{}
+  }else{
+    await trackDailyActive();
+  }
+});
 // prefNotifications is handled by bindPushPreference() so browser permission and subscription stay in sync.
 $("prefNotifyMorning")?.addEventListener("change",()=>commitUserPreferences());
 $("prefNotifyEvening")?.addEventListener("change",()=>commitUserPreferences());
 document.querySelectorAll("[data-notify-category]").forEach(input=>input.addEventListener("change",()=>commitUserPreferences()));
 $("resetUserPreferencesBtn")?.addEventListener("click",()=>{
   userPrefs={...USER_PREF_DEFAULTS,notifyCategories:[...USER_PREF_DEFAULTS.notifyCategories]};
-  try{localStorage.removeItem(USER_PREFS_KEY)}catch{}
+  try{
+    localStorage.removeItem(USER_PREFS_KEY);
+    localStorage.removeItem("goodNewsDeviceId");
+    localStorage.removeItem("goodNewsAnalyticsActiveDay");
+  }catch{}
   applyUserPreferences();
   populateUserPreferences();
   if(allNews.length)renderFeed();
@@ -1629,7 +1657,7 @@ fetchPublicNews();
 // selbst alle offenen Good-News-Fenster auf den neuen Build führen. So hängt die
 // installierte PWA nicht mehr an einer alten Cache-/Worker-Version fest.
 // Build 35 – adaptive Überschriften (max. 4 Zeilen) und stärkerer Lesbarkeitsverlauf.
-const GOOD_NEWS_BUILD=39;
+const GOOD_NEWS_BUILD=40;
 let goodNewsSwRegistration=null;
 let goodNewsReloading=false;
 

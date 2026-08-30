@@ -439,3 +439,12 @@ drop policy if exists "Admins read reports" on public.news_reports;
 create policy "Admins read reports" on public.news_reports for select to authenticated using (public.is_admin());
 drop policy if exists "Admins update reports" on public.news_reports;
 create policy "Admins update reports" on public.news_reports for update to authenticated using (public.is_admin()) with check (public.is_admin());
+
+
+-- =========================================================
+-- GOOD NEWS BUILD 40 – Release-Härtung
+-- =========================================================
+-- Trigger-Funktionen dürfen nicht direkt über die Data API aufrufbar sein.
+revoke execute on function public.create_default_user_role() from public, anon, authenticated;
+-- is_admin() wird von RLS-Policies für angemeldete Nutzer benötigt, aber nicht anonym.
+revoke execute on function public.is_admin() from anon;

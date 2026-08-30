@@ -39,7 +39,7 @@
         <span class="menu-chevron" aria-hidden="true">›</span>
       </button>
         <button id="accountBtn" type="button"><span>↪</span><span id="accountBtnLabel">Anmelden</span></button>
-        <div class="app-build-label" aria-label="App-Version">Good News · Build 39</div>
+        <div class="app-build-label" aria-label="App-Version">Good News · Build 40</div>
       </div>
       <button class="icon-btn quick-toggle-btn" id="quickToggleBtn" type="button" aria-label="Schnellfunktionen öffnen" aria-expanded="false" aria-controls="quickActions">＋</button>
       <div class="quick-actions" id="quickActions" hidden>
@@ -170,6 +170,17 @@
         </label>
       </section>
 
+      <section class="user-setting-card user-setting-toggle-row">
+        <div class="user-setting-copy">
+          <strong>Anonyme Nutzungsstatistik</strong>
+          <span>Freiwillig. Hilft uns zu sehen, wie oft Good News genutzt, gemerkt oder geteilt werden. Standardmäßig ausgeschaltet.</span>
+        </div>
+        <label class="switch-control" aria-label="Anonyme Nutzungsstatistik erlauben">
+          <input id="prefAnalytics" type="checkbox">
+          <span class="switch-slider" aria-hidden="true"></span>
+        </label>
+      </section>
+
       <section class="user-setting-card user-notification-card">
         <div class="user-setting-toggle-row">
           <div class="user-setting-copy">
@@ -234,29 +245,50 @@
 
       <section class="legal-panel" data-legal-panel="privacy">
         <h3>Datenschutzerklärung</h3>
-        <div class="legal-notice">
-          <strong>Entwurf für die Release-Vorbereitung</strong>
-          <p>Die Kontaktdaten des Verantwortlichen sowie gegebenenfalls Angaben zu Hosting und Auftragsverarbeitung müssen vor Veröffentlichung abschließend geprüft werden.</p>
-        </div>
+        <p class="legal-small">Stand: 30. August 2026</p>
+
         <h4>1. Verantwortlicher</h4>
         <p id="legalPrivacyResponsible">Timo Heinrich Grabbe<br>c/o Online-Impressum 10641<br>Europaring 90<br>53757 Sankt Augustin<br><a href="mailto:good-news@mail.online-impressum.de">good-news@mail.online-impressum.de</a></p>
-        <h4>2. Bereitstellung der App</h4>
-        <p>Good News stellt redaktionell ausgewählte Nachrichten und zugehörige Quellenangaben bereit. Für Datenbank-, Anmelde- und Speicherfunktionen wird Supabase eingesetzt. Beim technischen Abruf können für die Bereitstellung notwendige Verbindungs- und Protokolldaten verarbeitet werden.</p>
-        <h4>3. Anmeldung und Konto</h4>
-        <p>Bei Nutzung einer Anmeldung werden insbesondere die für das Konto erforderlichen Anmeldedaten verarbeitet. Redaktionsrechte werden getrennt vom normalen Nutzerkonto verwaltet.</p>
-        <h4>4. Lokale Speicherung</h4>
-        <p>Die App speichert bestimmte Einstellungen und Funktionen lokal auf dem Gerät, beispielsweise Darstellungsoptionen und gemerkte Meldungen. Diese Daten dienen der gewünschten App-Funktionalität.</p>
-        <h4>5. Nutzungsstatistik</h4>
-        <p>Good News kann pseudonyme Ereignisse wie aktive Nutzung, Merken oder Teilen einer Meldung erfassen, um die App zu verbessern. Vor dem öffentlichen Release wird abschließend geprüft, welche Daten tatsächlich erhoben werden und auf welcher Rechtsgrundlage dies erfolgt.</p>
-        <h4>6. Nutzerbeiträge</h4>
-        <p>Wenn Nutzer Inhalte einsenden, werden die dabei übermittelten Angaben verarbeitet, um den Beitrag zu prüfen und gegebenenfalls redaktionell zu verwenden.</p>
-        <h4>7. Externe Quellen und Links</h4>
-        <p>Die App enthält Links zu Text- und Bildquellen. Beim Öffnen eines externen Links gelten die Datenschutzbestimmungen des jeweiligen Anbieters.</p>
-        <h4>8. Rechte betroffener Personen</h4>
-        <p>Betroffene Personen haben im Rahmen der gesetzlichen Voraussetzungen insbesondere Rechte auf Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung, Datenübertragbarkeit und Widerspruch sowie ein Beschwerderecht bei einer Datenschutzaufsichtsbehörde.</p>
-        <h4>9. Änderungen</h4>
-        <p>Diese Datenschutzerklärung wird angepasst, wenn sich Funktionen oder die Datenverarbeitung von Good News ändern.</p>
-        <p class="legal-small">Stand: August 2026 · Entwurfsfassung – vor Veröffentlichung rechtlich und technisch abschließend prüfen.</p>
+
+        <h4>2. Bereitstellung und Hosting</h4>
+        <p>Good News wird als Web-App/PWA über GitHub Pages bereitgestellt. Beim Aufruf können technisch erforderliche Verbindungsdaten, insbesondere die IP-Adresse sowie Zeitpunkt und technische Angaben zum Abruf, durch GitHub verarbeitet werden. GitHub weist darauf hin, dass bei Besuchen von GitHub-Pages-Seiten IP-Adressen zu Sicherheitszwecken protokolliert werden. Die Verarbeitung erfolgt zur sicheren und zuverlässigen Bereitstellung der App auf Grundlage von Art. 6 Abs. 1 lit. f DSGVO.</p>
+        <p class="legal-small">Anbieter: GitHub, Inc. / GitHub B.V. · <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement" target="_blank" rel="noopener noreferrer">Datenschutzhinweise von GitHub</a></p>
+
+        <h4>3. Datenbank, Anmeldung und Speicherfunktionen</h4>
+        <p>Für Nachrichteninhalte, redaktionelle Funktionen, Anmeldungen, Einsendungen, Fehlermeldungen und Push-Abonnements wird Supabase eingesetzt. Dabei können je nach genutzter Funktion Inhaltsdaten, Konto- bzw. Nutzerkennungen, Zeitstempel und technisch erforderliche Verbindungsdaten verarbeitet werden. Das Good-News-Projekt ist derzeit in der Supabase-Region <strong>eu-west-1 (Irland)</strong> angelegt. Supabase kann zur Leistungserbringung weitere Unterauftragsverarbeiter einsetzen.</p>
+        <p>Die Verarbeitung erfolgt – je nach Funktion – zur Bereitstellung der App und ihrer Sicherheitsfunktionen auf Grundlage von Art. 6 Abs. 1 lit. f DSGVO, bei einer ausdrücklich angeforderten Kontofunktion zur Durchführung dieser Funktion sowie bei einwilligungsabhängigen Funktionen auf Grundlage von Art. 6 Abs. 1 lit. a DSGVO.</p>
+        <p class="legal-small">Anbieter: Supabase, Inc. · <a href="https://supabase.com/privacy" target="_blank" rel="noopener noreferrer">Datenschutzhinweise von Supabase</a></p>
+
+        <h4>4. Technische Bibliothek (jsDelivr)</h4>
+        <p>Beim Laden der App wird die für die Verbindung zu Supabase erforderliche JavaScript-Bibliothek über das Content-Delivery-Network jsDelivr geladen. Dabei wird technisch bedingt eine Verbindung zu jsDelivr aufgebaut; hierbei können insbesondere IP-Adresse, Browserinformationen, Referrer, angeforderte URL sowie Zeitpunkt des Abrufs verarbeitet werden. Dies dient der technischen Bereitstellung der App und beruht auf Art. 6 Abs. 1 lit. f DSGVO.</p>
+        <p class="legal-small"><a href="https://www.jsdelivr.com/terms" target="_blank" rel="noopener noreferrer">Datenschutzinformationen von jsDelivr</a></p>
+
+        <h4>5. Lokale Speicherung auf dem Gerät</h4>
+        <p>Good News speichert auf dem Gerät Einstellungen, gemerkte Meldungen, einen zwischengespeicherten Nachrichtenfeed sowie für die PWA technisch notwendige Cache-Daten. Diese Speicherung ist erforderlich, um ausdrücklich gewünschte App-Funktionen, Einstellungen und die Offline-/Update-Funktion bereitzustellen. Soweit die Speicherung hierfür unbedingt erforderlich ist, erfolgt sie nach § 25 Abs. 2 Nr. 2 TDDDG.</p>
+
+        <h4>6. Freiwillige Nutzungsstatistik</h4>
+        <p>Die anonyme bzw. pseudonyme Nutzungsstatistik ist <strong>standardmäßig ausgeschaltet</strong>. Sie kann in den Einstellungen freiwillig aktiviert werden. Erst danach wird lokal eine zufällige Gerätekennung erzeugt und zusammen mit Ereignissen wie täglicher aktiver Nutzung, Merken oder Teilen sowie gegebenenfalls der Kennung der betreffenden Meldung an Supabase übertragen. Name und E-Mail-Adresse werden diesen Statistikereignissen nicht beigefügt.</p>
+        <p>Rechtsgrundlage ist deine Einwilligung nach Art. 6 Abs. 1 lit. a DSGVO und – soweit Informationen auf deinem Gerät gespeichert oder ausgelesen werden – § 25 Abs. 1 TDDDG. Du kannst die Einwilligung jederzeit in den Einstellungen widerrufen. Danach werden keine neuen Statistikereignisse mehr übertragen und die lokale Statistikkennung wird vom Gerät gelöscht. Die Rechtmäßigkeit der bis zum Widerruf erfolgten Verarbeitung bleibt unberührt.</p>
+
+        <h4>7. Push-Benachrichtigungen</h4>
+        <p>Push-Benachrichtigungen sind freiwillig. Sie werden nur aktiviert, wenn du sie in den Einstellungen einschaltest und die Berechtigung deines Browsers bzw. Betriebssystems erteilst. Für den Versand werden ein Push-Endpunkt und die dafür technisch erforderlichen Verschlüsselungsschlüssel bei Supabase gespeichert. Die Verarbeitung beruht auf deiner Einwilligung nach Art. 6 Abs. 1 lit. a DSGVO. Du kannst Push-Benachrichtigungen jederzeit in Good News oder in den Geräteeinstellungen deaktivieren.</p>
+
+        <h4>8. Gute Nachricht einreichen und Fehler melden</h4>
+        <p>Wenn du eine gute Nachricht einreichst, werden Überschrift, Text, Quellenlink, Kategorie sowie freiwillige Angaben wie Ort und Name/Pseudonym gespeichert und redaktionell geprüft. Ein Name oder Pseudonym wird nur veröffentlicht, wenn du die dafür vorgesehene Zustimmung ausdrücklich aktivierst. Bei einer Fehlermeldung zu einem Beitrag werden die Art des Hinweises, ein freiwilliger Kommentar und die betroffene Meldung gespeichert; bei angemeldeten Nutzern kann zusätzlich die Nutzerkennung zugeordnet werden.</p>
+        <p>Die redaktionelle Bearbeitung freiwillig übermittelter Hinweise erfolgt auf Grundlage von Art. 6 Abs. 1 lit. f DSGVO. Eine Veröffentlichung eines freiwillig angegebenen Namens/Pseudonyms erfolgt nur auf Grundlage deiner Einwilligung nach Art. 6 Abs. 1 lit. a DSGVO.</p>
+
+        <h4>9. Externe Quellen und Links</h4>
+        <p>Good News enthält Links zu externen Text- und Bildquellen. Erst wenn du einen solchen Link öffnest, wird eine Verbindung zum jeweiligen externen Anbieter hergestellt. Für die dortige Datenverarbeitung ist der jeweilige Anbieter verantwortlich.</p>
+
+        <h4>10. Speicherdauer</h4>
+        <p>Personenbezogene Daten werden nur so lange gespeichert, wie sie für den jeweiligen Zweck erforderlich sind oder gesetzliche Aufbewahrungspflichten bestehen. Lokale App-Daten können durch Zurücksetzen der Einstellungen, Löschen von Favoriten, Löschen der Website-/App-Daten oder Deinstallation entfernt werden. Nicht mehr benötigte redaktionelle Einsendungen und Fehlermeldungen werden im Rahmen der redaktionellen Pflege gelöscht. Ungültige Push-Abonnements werden beim Versand technisch erkannt und entfernt.</p>
+
+        <h4>11. Deine Rechte</h4>
+        <p>Du hast im Rahmen der gesetzlichen Voraussetzungen insbesondere Rechte auf Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung, Datenübertragbarkeit und Widerspruch. Erteilte Einwilligungen kannst du jederzeit mit Wirkung für die Zukunft widerrufen. Außerdem besteht ein Beschwerderecht bei einer Datenschutzaufsichtsbehörde.</p>
+        <p class="legal-small">Für Verantwortliche mit Sitz in Bremen ist insbesondere der Landesbeauftragte für Datenschutz und Informationsfreiheit der Freien Hansestadt Bremen zuständig: <a href="https://www.datenschutz.bremen.de/" target="_blank" rel="noopener noreferrer">datenschutz.bremen.de</a>.</p>
+
+        <h4>12. Änderungen dieser Datenschutzerklärung</h4>
+        <p>Diese Datenschutzerklärung wird angepasst, wenn sich Funktionen, eingesetzte Dienste oder die Datenverarbeitung von Good News wesentlich ändern.</p>
       </section>
     </div>
   </dialog>
@@ -774,6 +806,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="app.js?v=61"></script>
+  <script src="app.js?v=62"></script>
 </body>
 </html>
