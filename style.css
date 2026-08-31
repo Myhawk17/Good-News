@@ -1612,3 +1612,6 @@ html.user-theme-light .admin-nav-items .admin-menu-item.active{background:#eeeee
 .password-change-form{margin-top:4px}
 .password-recovery-dialog{max-width:560px}
 html.user-theme-light .user-password-card{background:#f6f6f4;border-color:#d8d8dc}
+
+/* Build 57 – Auge direkt unter dem Hauptmenü; Plus öffnet nur Favorit, Teilen und Fehler melden. */
+.account-password-card{margin-top:18px;margin-bottom:18px}

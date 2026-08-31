@@ -1054,11 +1054,8 @@ applySlideFocusMode();
 $("userPreferencesBtn").onclick = runMenuAction(async()=>{
   await syncPushPreferencesForCurrentAccount().catch(()=>{});
   populateUserPreferences();
-  await refreshPasswordSettings();
   markFormClean($("userPreferencesForm"));
-  markFormClean($("passwordChangeForm"));
   if($("userPreferencesMessage")) $("userPreferencesMessage").textContent="";
-  if($("passwordChangeMessage")) $("passwordChangeMessage").textContent="";
   userPreferencesDialog.showModal();
 });
 document.addEventListener("click",(e)=>{
@@ -1071,11 +1068,12 @@ $("homeBtn").onclick = () => {closeMainMenu();feed.scrollTo({top:0,behavior:"smo
 
 function dialogDirtyForms(dialog){
   if(!dialog)return [];
-  if(dialog===userPreferencesDialog)return [$("userPreferencesForm"),$("passwordChangeForm")].filter(Boolean);
+  if(dialog===userPreferencesDialog)return [$("userPreferencesForm")].filter(Boolean);
   if(dialog===$("submissionDialog"))return [$("submissionForm")].filter(Boolean);
   if(dialog===$("reportDialog"))return [$("reportForm")].filter(Boolean);
   if(dialog===adminDialog)return [$("newsForm"),$("settingsForm"),$("legalSettingsForm")].filter(Boolean);
   if(dialog===settingsDialog){
+    if($("settingsLoggedIn") && !$("settingsLoggedIn").hidden)return [$("passwordChangeForm")].filter(Boolean);
     if($("settingsRegisterView") && !$("settingsRegisterView").hidden)return [$("settingsRegisterForm")].filter(Boolean);
     if($("settingsForgotView") && !$("settingsForgotView").hidden)return [$("settingsForgotForm")].filter(Boolean);
   }
@@ -1085,10 +1083,7 @@ function dialogDirtyForms(dialog){
 function discardDialogChanges(dialog){
   if(dialog===userPreferencesDialog){
     populateUserPreferences();
-    $("passwordChangeForm")?.reset();
-    if($("passwordChangeMessage"))$("passwordChangeMessage").textContent="";
     markFormClean($("userPreferencesForm"));
-    markFormClean($("passwordChangeForm"));
     return;
   }
   if(dialog===$("submissionDialog")){
@@ -1118,10 +1113,13 @@ function discardDialogChanges(dialog){
   if(dialog===settingsDialog){
     $("settingsRegisterForm")?.reset();
     $("settingsForgotForm")?.reset();
+    $("passwordChangeForm")?.reset();
     if($("settingsRegisterMessage"))$("settingsRegisterMessage").textContent="";
     if($("settingsForgotMessage"))$("settingsForgotMessage").textContent="";
+    if($("passwordChangeMessage"))$("passwordChangeMessage").textContent="";
     markFormClean($("settingsRegisterForm"));
     markFormClean($("settingsForgotForm"));
+    markFormClean($("passwordChangeForm"));
   }
   if(dialog===passwordRecoveryDialog){
     $("passwordRecoveryForm")?.reset();
@@ -1176,25 +1174,19 @@ trackFormState($("passwordChangeForm"),"Passwort ändern");
 trackFormState($("passwordRecoveryForm"),"Neues Passwort");
 
 async function refreshPasswordSettings(){
-  const loggedIn=$("passwordSettingsLoggedIn");
-  const loggedOut=$("passwordSettingsLoggedOut");
-  if(!loggedIn||!loggedOut)return;
-  if(!configured){
-    loggedIn.hidden=true;loggedOut.hidden=false;
-    return;
-  }
+  if(!configured)return;
   const {data:{session}}=await db.auth.getSession();
-  loggedIn.hidden=!session;
-  loggedOut.hidden=!!session;
   if(session && $("passwordSettingsEmail"))$("passwordSettingsEmail").textContent=session.user.email||"Good-News-Konto";
 }
 
-$("passwordSettingsLoginBtn")?.addEventListener("click",async()=>{
-  if(!requestDialogClose(userPreferencesDialog))return;
-  setSettingsAuthMode("login");
-  settingsDialog.showModal();
-  await refreshSettingsAccount();
-});
+function passwordPolicyError(password){
+  if(password.length<8)return "Das Passwort muss mindestens 8 Zeichen lang sein.";
+  if(!/[A-ZÄÖÜ]/.test(password))return "Das Passwort muss mindestens einen Großbuchstaben enthalten.";
+  if(!/[a-zäöüß]/.test(password))return "Das Passwort muss mindestens einen Kleinbuchstaben enthalten.";
+  if(!/[0-9]/.test(password))return "Das Passwort muss mindestens eine Zahl enthalten.";
+  if(!/[^A-Za-z0-9ÄÖÜäöüß\s]/.test(password))return "Das Passwort muss mindestens ein Sonderzeichen enthalten.";
+  return "";
+}
 
 $("passwordChangeForm")?.addEventListener("submit",async(e)=>{
   e.preventDefault();
@@ -1202,7 +1194,8 @@ $("passwordChangeForm")?.addEventListener("submit",async(e)=>{
   const current=$("currentPassword")?.value||"";
   const next=$("newPassword")?.value||"";
   const confirmNext=$("newPasswordConfirm")?.value||"";
-  if(next.length<8){if(msg)msg.textContent="Das neue Passwort muss mindestens 8 Zeichen lang sein.";return}
+  const policyError=passwordPolicyError(next);
+  if(policyError){if(msg)msg.textContent=policyError;return}
   if(next!==confirmNext){if(msg)msg.textContent="Die neuen Passwörter stimmen nicht überein.";return}
   if(current===next){if(msg)msg.textContent="Das neue Passwort muss sich vom aktuellen Passwort unterscheiden.";return}
   if(!configured){if(msg)msg.textContent="Die Anmeldung ist noch nicht verbunden.";return}
@@ -1252,7 +1245,8 @@ $("passwordRecoveryForm")?.addEventListener("submit",async(e)=>{
   const msg=$("passwordRecoveryMessage");
   const next=$("recoveryNewPassword")?.value||"";
   const confirmNext=$("recoveryNewPasswordConfirm")?.value||"";
-  if(next.length<8){if(msg)msg.textContent="Das Passwort muss mindestens 8 Zeichen lang sein.";return}
+  const policyError=passwordPolicyError(next);
+  if(policyError){if(msg)msg.textContent=policyError;return}
   if(next!==confirmNext){if(msg)msg.textContent="Die Passwörter stimmen nicht überein.";return}
   const btn=$("passwordRecoveryForm")?.querySelector('button[type="submit"]');
   if(btn)btn.disabled=true;
@@ -1470,8 +1464,12 @@ $("showLoginBtn")?.addEventListener("click",()=>{
 $("accountBtn").onclick = async () => {
   closeMainMenu();
   setSettingsAuthMode("login");
+  $("passwordChangeForm")?.reset();
+  if($("passwordChangeMessage"))$("passwordChangeMessage").textContent="";
+  markFormClean($("passwordChangeForm"));
   settingsDialog.showModal();
   await refreshSettingsAccount();
+  await refreshPasswordSettings();
 };
 
 async function refreshSettingsAccount(){
@@ -1499,6 +1497,7 @@ async function refreshSettingsAccount(){
   if(message&&!session)message.textContent="";
   if(session){
     $("settingsWhoAmI").textContent=session.user.email||"Good-News-Konto";
+    if($("passwordSettingsEmail"))$("passwordSettingsEmail").textContent=session.user.email||"Good-News-Konto";
   }
 }
 
@@ -1556,7 +1555,8 @@ $("settingsRegisterForm")?.addEventListener("submit",async(e)=>{
   const password=$("settingsRegisterPassword")?.value||"";
   const confirmPassword=$("settingsRegisterPasswordConfirm")?.value||"";
   if(!configured){if(msg)msg.textContent="Die Registrierung ist noch nicht verbunden.";return}
-  if(password.length<8){if(msg)msg.textContent="Das Passwort muss mindestens 8 Zeichen lang sein.";return}
+  const policyError=passwordPolicyError(password);
+  if(policyError){if(msg)msg.textContent=policyError;return}
   if(password!==confirmPassword){if(msg)msg.textContent="Die Passwörter stimmen nicht überein.";return}
   const submitBtn=$("settingsRegisterForm")?.querySelector('button[type="submit"]');
   if(submitBtn)submitBtn.disabled=true;
@@ -2317,7 +2317,7 @@ queueMicrotask(()=>{
 // selbst alle offenen Good-News-Fenster auf den neuen Build führen. So hängt die
 // installierte PWA nicht mehr an einer alten Cache-/Worker-Version fest.
 // Build 35 – adaptive Überschriften (max. 4 Zeilen) und stärkerer Lesbarkeitsverlauf.
-const GOOD_NEWS_BUILD=56;
+const GOOD_NEWS_BUILD=57;
 let goodNewsSwRegistration=null;
 let goodNewsReloading=false;
 

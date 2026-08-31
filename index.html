@@ -14,7 +14,7 @@
   <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-  <link rel="stylesheet" href="style.css?v=79">
+  <link rel="stylesheet" href="style.css?v=80">
 </head>
 <body>
 <header class="appbar">
@@ -39,16 +39,17 @@
         <span class="menu-chevron" aria-hidden="true">›</span>
       </button>
         <button id="accountBtn" type="button"><span>↪</span><span id="accountBtnLabel">Anmelden</span></button>
-        <div class="app-build-label" aria-label="App-Version">Good News · Build 56</div>
+        <div class="app-build-label" aria-label="App-Version">Good News · Build 57</div>
       </div>
-      <button class="icon-btn slide-actions-toggle-btn" id="slideActionsToggleBtn" type="button" aria-label="Meldungsaktionen öffnen" aria-expanded="false" aria-controls="slideQuickActions">＋</button>
-      <div class="slide-quick-actions" id="slideQuickActions" hidden>
-        <button class="icon-btn slide-focus-btn" id="slideFocusBtn" type="button" aria-label="Slide-Text ausblenden" aria-pressed="false" title="Text ausblenden">
+      <button class="icon-btn slide-focus-btn" id="slideFocusBtn" type="button" aria-label="Slide-Text ausblenden" aria-pressed="false" title="Text ausblenden">
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"></path>
             <circle cx="12" cy="12" r="2.6"></circle>
           </svg>
         </button>
+
+      <button class="icon-btn slide-actions-toggle-btn" id="slideActionsToggleBtn" type="button" aria-label="Meldungsaktionen öffnen" aria-expanded="false" aria-controls="slideQuickActions">＋</button>
+      <div class="slide-quick-actions" id="slideQuickActions" hidden>
         <button class="icon-btn slide-fav-quick-btn" id="slideFavQuickBtn" type="button" aria-label="Aktuelle Meldung zu Favoriten hinzufügen" title="Favorit">♡</button>
         <button class="icon-btn slide-share-quick-btn" id="slideShareQuickBtn" type="button" aria-label="Aktuelle Meldung teilen" title="Teilen">↗</button>
         <button class="icon-btn slide-report-quick-btn" id="slideReportQuickBtn" type="button" aria-label="Fehler in aktueller Meldung melden" title="Fehler melden">⚑</button>
@@ -227,38 +228,6 @@
       <div id="userPreferencesMessage" class="message" aria-live="polite"></div>
     </div>
     </form>
-
-    <section class="user-password-card" id="userPasswordCard" aria-labelledby="passwordSettingsTitle">
-      <div class="section-head compact">
-        <div>
-          <h3 id="passwordSettingsTitle">Passwort</h3>
-          <p class="muted">Ändere hier das Passwort deines Good-News-Kontos.</p>
-        </div>
-      </div>
-      <div id="passwordSettingsLoggedOut">
-        <p class="muted">Melde dich zuerst an, um dein Passwort zu ändern.</p>
-        <button class="secondary" id="passwordSettingsLoginBtn" type="button">Anmelden</button>
-      </div>
-      <div id="passwordSettingsLoggedIn" hidden>
-        <div class="account-card password-account-card">
-          <div><span class="muted">Konto</span><strong id="passwordSettingsEmail"></strong></div>
-        </div>
-        <form id="passwordChangeForm" class="stack password-change-form">
-          <label>Aktuelles Passwort
-            <input id="currentPassword" type="password" autocomplete="current-password" required>
-          </label>
-          <label>Neues Passwort
-            <input id="newPassword" type="password" autocomplete="new-password" minlength="8" required>
-            <span class="field-hint">Mindestens 8 Zeichen.</span>
-          </label>
-          <label>Neues Passwort bestätigen
-            <input id="newPasswordConfirm" type="password" autocomplete="new-password" minlength="8" required>
-          </label>
-          <button class="primary" type="submit">Passwort ändern</button>
-          <div id="passwordChangeMessage" class="message" aria-live="polite"></div>
-        </form>
-      </div>
-    </section>
   </dialog>
 
 
@@ -405,7 +374,7 @@
             </label>
             <label>Passwort
               <input id="settingsRegisterPassword" type="password" autocomplete="new-password" minlength="8" required>
-              <span class="field-hint">Mindestens 8 Zeichen.</span>
+              <span class="field-hint">Mindestens 8 Zeichen sowie mindestens ein Großbuchstabe, ein Kleinbuchstabe, eine Zahl und ein Sonderzeichen.</span>
             </label>
             <label>Passwort bestätigen
               <input id="settingsRegisterPasswordConfirm" type="password" autocomplete="new-password" minlength="8" required>
@@ -446,6 +415,32 @@
         </div>
         <p class="muted account-admin-hint">Redaktionsfunktionen öffnest du über das ⚙ unter dem Menü.</p>
 
+        <section class="user-password-card account-password-card" id="userPasswordCard" aria-labelledby="passwordSettingsTitle">
+          <div class="section-head compact">
+            <div>
+              <h3 id="passwordSettingsTitle">Passwort ändern</h3>
+              <p class="muted">Ändere hier das Passwort deines Good-News-Kontos.</p>
+            </div>
+          </div>
+          <div class="account-card password-account-card">
+            <div><span class="muted">Konto</span><strong id="passwordSettingsEmail"></strong></div>
+          </div>
+          <form id="passwordChangeForm" class="stack password-change-form">
+            <label>Aktuelles Passwort
+              <input id="currentPassword" type="password" autocomplete="current-password" required>
+            </label>
+            <label>Neues Passwort
+              <input id="newPassword" type="password" autocomplete="new-password" minlength="8" required>
+              <span class="field-hint">Mindestens 8 Zeichen sowie mindestens ein Großbuchstabe, ein Kleinbuchstabe, eine Zahl und ein Sonderzeichen.</span>
+            </label>
+            <label>Neues Passwort bestätigen
+              <input id="newPasswordConfirm" type="password" autocomplete="new-password" minlength="8" required>
+            </label>
+            <button class="primary" type="submit">Passwort ändern</button>
+            <div id="passwordChangeMessage" class="message" aria-live="polite"></div>
+          </form>
+        </section>
+
         <section class="privacy-self-card" aria-labelledby="myDataTitle">
           <div class="section-head compact">
             <div>
@@ -482,7 +477,7 @@
     <form id="passwordRecoveryForm" class="stack">
       <label>Neues Passwort
         <input id="recoveryNewPassword" type="password" autocomplete="new-password" minlength="8" required>
-        <span class="field-hint">Mindestens 8 Zeichen.</span>
+        <span class="field-hint">Mindestens 8 Zeichen sowie mindestens ein Großbuchstabe, ein Kleinbuchstabe, eine Zahl und ein Sonderzeichen.</span>
       </label>
       <label>Neues Passwort bestätigen
         <input id="recoveryNewPasswordConfirm" type="password" autocomplete="new-password" minlength="8" required>
@@ -520,7 +515,7 @@
         <button class="secondary" id="logoutBtn">Abmelden</button>
       </div>
 
-      <!-- Build 56: Kompakte Statistik bleibt sichtbar; darunter nur Beiträge und Einstellungen. -->
+      <!-- Build 57: Konto-Passwortverwaltung + stärkere Passwortregeln; Slide-Auge direkt unter dem Menü. -->
       <div id="dashboardCards" class="metric-grid metric-grid-compact" aria-label="Redaktionsstatistik"></div>
 
       <section class="analytics-panel analytics-panel-compact" aria-label="Nutzerstatistik">
@@ -934,6 +929,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="app.js?v=74"></script>
+  <script src="app.js?v=75"></script>
 </body>
 </html>

@@ -1,10 +1,10 @@
-const GOOD_NEWS_SW_BUILD=56;
+const GOOD_NEWS_SW_BUILD=57;
 const CACHE=`good-news-build-${GOOD_NEWS_SW_BUILD}`;
 const STATIC=[
   "./",
   "./index.html",
-  "./style.css?v=79",
-  "./app.js?v=74",
+  "./style.css?v=80",
+  "./app.js?v=75",
   "./config.js",
   "./manifest.json",
   "./favicon-32.png",
