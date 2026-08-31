@@ -1599,3 +1599,16 @@ html.user-theme-light .admin-nav-group>summary small{color:#6f6f76}
 html.user-theme-light .admin-nav-items{border-top-color:#0000000c}
 html.user-theme-light .admin-nav-items .admin-menu-item{background:#f6f6f4;color:#111;border-color:#d8d8dc}
 html.user-theme-light .admin-nav-items .admin-menu-item.active{background:#eeeeec;border-color:#aaa;box-shadow:inset 3px 0 0 #111}
+
+
+/* Build 56 – Passwort vergessen und selbstständige Passwortänderung */
+.account-login-links{display:flex;justify-content:flex-end;margin-top:8px}
+.text-button{border:0;background:transparent;color:var(--text);padding:4px 0;font:inherit;font-size:.82rem;text-decoration:underline;text-underline-offset:3px;cursor:pointer;opacity:.9}
+.text-button:hover{opacity:1}
+.user-password-card{margin:18px 0 2px;padding:16px;border:1px solid var(--line);border-radius:16px;background:var(--panel2)}
+.user-password-card h3{margin:0 0 5px;font-size:1rem}
+.password-account-card{margin:10px 0 14px}
+.password-account-card>div{display:flex;flex-direction:column;gap:3px}
+.password-change-form{margin-top:4px}
+.password-recovery-dialog{max-width:560px}
+html.user-theme-light .user-password-card{background:#f6f6f4;border-color:#d8d8dc}

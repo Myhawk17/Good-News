@@ -13,6 +13,7 @@ const feed = $("feed");
 const readerDialog = $("readerDialog");
 const userPreferencesDialog = $("userPreferencesDialog");
 const settingsDialog = $("settingsDialog");
+const passwordRecoveryDialog = $("passwordRecoveryDialog");
 const adminDialog = $("adminDialog");
 const previewDialog = $("previewDialog");
 const aboutDialog = $("aboutDialog");
@@ -1053,8 +1054,11 @@ applySlideFocusMode();
 $("userPreferencesBtn").onclick = runMenuAction(async()=>{
   await syncPushPreferencesForCurrentAccount().catch(()=>{});
   populateUserPreferences();
+  await refreshPasswordSettings();
   markFormClean($("userPreferencesForm"));
+  markFormClean($("passwordChangeForm"));
   if($("userPreferencesMessage")) $("userPreferencesMessage").textContent="";
+  if($("passwordChangeMessage")) $("passwordChangeMessage").textContent="";
   userPreferencesDialog.showModal();
 });
 document.addEventListener("click",(e)=>{
@@ -1067,17 +1071,24 @@ $("homeBtn").onclick = () => {closeMainMenu();feed.scrollTo({top:0,behavior:"smo
 
 function dialogDirtyForms(dialog){
   if(!dialog)return [];
-  if(dialog===userPreferencesDialog)return [$("userPreferencesForm")].filter(Boolean);
+  if(dialog===userPreferencesDialog)return [$("userPreferencesForm"),$("passwordChangeForm")].filter(Boolean);
   if(dialog===$("submissionDialog"))return [$("submissionForm")].filter(Boolean);
   if(dialog===$("reportDialog"))return [$("reportForm")].filter(Boolean);
   if(dialog===adminDialog)return [$("newsForm"),$("settingsForm"),$("legalSettingsForm")].filter(Boolean);
-  if(dialog===settingsDialog && $("settingsRegisterView") && !$("settingsRegisterView").hidden)return [$("settingsRegisterForm")].filter(Boolean);
+  if(dialog===settingsDialog){
+    if($("settingsRegisterView") && !$("settingsRegisterView").hidden)return [$("settingsRegisterForm")].filter(Boolean);
+    if($("settingsForgotView") && !$("settingsForgotView").hidden)return [$("settingsForgotForm")].filter(Boolean);
+  }
+  if(dialog===passwordRecoveryDialog)return [$("passwordRecoveryForm")].filter(Boolean);
   return [];
 }
 function discardDialogChanges(dialog){
   if(dialog===userPreferencesDialog){
     populateUserPreferences();
+    $("passwordChangeForm")?.reset();
+    if($("passwordChangeMessage"))$("passwordChangeMessage").textContent="";
     markFormClean($("userPreferencesForm"));
+    markFormClean($("passwordChangeForm"));
     return;
   }
   if(dialog===$("submissionDialog")){
@@ -1104,10 +1115,18 @@ function discardDialogChanges(dialog){
       markFormClean($("legalSettingsForm"));
     }
   }
-  if(dialog===settingsDialog && $("settingsRegisterForm")){
-    $("settingsRegisterForm").reset();
+  if(dialog===settingsDialog){
+    $("settingsRegisterForm")?.reset();
+    $("settingsForgotForm")?.reset();
     if($("settingsRegisterMessage"))$("settingsRegisterMessage").textContent="";
+    if($("settingsForgotMessage"))$("settingsForgotMessage").textContent="";
     markFormClean($("settingsRegisterForm"));
+    markFormClean($("settingsForgotForm"));
+  }
+  if(dialog===passwordRecoveryDialog){
+    $("passwordRecoveryForm")?.reset();
+    if($("passwordRecoveryMessage"))$("passwordRecoveryMessage").textContent="";
+    markFormClean($("passwordRecoveryForm"));
   }
 }
 function dirtyDialogMessage(dialog){
@@ -1124,7 +1143,7 @@ function requestDialogClose(dialog){
   return true;
 }
 document.querySelectorAll("[data-close]").forEach(b=>b.onclick=()=>requestDialogClose($(b.dataset.close)));
-[userPreferencesDialog,$("submissionDialog"),$("reportDialog"),settingsDialog,adminDialog].filter(Boolean).forEach(dialog=>{
+[userPreferencesDialog,$("submissionDialog"),$("reportDialog"),settingsDialog,passwordRecoveryDialog,adminDialog].filter(Boolean).forEach(dialog=>{
   dialog.addEventListener("cancel",e=>{
     if(dialogDirtyForms(dialog).some(formIsDirty)){
       e.preventDefault();
@@ -1136,7 +1155,7 @@ document.querySelectorAll("[data-close]").forEach(b=>b.onclick=()=>requestDialog
   });
 });
 window.addEventListener("beforeunload",e=>{
-  const forms=[$("userPreferencesForm"),$("submissionForm"),$("reportForm"),$("settingsRegisterForm"),$("newsForm"),$("settingsForm"),$("legalSettingsForm")].filter(Boolean);
+  const forms=[$("userPreferencesForm"),$("passwordChangeForm"),$("submissionForm"),$("reportForm"),$("settingsRegisterForm"),$("settingsForgotForm"),$("passwordRecoveryForm"),$("newsForm"),$("settingsForm"),$("legalSettingsForm")].filter(Boolean);
   if(forms.some(formIsDirty)){e.preventDefault();e.returnValue="";}
 });
 let quickActionScrollTimer;
@@ -1152,6 +1171,112 @@ setTimeout(syncSlideQuickActions,250);
 const userPreferencesForm=$("userPreferencesForm");
 trackFormState(userPreferencesForm,"Einstellungen");
 trackFormState($("settingsRegisterForm"),"Registrierung");
+trackFormState($("settingsForgotForm"),"Passwort zurücksetzen");
+trackFormState($("passwordChangeForm"),"Passwort ändern");
+trackFormState($("passwordRecoveryForm"),"Neues Passwort");
+
+async function refreshPasswordSettings(){
+  const loggedIn=$("passwordSettingsLoggedIn");
+  const loggedOut=$("passwordSettingsLoggedOut");
+  if(!loggedIn||!loggedOut)return;
+  if(!configured){
+    loggedIn.hidden=true;loggedOut.hidden=false;
+    return;
+  }
+  const {data:{session}}=await db.auth.getSession();
+  loggedIn.hidden=!session;
+  loggedOut.hidden=!!session;
+  if(session && $("passwordSettingsEmail"))$("passwordSettingsEmail").textContent=session.user.email||"Good-News-Konto";
+}
+
+$("passwordSettingsLoginBtn")?.addEventListener("click",async()=>{
+  if(!requestDialogClose(userPreferencesDialog))return;
+  setSettingsAuthMode("login");
+  settingsDialog.showModal();
+  await refreshSettingsAccount();
+});
+
+$("passwordChangeForm")?.addEventListener("submit",async(e)=>{
+  e.preventDefault();
+  const msg=$("passwordChangeMessage");
+  const current=$("currentPassword")?.value||"";
+  const next=$("newPassword")?.value||"";
+  const confirmNext=$("newPasswordConfirm")?.value||"";
+  if(next.length<8){if(msg)msg.textContent="Das neue Passwort muss mindestens 8 Zeichen lang sein.";return}
+  if(next!==confirmNext){if(msg)msg.textContent="Die neuen Passwörter stimmen nicht überein.";return}
+  if(current===next){if(msg)msg.textContent="Das neue Passwort muss sich vom aktuellen Passwort unterscheiden.";return}
+  if(!configured){if(msg)msg.textContent="Die Anmeldung ist noch nicht verbunden.";return}
+  const btn=$("passwordChangeForm")?.querySelector('button[type="submit"]');
+  if(btn)btn.disabled=true;
+  if(msg)msg.textContent="Passwort wird geändert …";
+  try{
+    const {data:{session}}=await db.auth.getSession();
+    const email=session?.user?.email;
+    if(!session||!email)throw new Error("Bitte melde dich erneut an.");
+    const {error:verifyError}=await db.auth.signInWithPassword({email,password:current});
+    if(verifyError)throw new Error("Das aktuelle Passwort ist nicht korrekt.");
+    const {error}=await db.auth.updateUser({password:next});
+    if(error)throw error;
+    $("passwordChangeForm").reset();
+    markFormClean($("passwordChangeForm"));
+    setShortMessage(msg,"Passwort geändert.");
+    showAppNotice("Passwort geändert.");
+  }catch(err){
+    if(msg)msg.textContent=err?.message||String(err);
+  }finally{
+    if(btn)btn.disabled=false;
+  }
+});
+
+let passwordRecoveryActive=false;
+try{passwordRecoveryActive=new URLSearchParams(location.hash.slice(1)).get("type")==="recovery"}catch{}
+function openPasswordRecovery(){
+  if(!passwordRecoveryDialog)return;
+  passwordRecoveryActive=true;
+  $("passwordRecoveryForm")?.reset();
+  markFormClean($("passwordRecoveryForm"));
+  if($("passwordRecoveryMessage"))$("passwordRecoveryMessage").textContent="";
+  if(!passwordRecoveryDialog.open)passwordRecoveryDialog.showModal();
+}
+function clearPasswordRecoveryUrl(){
+  try{
+    const url=new URL(location.href);
+    url.hash="";
+    ["code","type"].forEach(key=>url.searchParams.delete(key));
+    history.replaceState(null,"",url.pathname+url.search);
+  }catch{}
+}
+
+$("passwordRecoveryForm")?.addEventListener("submit",async(e)=>{
+  e.preventDefault();
+  const msg=$("passwordRecoveryMessage");
+  const next=$("recoveryNewPassword")?.value||"";
+  const confirmNext=$("recoveryNewPasswordConfirm")?.value||"";
+  if(next.length<8){if(msg)msg.textContent="Das Passwort muss mindestens 8 Zeichen lang sein.";return}
+  if(next!==confirmNext){if(msg)msg.textContent="Die Passwörter stimmen nicht überein.";return}
+  const btn=$("passwordRecoveryForm")?.querySelector('button[type="submit"]');
+  if(btn)btn.disabled=true;
+  if(msg)msg.textContent="Passwort wird gespeichert …";
+  try{
+    const {error}=await db.auth.updateUser({password:next});
+    if(error)throw error;
+    passwordRecoveryActive=false;
+    clearPasswordRecoveryUrl();
+    $("passwordRecoveryForm").reset();
+    markFormClean($("passwordRecoveryForm"));
+    setShortMessage(msg,"Passwort geändert. Du bist jetzt angemeldet.");
+    showAppNotice("Passwort geändert.");
+    setTimeout(async()=>{
+      if(passwordRecoveryDialog?.open)passwordRecoveryDialog.close();
+      await refreshPasswordSettings().catch(()=>{});
+      await refreshSettingsAccount().catch(()=>{});
+    },900);
+  }catch(err){
+    if(msg)msg.textContent=err?.message||String(err);
+  }finally{
+    if(btn)btn.disabled=false;
+  }
+});
 ["prefAppearance","prefTextSize","prefDataSaver","prefAnalytics","prefNotifyMorning","prefNotifyEvening"].forEach(id=>{
   $(id)?.addEventListener("change",()=>{});
 });
@@ -1308,20 +1433,30 @@ $("adminBtn").onclick = async () => {
 
 function setSettingsAuthMode(mode="login"){
   const register=mode==="register";
-  if($("settingsLoginView")) $("settingsLoginView").hidden=register;
+  const forgot=mode==="forgot";
+  if($("settingsLoginView")) $("settingsLoginView").hidden=register||forgot;
   if($("settingsRegisterView")) $("settingsRegisterView").hidden=!register;
-  if($("accountDialogTitle")) $("accountDialogTitle").textContent=register?"Konto erstellen":"Anmelden";
+  if($("settingsForgotView")) $("settingsForgotView").hidden=!forgot;
+  if($("accountDialogTitle")) $("accountDialogTitle").textContent=register?"Konto erstellen":forgot?"Passwort vergessen":"Anmelden";
   if(register){
     const email=$("settingsLoginEmail")?.value?.trim()||"";
     if(email && $("settingsRegisterEmail") && !$("settingsRegisterEmail").value) $("settingsRegisterEmail").value=email;
     markFormClean($("settingsRegisterForm"));
     if($("settingsRegisterMessage")) $("settingsRegisterMessage").textContent="";
+  }else if(forgot){
+    const email=$("settingsLoginEmail")?.value?.trim()||$("settingsRegisterEmail")?.value?.trim()||"";
+    if(email && $("settingsForgotEmail")) $("settingsForgotEmail").value=email;
+    markFormClean($("settingsForgotForm"));
+    if($("settingsForgotMessage")) $("settingsForgotMessage").textContent="";
   }else{
     markFormClean($("settingsRegisterForm"));
+    markFormClean($("settingsForgotForm"));
   }
 }
 
 $("showRegisterBtn")?.addEventListener("click",()=>setSettingsAuthMode("register"));
+$("showForgotPasswordBtn")?.addEventListener("click",()=>setSettingsAuthMode("forgot"));
+$("forgotBackToLoginBtn")?.addEventListener("click",()=>setSettingsAuthMode("login"));
 $("showLoginBtn")?.addEventListener("click",()=>{
   const form=$("settingsRegisterForm");
   if(formIsDirty(form) && !confirmDiscard("Du hast die Registrierung noch nicht abgeschlossen. Möchtest du die Eingaben verwerfen und zur Anmeldung zurückkehren?"))return;
@@ -1358,7 +1493,8 @@ async function refreshSettingsAccount(){
   if($("accountBtnLabel")) $("accountBtnLabel").textContent=session?"Konto":"Anmelden";
   if($("accountDialogTitle")){
     const registering=$("settingsRegisterView") && !$("settingsRegisterView").hidden;
-    $("accountDialogTitle").textContent=session?"Konto":(registering?"Konto erstellen":"Anmelden");
+    const forgot=$("settingsForgotView") && !$("settingsForgotView").hidden;
+    $("accountDialogTitle").textContent=session?"Konto":(registering?"Konto erstellen":forgot?"Passwort vergessen":"Anmelden");
   }
   if(message&&!session)message.textContent="";
   if(session){
@@ -1382,6 +1518,37 @@ $("settingsLoginForm").onsubmit=async(e)=>{
   await syncPushPreferencesForCurrentAccount().catch(()=>{});
 };
 
+function cleanAuthRedirectUrl(){
+  try{
+    const url=new URL(window.location.href);
+    url.hash="";
+    ["gn_build","gn_sw","gn_refresh"].forEach(key=>url.searchParams.delete(key));
+    return url.href;
+  }catch{
+    return window.location.origin + window.location.pathname;
+  }
+}
+
+$("settingsForgotForm")?.addEventListener("submit",async(e)=>{
+  e.preventDefault();
+  const msg=$("settingsForgotMessage");
+  const email=$("settingsForgotEmail")?.value.trim()||"";
+  if(!configured){if(msg)msg.textContent="Die Anmeldung ist noch nicht verbunden.";return}
+  const btn=$("settingsForgotForm")?.querySelector('button[type="submit"]');
+  if(btn)btn.disabled=true;
+  if(msg)msg.textContent="Reset-Link wird gesendet …";
+  try{
+    const {error}=await db.auth.resetPasswordForEmail(email,{redirectTo:cleanAuthRedirectUrl()});
+    if(error)throw error;
+    markFormClean($("settingsForgotForm"));
+    if(msg)msg.textContent="Wenn zu dieser E-Mail-Adresse ein Konto besteht, wurde ein Link zum Zurücksetzen des Passworts gesendet. Bitte prüfe auch den Spam-Ordner.";
+  }catch(err){
+    if(msg)msg.textContent=err?.message||String(err);
+  }finally{
+    if(btn)btn.disabled=false;
+  }
+});
+
 $("settingsRegisterForm")?.addEventListener("submit",async(e)=>{
   e.preventDefault();
   const msg=$("settingsRegisterMessage");
@@ -1395,16 +1562,7 @@ $("settingsRegisterForm")?.addEventListener("submit",async(e)=>{
   if(submitBtn)submitBtn.disabled=true;
   if(msg)msg.textContent="Konto wird erstellt …";
   try{
-    const redirectUrl=(()=>{
-      try{
-        const url=new URL(window.location.href);
-        url.hash="";
-        ["gn_build","gn_sw","gn_refresh"].forEach(key=>url.searchParams.delete(key));
-        return url.href;
-      }catch{
-        return window.location.origin + window.location.pathname;
-      }
-    })();
+    const redirectUrl=cleanAuthRedirectUrl();
     const {data,error}=await db.auth.signUp({
       email,
       password,
@@ -2101,13 +2259,15 @@ if(db){
     currentUserIsAdmin=await sessionIsAdmin(session);
     $("adminBtn").hidden=!currentUserIsAdmin;
     if($("accountBtnLabel")) $("accountBtnLabel").textContent=session?"Konto":"Anmelden";
+    if(passwordRecoveryActive && session)setTimeout(openPasswordRecovery,0);
   }).catch(()=>{
     currentAdminSession=null;
     currentUserIsAdmin=false;
     $("adminBtn").hidden=true;
     if($("accountBtnLabel")) $("accountBtnLabel").textContent="Anmelden";
   });
-  db.auth.onAuthStateChange((_event,session)=>{
+  db.auth.onAuthStateChange((event,session)=>{
+    if(event==="PASSWORD_RECOVERY")passwordRecoveryActive=true;
     currentAdminSession=session;
     currentUserIsAdmin=false;
     $("adminBtn").hidden=true;
@@ -2117,7 +2277,9 @@ if(db){
       $("adminBtn").hidden=!currentUserIsAdmin;
       if(adminDialog.open)await refreshAuth();
       if(settingsDialog.open)await refreshSettingsAccount();
+      if(userPreferencesDialog?.open)await refreshPasswordSettings();
       await syncPushPreferencesForCurrentAccount(session).catch(()=>{});
+      if(event==="PASSWORD_RECOVERY"||passwordRecoveryActive)openPasswordRecovery();
     },0);
   });
 }else{
@@ -2155,7 +2317,7 @@ queueMicrotask(()=>{
 // selbst alle offenen Good-News-Fenster auf den neuen Build führen. So hängt die
 // installierte PWA nicht mehr an einer alten Cache-/Worker-Version fest.
 // Build 35 – adaptive Überschriften (max. 4 Zeilen) und stärkerer Lesbarkeitsverlauf.
-const GOOD_NEWS_BUILD=55;
+const GOOD_NEWS_BUILD=56;
 let goodNewsSwRegistration=null;
 let goodNewsReloading=false;
 

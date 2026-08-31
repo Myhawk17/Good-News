@@ -14,7 +14,7 @@
   <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-  <link rel="stylesheet" href="style.css?v=78">
+  <link rel="stylesheet" href="style.css?v=79">
 </head>
 <body>
 <header class="appbar">
@@ -39,7 +39,7 @@
         <span class="menu-chevron" aria-hidden="true">›</span>
       </button>
         <button id="accountBtn" type="button"><span>↪</span><span id="accountBtnLabel">Anmelden</span></button>
-        <div class="app-build-label" aria-label="App-Version">Good News · Build 55</div>
+        <div class="app-build-label" aria-label="App-Version">Good News · Build 56</div>
       </div>
       <button class="icon-btn slide-actions-toggle-btn" id="slideActionsToggleBtn" type="button" aria-label="Meldungsaktionen öffnen" aria-expanded="false" aria-controls="slideQuickActions">＋</button>
       <div class="slide-quick-actions" id="slideQuickActions" hidden>
@@ -227,6 +227,38 @@
       <div id="userPreferencesMessage" class="message" aria-live="polite"></div>
     </div>
     </form>
+
+    <section class="user-password-card" id="userPasswordCard" aria-labelledby="passwordSettingsTitle">
+      <div class="section-head compact">
+        <div>
+          <h3 id="passwordSettingsTitle">Passwort</h3>
+          <p class="muted">Ändere hier das Passwort deines Good-News-Kontos.</p>
+        </div>
+      </div>
+      <div id="passwordSettingsLoggedOut">
+        <p class="muted">Melde dich zuerst an, um dein Passwort zu ändern.</p>
+        <button class="secondary" id="passwordSettingsLoginBtn" type="button">Anmelden</button>
+      </div>
+      <div id="passwordSettingsLoggedIn" hidden>
+        <div class="account-card password-account-card">
+          <div><span class="muted">Konto</span><strong id="passwordSettingsEmail"></strong></div>
+        </div>
+        <form id="passwordChangeForm" class="stack password-change-form">
+          <label>Aktuelles Passwort
+            <input id="currentPassword" type="password" autocomplete="current-password" required>
+          </label>
+          <label>Neues Passwort
+            <input id="newPassword" type="password" autocomplete="new-password" minlength="8" required>
+            <span class="field-hint">Mindestens 8 Zeichen.</span>
+          </label>
+          <label>Neues Passwort bestätigen
+            <input id="newPasswordConfirm" type="password" autocomplete="new-password" minlength="8" required>
+          </label>
+          <button class="primary" type="submit">Passwort ändern</button>
+          <div id="passwordChangeMessage" class="message" aria-live="polite"></div>
+        </form>
+      </div>
+    </section>
   </dialog>
 
 
@@ -356,6 +388,9 @@
             <button class="primary" type="submit">Anmelden</button>
             <div id="settingsLoginMessage" class="message" aria-live="polite"></div>
           </form>
+          <div class="account-login-links">
+            <button class="text-button" id="showForgotPasswordBtn" type="button">Passwort vergessen?</button>
+          </div>
           <div class="account-auth-switch">
             <span class="muted">Noch kein Konto?</span>
             <button class="secondary" id="showRegisterBtn" type="button">Konto erstellen</button>
@@ -381,6 +416,20 @@
           <div class="account-auth-switch">
             <span class="muted">Schon registriert?</span>
             <button class="secondary" id="showLoginBtn" type="button">Zur Anmeldung</button>
+          </div>
+        </div>
+
+        <div id="settingsForgotView" hidden>
+          <p class="muted">Gib die E-Mail-Adresse deines Good-News-Kontos ein. Wir senden dir einen Link, mit dem du ein neues Passwort festlegen kannst.</p>
+          <form id="settingsForgotForm" class="stack">
+            <label>E-Mail
+              <input id="settingsForgotEmail" type="email" autocomplete="email" required>
+            </label>
+            <button class="primary" type="submit">Reset-Link senden</button>
+            <div id="settingsForgotMessage" class="message" aria-live="polite"></div>
+          </form>
+          <div class="account-auth-switch">
+            <button class="secondary" id="forgotBackToLoginBtn" type="button">Zurück zur Anmeldung</button>
           </div>
         </div>
       </div>
@@ -421,6 +470,28 @@
     </section>
   </dialog>
 
+  <dialog id="passwordRecoveryDialog" class="sheet settings-dialog password-recovery-dialog">
+    <div class="dialog-head">
+      <div>
+        <div class="eyebrow">Good News</div>
+        <h2>Neues Passwort festlegen</h2>
+      </div>
+      <button class="icon-btn dialog-close" data-close="passwordRecoveryDialog">✕</button>
+    </div>
+    <p class="muted">Dein Reset-Link wurde bestätigt. Lege jetzt ein neues Passwort fest.</p>
+    <form id="passwordRecoveryForm" class="stack">
+      <label>Neues Passwort
+        <input id="recoveryNewPassword" type="password" autocomplete="new-password" minlength="8" required>
+        <span class="field-hint">Mindestens 8 Zeichen.</span>
+      </label>
+      <label>Neues Passwort bestätigen
+        <input id="recoveryNewPasswordConfirm" type="password" autocomplete="new-password" minlength="8" required>
+      </label>
+      <button class="primary" type="submit">Passwort speichern</button>
+      <div id="passwordRecoveryMessage" class="message" aria-live="polite"></div>
+    </form>
+  </dialog>
+
   <dialog id="adminDialog" class="admin-dialog">
     <div class="dialog-head">
       <div>
@@ -449,7 +520,7 @@
         <button class="secondary" id="logoutBtn">Abmelden</button>
       </div>
 
-      <!-- Build 55: Kompakte Statistik bleibt sichtbar; darunter nur Beiträge und Einstellungen. -->
+      <!-- Build 56: Kompakte Statistik bleibt sichtbar; darunter nur Beiträge und Einstellungen. -->
       <div id="dashboardCards" class="metric-grid metric-grid-compact" aria-label="Redaktionsstatistik"></div>
 
       <section class="analytics-panel analytics-panel-compact" aria-label="Nutzerstatistik">
@@ -863,6 +934,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="app.js?v=73"></script>
+  <script src="app.js?v=74"></script>
 </body>
 </html>
