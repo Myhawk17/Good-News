@@ -14,7 +14,7 @@
   <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-  <link rel="stylesheet" href="style.css?v=80">
+  <link rel="stylesheet" href="style.css?v=81">
 </head>
 <body>
 <header class="appbar">
@@ -30,7 +30,7 @@
         <button id="favoritesBtn" type="button"><span>♡</span>Meine Favoriten</button>
         <button id="submitNewsBtn" type="button"><span>＋</span>Nachricht einreichen</button>
         <div class="menu-separator" aria-hidden="true"></div>
-        <button id="aboutBtn" type="button"><span>ⓘ</span>Über uns</button>
+        <button id="aboutBtn" type="button"><span>ⓘ</span>Über Good News</button>
         <button id="userPreferencesBtn" type="button"><span>⚙</span>Einstellungen</button>
         <button id="installAppBtn" type="button" hidden><span>⇩</span>App installieren</button>
       <button class="menu-item" id="legalBtn" type="button">
@@ -39,7 +39,7 @@
         <span class="menu-chevron" aria-hidden="true">›</span>
       </button>
         <button id="accountBtn" type="button"><span>↪</span><span id="accountBtnLabel">Anmelden</span></button>
-        <div class="app-build-label" aria-label="App-Version">Good News · Build 57</div>
+        <div class="app-build-label" aria-label="App-Version">Good News · Build 58</div>
       </div>
       <button class="icon-btn slide-focus-btn" id="slideFocusBtn" type="button" aria-label="Slide-Text ausblenden" aria-pressed="false" title="Text ausblenden">
           <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -232,28 +232,18 @@
 
 
   <dialog id="aboutDialog" class="about-dialog">
-    <div class="dialog-head about-dialog-head">
-      <div>
-        <div class="eyebrow">Good News</div>
-        <h2>Über uns</h2>
-      </div>
-      <button class="icon-btn dialog-close" id="aboutCloseBtn" type="button" aria-label="Über uns schließen">✕</button>
-    </div>
+    <button class="icon-btn dialog-close about-close" id="aboutCloseBtn" type="button" aria-label="Über Good News schließen">✕</button>
     <div class="about-scroll">
-      <section class="about-hero">
-        <img src="good-news-logo.png" alt="Good News Logo">
-        <div>
-          <span class="about-kicker">Warum Good News?</span>
-          <h3>Mehr Raum für das, was gelingt.</h3>
-          <p>Good News ist entstanden, weil Nachrichten nicht nur zeigen sollen, was schiefläuft, sondern auch, wo Menschen etwas verbessern, Forschung vorankommt, Natur geschützt wird und besondere Geschichten passieren.</p>
+      <section class="about-page">
+        <img class="about-logo" src="good-news-logo.png" alt="Good News Logo">
+        <h2>Über Good News</h2>
+        <div class="about-copy">
+          <p>Good News ist aus dem Wunsch entstanden, neben Krisen und Problemen auch die positiven Entwicklungen sichtbar zu machen, die in klassischen Nachrichten oft untergehen.</p>
+          <p>Wir sammeln gute Nachrichten aus aller Welt, fassen sie kurz zusammen und machen sie für Euch leicht zugänglich. Dabei wollen wir nichts schönreden, sondern Euch auf positive Geschehnisse aufmerksam machen.</p>
+          <p>Das Fundament unserer Arbeit sind <strong>nachvollziehbare Quellen</strong>. Jede Meldung verweist auf ihre Originalquelle und bleibt so transparent und überprüfbar.</p>
+          <p>Auch Ihr könnt eigene Nachrichten einsenden – und damit dazu beitragen, dass gute Nachrichten sichtbar werden!</p>
         </div>
       </section>
-      <div class="about-values">
-        <article><strong>Redaktionell ausgewählt</strong><span>Keine automatische Veröffentlichung: Beiträge und Einsendungen werden geprüft.</span></article>
-        <article><strong>Quellen transparent</strong><span>Text- und Bildquellen werden direkt an der Meldung sichtbar gemacht.</span></article>
-        <article><strong>Positiv, ohne schönzureden</strong><span>Wir suchen echte Fortschritte und gute Entwicklungen – nicht bloß gute Schlagzeilen.</span></article>
-      </div>
-      <p class="about-placeholder-note">Dieser „Über uns“-Bereich ist als Platzhalter angelegt und wird vor dem öffentlichen Start noch final redaktionell ausgearbeitet.</p>
     </div>
     <div class="about-footer">
       <button class="primary" id="aboutContinueBtn" type="button">Good News entdecken</button>
@@ -515,7 +505,7 @@
         <button class="secondary" id="logoutBtn">Abmelden</button>
       </div>
 
-      <!-- Build 57: Konto-Passwortverwaltung + stärkere Passwortregeln; Slide-Auge direkt unter dem Menü. -->
+      <!-- Build 58: finaler Über-Good-News-Bereich mit kompaktem Einseiten-Layout. -->
       <div id="dashboardCards" class="metric-grid metric-grid-compact" aria-label="Redaktionsstatistik"></div>
 
       <section class="analytics-panel analytics-panel-compact" aria-label="Nutzerstatistik">
@@ -929,6 +919,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="app.js?v=75"></script>
+  <script src="app.js?v=76"></script>
 </body>
 </html>
