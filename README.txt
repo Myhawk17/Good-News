@@ -152,3 +152,7 @@ BUILD 53 – PLUS-MENÜ, SUCHE & KOMPAKTE LISTEN
 - Suche: Beim Öffnen eines Suchtreffers wird der eingegebene Begriff im Slide sichtbar markiert.
 - Archiv und Meine Favoriten: kompaktere Zeilen mit kleiner Meta-Spalte, zweizeilig begrenzter Überschrift und Pfeil statt großer Titelblöcke.
 - Fehlermeldungen: Beschreibung ist Pflicht (mindestens 5 Zeichen); die Datenbank erzwingt dies ebenfalls.
+
+Build 55:
+- Kompakte Redaktionsstatistik wiederhergestellt, ohne die entfernte Übersicht zurückzubringen.
+- Die Redaktions-Hauptmaske bleibt bei den zwei Bereichen Beiträge und Einstellungen.

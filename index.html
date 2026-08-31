@@ -39,7 +39,7 @@
         <span class="menu-chevron" aria-hidden="true">›</span>
       </button>
         <button id="accountBtn" type="button"><span>↪</span><span id="accountBtnLabel">Anmelden</span></button>
-        <div class="app-build-label" aria-label="App-Version">Good News · Build 54</div>
+        <div class="app-build-label" aria-label="App-Version">Good News · Build 55</div>
       </div>
       <button class="icon-btn slide-actions-toggle-btn" id="slideActionsToggleBtn" type="button" aria-label="Meldungsaktionen öffnen" aria-expanded="false" aria-controls="slideQuickActions">＋</button>
       <div class="slide-quick-actions" id="slideQuickActions" hidden>
@@ -449,7 +449,24 @@
         <button class="secondary" id="logoutBtn">Abmelden</button>
       </div>
 
-      <!-- Build 54: Die Redaktion startet bewusst nur mit zwei Bereichen. -->
+      <!-- Build 55: Kompakte Statistik bleibt sichtbar; darunter nur Beiträge und Einstellungen. -->
+      <div id="dashboardCards" class="metric-grid metric-grid-compact" aria-label="Redaktionsstatistik"></div>
+
+      <section class="analytics-panel analytics-panel-compact" aria-label="Nutzerstatistik">
+        <div class="analytics-grid analytics-grid-compact" id="analyticsCards">
+          <button class="metric analytics-metric" type="button" data-analytics="active" aria-expanded="false">
+            <strong>–</strong><span>aktiv heute</span>
+          </button>
+          <button class="metric analytics-metric" type="button" data-analytics="favorite" aria-expanded="false">
+            <strong>–</strong><span>favorisiert heute</span>
+          </button>
+          <button class="metric analytics-metric" type="button" data-analytics="share" aria-expanded="false">
+            <strong>–</strong><span>geteilt heute</span>
+          </button>
+        </div>
+        <div id="analyticsDetails" class="analytics-details" hidden></div>
+      </section>
+
       <nav class="admin-hub" aria-label="Redaktion">
         <details class="admin-nav-group">
           <summary><span class="admin-nav-summary-icon">📰</span><span><strong>Beiträge</strong><small>Entwürfe, neue Beiträge und Einsendungen</small></span><span class="admin-nav-chevron">⌄</span></summary>
@@ -846,6 +863,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="app.js?v=72"></script>
+  <script src="app.js?v=73"></script>
 </body>
 </html>

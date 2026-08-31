@@ -1471,7 +1471,8 @@ async function refreshAuth() {
   await loadSubmissions();
   await loadTripleDrafts();
   await loadAppSettings();
-  // Redaktion startet immer auf der kompakten Hauptmaske mit Beiträge/Einstellungen.
+  await loadAnalyticsSummary();
+  // Redaktion startet immer auf der kompakten Hauptmaske mit Statistik sowie Beiträge/Einstellungen.
   switchAdminTab("home");
 }
 
@@ -1495,19 +1496,16 @@ async function loadAdminNews() {
 }
 
 function renderDashboard() {
-  if(!$("dashboardCards") || !$("todayList")) return;
+  const cards=$("dashboardCards");
+  if(!cards) return;
   const today=new Date().toISOString().slice(0,10);
   const todayItems=adminNews.filter(n=>n.published_date===today);
   const published=adminNews.filter(n=>n.status==="published").length;
   const drafts=adminNews.filter(n=>n.status==="draft").length;
-  $("dashboardCards").innerHTML=`
+  cards.innerHTML=`
     <div class="metric"><strong>${todayItems.length}</strong><span>heute</span></div>
     <div class="metric"><strong>${published}</strong><span>veröffentlicht</span></div>
     <div class="metric"><strong>${drafts}</strong><span>Entwürfe</span></div>`;
-  const slots=[['damals','🕰️ WAS WAR....'],['fortschritt','🚀 FORTSCHRITT'],['heute','❤️ HEUTE']];
-  const triple=slots.map(([key,label])=>{const n=todayItems.find(x=>x.daily_slot===key);return `<div class="triple-slot ${n?'':'missing'}"><div class="slot-label">${label}</div>${n?`<h4>${esc(n.title)}</h4><div class="muted">${n.status==='published'?'Veröffentlicht':'Entwurf'}</div>`:`<div class="muted">Noch nicht besetzt</div>`}</div>`}).join('');
-  $("todayList").innerHTML=`<div class="triple-grid">${triple}</div>`+(todayItems.length?todayItems.map(adminItemHtml).join(""):`<p class="muted">Für heute gibt es noch keine Beiträge.</p>`);
-  bindAdminItemButtons($("todayList"));
 }
 
 function adminItemHtml(n){
@@ -2157,7 +2155,7 @@ queueMicrotask(()=>{
 // selbst alle offenen Good-News-Fenster auf den neuen Build führen. So hängt die
 // installierte PWA nicht mehr an einer alten Cache-/Worker-Version fest.
 // Build 35 – adaptive Überschriften (max. 4 Zeilen) und stärkerer Lesbarkeitsverlauf.
-const GOOD_NEWS_BUILD=54;
+const GOOD_NEWS_BUILD=55;
 let goodNewsSwRegistration=null;
 let goodNewsReloading=false;
 
