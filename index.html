@@ -4,23 +4,23 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#0e0e10">
-  <meta name="application-name" content="Good News">
+  <meta name="application-name" content="Aufwind">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Good News">
-  <meta name="description" content="Good News – Jeden Tag passiert auch Gutes.">
-  <title>Good News</title>
+  <meta name="apple-mobile-web-app-title" content="Aufwind">
+  <meta name="description" content="Aufwind – Good News aus aller Welt. Positive Nachrichten kompakt, transparent und nachvollziehbar.">
+  <title>Aufwind – Good News aus aller Welt</title>
   <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-  <link rel="stylesheet" href="style.css?v=82">
+  <link rel="stylesheet" href="style.css?v=83">
 </head>
 <body>
 <header class="appbar">
     <button class="brand-btn" id="homeBtn" aria-label="Zum neuesten Beitrag">
-      <img id="brandLogo" class="brand-logo" src="icon-192.png" alt="Good News App-Logo">
-      <span class="brand-name">Good News</span>
+      <img id="brandLogo" class="brand-logo" src="icon-192.png" alt="Aufwind App-Logo">
+      <span class="brand-copy"><span class="brand-name">Aufwind</span><span class="brand-tagline">Good News aus aller Welt</span></span>
     </button>
     <div class="appbar-actions">
       <button class="icon-btn menu-toggle-btn" id="menuBtn" aria-label="Menü öffnen" aria-expanded="false" aria-controls="mainMenu">☰</button>
@@ -30,7 +30,7 @@
         <button id="favoritesBtn" type="button"><span>♡</span>Meine Favoriten</button>
         <button id="submitNewsBtn" type="button"><span>＋</span>Nachricht einreichen</button>
         <div class="menu-separator" aria-hidden="true"></div>
-        <button id="aboutBtn" type="button"><span>ⓘ</span>Über Good News</button>
+        <button id="aboutBtn" type="button"><span>ⓘ</span>Über Aufwind</button>
         <button id="userPreferencesBtn" type="button"><span>⚙</span>Einstellungen</button>
         <button id="installAppBtn" type="button" hidden><span>⇩</span>App installieren</button>
       <button class="menu-item" id="legalBtn" type="button">
@@ -39,7 +39,7 @@
         <span class="menu-chevron" aria-hidden="true">›</span>
       </button>
         <button id="accountBtn" type="button"><span>↪</span><span id="accountBtnLabel">Anmelden</span></button>
-        <div class="app-build-label" aria-label="App-Version">Good News · Build 60</div>
+        <div class="app-build-label" aria-label="App-Version">Aufwind · Build 61</div>
       </div>
       <button class="icon-btn slide-focus-btn" id="slideFocusBtn" type="button" aria-label="Slide-Text ausblenden" aria-pressed="false" title="Text ausblenden">
           <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -59,12 +59,12 @@
   </header>
 
   <main id="feed" class="feed" aria-live="polite">
-    <section class="feed-loading" id="feedLoading" aria-label="Good News werden geladen">
+    <section class="feed-loading" id="feedLoading" aria-label="Aufwind wird geladen">
       <img src="date-slide-background-v2.png" alt="" aria-hidden="true">
       <div class="feed-loading-overlay"></div>
       <div class="feed-loading-copy">
-        <strong>GOOD NEWS</strong>
-        <span>Nachrichten werden geladen …</span>
+        <strong>AUFWIND</strong>
+        <span>Good News aus aller Welt</span>
       </div>
     </section>
   </main>
@@ -74,7 +74,7 @@
   <dialog id="readerDialog" class="sheet">
     <div class="dialog-head">
       <div>
-        <div class="eyebrow" id="readerEyebrow">Good News</div>
+        <div class="eyebrow" id="readerEyebrow">Aufwind</div>
         <h2 id="readerTitle">Menü</h2>
       </div>
       <button class="icon-btn dialog-close" data-close="readerDialog">✕</button>
@@ -83,7 +83,7 @@
   </dialog>
 
   <dialog id="reportDialog" class="sheet report-dialog">
-    <div class="dialog-head"><div><div class="eyebrow">Good News</div><h2>Fehler melden</h2></div><button class="icon-btn dialog-close" data-close="reportDialog">✕</button></div>
+    <div class="dialog-head"><div><div class="eyebrow">Aufwind</div><h2>Fehler melden</h2></div><button class="icon-btn dialog-close" data-close="reportDialog">✕</button></div>
     <form id="reportForm" class="stack">
       <p id="reportNewsTitle" class="muted"></p>
       <label>Was ist dir aufgefallen?
@@ -130,7 +130,7 @@
   <dialog id="userPreferencesDialog" class="admin-dialog user-preferences-dialog">
     <div class="dialog-head">
       <div>
-        <div class="eyebrow">Good News</div>
+        <div class="eyebrow">Aufwind</div>
         <h2>Einstellungen</h2>
       </div>
       <button class="icon-btn dialog-close" data-close="userPreferencesDialog">✕</button>
@@ -232,13 +232,14 @@
 
 
   <dialog id="aboutDialog" class="about-dialog">
-    <button class="icon-btn dialog-close about-close" id="aboutCloseBtn" type="button" aria-label="Über Good News schließen">✕</button>
+    <button class="icon-btn dialog-close about-close" id="aboutCloseBtn" type="button" aria-label="Über Aufwind schließen">✕</button>
     <div class="about-scroll">
       <section class="about-page">
-        <img class="about-logo" src="good-news-logo.png" alt="Good News Logo">
-        <h2>Über Good News</h2>
+        <img class="about-logo" src="good-news-logo.png" alt="Aufwind – Good News aus aller Welt">
+        <h2>Über Aufwind</h2>
+        <div class="about-tagline">Good News aus aller Welt</div>
         <div class="about-copy">
-          <p>Good News ist aus dem Wunsch entstanden, neben Krisen und Problemen auch die positiven Entwicklungen sichtbar zu machen, die in klassischen Nachrichten oft untergehen.</p>
+          <p>Aufwind ist aus dem Wunsch entstanden, neben Krisen und Problemen auch die positiven Entwicklungen sichtbar zu machen, die in klassischen Nachrichten oft untergehen.</p>
           <p>Wir sammeln gute Nachrichten aus aller Welt, fassen sie kurz zusammen und machen sie für Euch leicht zugänglich. Dabei wollen wir nichts schönreden, sondern Euch auf positive Geschehnisse aufmerksam machen.</p>
           <p>Das Fundament unserer Arbeit sind <strong>nachvollziehbare Quellen</strong>. Jede Meldung verweist auf ihre Originalquelle und bleibt so transparent und überprüfbar.</p>
           <p>Auch Ihr könnt eigene Nachrichten einsenden – und damit dazu beitragen, dass gute Nachrichten sichtbar werden!</p>
@@ -246,13 +247,13 @@
       </section>
     </div>
     <div class="about-footer">
-      <button class="primary" id="aboutContinueBtn" type="button">Good News entdecken</button>
+      <button class="primary" id="aboutContinueBtn" type="button">Aufwind entdecken</button>
     </div>
   </dialog>
 
   <dialog id="legalDialog" class="legal-dialog">
     <div class="dialog-head">
-      <div><div class="eyebrow">Good News</div><h2>Impressum & Datenschutz</h2></div>
+      <div><div class="eyebrow">Aufwind</div><h2>Impressum & Datenschutz</h2></div>
       <button class="icon-btn dialog-close" data-close="legalDialog">✕</button>
     </div>
     <div class="legal-tabs" role="tablist" aria-label="Rechtliche Informationen">
@@ -263,7 +264,7 @@
       <section class="legal-panel active" data-legal-panel="imprint">
         <h3>Impressum</h3>
         <h4>Angaben zum Anbieter</h4>
-        <p><strong>Good News</strong><br>
+        <p><strong>Aufwind – Good News aus aller Welt</strong><br>
         Verantwortliche Person: <span id="legalProviderName">Timo Heinrich Grabbe</span><br>
         Ladungsfähige Anschrift: <span id="legalProviderAddress">c/o Online-Impressum 10641<br>Europaring 90<br>53757 Sankt Augustin</span></p>
         <h4>Kontakt</h4>
@@ -282,7 +283,7 @@
         <p id="legalPrivacyResponsible">Timo Heinrich Grabbe<br>c/o Online-Impressum 10641<br>Europaring 90<br>53757 Sankt Augustin<br><a href="mailto:good-news@mail.online-impressum.de">good-news@mail.online-impressum.de</a></p>
 
         <h4>2. Bereitstellung und Hosting</h4>
-        <p>Good News wird als Web-App/PWA über GitHub Pages bereitgestellt. Beim Aufruf können technisch erforderliche Verbindungsdaten, insbesondere die IP-Adresse sowie Zeitpunkt und technische Angaben zum Abruf, durch GitHub verarbeitet werden. GitHub weist darauf hin, dass bei Besuchen von GitHub-Pages-Seiten IP-Adressen zu Sicherheitszwecken protokolliert werden. Die Verarbeitung erfolgt zur sicheren und zuverlässigen Bereitstellung der App auf Grundlage von Art. 6 Abs. 1 lit. f DSGVO.</p>
+        <p>Aufwind wird als Web-App/PWA über GitHub Pages bereitgestellt. Beim Aufruf können technisch erforderliche Verbindungsdaten, insbesondere die IP-Adresse sowie Zeitpunkt und technische Angaben zum Abruf, durch GitHub verarbeitet werden. GitHub weist darauf hin, dass bei Besuchen von GitHub-Pages-Seiten IP-Adressen zu Sicherheitszwecken protokolliert werden. Die Verarbeitung erfolgt zur sicheren und zuverlässigen Bereitstellung der App auf Grundlage von Art. 6 Abs. 1 lit. f DSGVO.</p>
         <p class="legal-small">Anbieter: GitHub, Inc. / GitHub B.V. · <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement" target="_blank" rel="noopener noreferrer">Datenschutzhinweise von GitHub</a></p>
 
         <h4>3. Datenbank, Anmeldung und Speicherfunktionen</h4>
@@ -295,21 +296,21 @@
         <p class="legal-small"><a href="https://www.jsdelivr.com/terms" target="_blank" rel="noopener noreferrer">Datenschutzinformationen von jsDelivr</a></p>
 
         <h4>5. Lokale Speicherung auf dem Gerät</h4>
-        <p>Good News speichert auf dem Gerät Einstellungen, gemerkte Meldungen, einen zwischengespeicherten Nachrichtenfeed sowie für die PWA technisch notwendige Cache-Daten. Diese Speicherung ist erforderlich, um ausdrücklich gewünschte App-Funktionen, Einstellungen und die Offline-/Update-Funktion bereitzustellen. Soweit die Speicherung hierfür unbedingt erforderlich ist, erfolgt sie nach § 25 Abs. 2 Nr. 2 TDDDG.</p>
+        <p>Aufwind speichert auf dem Gerät Einstellungen, gemerkte Meldungen, einen zwischengespeicherten Nachrichtenfeed sowie für die PWA technisch notwendige Cache-Daten. Diese Speicherung ist erforderlich, um ausdrücklich gewünschte App-Funktionen, Einstellungen und die Offline-/Update-Funktion bereitzustellen. Soweit die Speicherung hierfür unbedingt erforderlich ist, erfolgt sie nach § 25 Abs. 2 Nr. 2 TDDDG.</p>
 
         <h4>6. Freiwillige Nutzungsstatistik</h4>
         <p>Die anonyme bzw. pseudonyme Nutzungsstatistik ist <strong>standardmäßig ausgeschaltet</strong>. Sie kann in den Einstellungen freiwillig aktiviert werden. Erst danach wird lokal eine zufällige Gerätekennung erzeugt und zusammen mit Ereignissen wie täglicher aktiver Nutzung, Merken oder Teilen sowie gegebenenfalls der Kennung der betreffenden Meldung an Supabase übertragen. Name und E-Mail-Adresse werden diesen Statistikereignissen nicht beigefügt.</p>
         <p>Rechtsgrundlage ist deine Einwilligung nach Art. 6 Abs. 1 lit. a DSGVO und – soweit Informationen auf deinem Gerät gespeichert oder ausgelesen werden – § 25 Abs. 1 TDDDG. Du kannst die Einwilligung jederzeit in den Einstellungen widerrufen. Danach werden keine neuen Statistikereignisse mehr übertragen und die lokale Statistikkennung wird vom Gerät gelöscht. Die Rechtmäßigkeit der bis zum Widerruf erfolgten Verarbeitung bleibt unberührt.</p>
 
         <h4>7. Push-Benachrichtigungen</h4>
-        <p>Push-Benachrichtigungen sind freiwillig. Sie werden nur aktiviert, wenn du sie in den Einstellungen einschaltest und die Berechtigung deines Browsers bzw. Betriebssystems erteilst. Für den Versand werden ein Push-Endpunkt, die dafür technisch erforderlichen Verschlüsselungsschlüssel, eine zufällig erzeugte technische Gerätekennung zur Vermeidung doppelter Abonnements sowie deine gewählten Benachrichtigungszeiten und Kategorien bei Supabase gespeichert. Die Verarbeitung beruht auf deiner Einwilligung nach Art. 6 Abs. 1 lit. a DSGVO. Du kannst Push-Benachrichtigungen jederzeit in Good News oder in den Geräteeinstellungen deaktivieren.</p>
+        <p>Push-Benachrichtigungen sind freiwillig. Sie werden nur aktiviert, wenn du sie in den Einstellungen einschaltest und die Berechtigung deines Browsers bzw. Betriebssystems erteilst. Für den Versand werden ein Push-Endpunkt, die dafür technisch erforderlichen Verschlüsselungsschlüssel, eine zufällig erzeugte technische Gerätekennung zur Vermeidung doppelter Abonnements sowie deine gewählten Benachrichtigungszeiten und Kategorien bei Supabase gespeichert. Die Verarbeitung beruht auf deiner Einwilligung nach Art. 6 Abs. 1 lit. a DSGVO. Du kannst Push-Benachrichtigungen jederzeit in Aufwind oder in den Geräteeinstellungen deaktivieren.</p>
 
         <h4>8. Gute Nachricht einreichen und Fehler melden</h4>
         <p>Wenn du eine gute Nachricht einreichst, werden Überschrift, Text, Quellenlink, Kategorie sowie freiwillige Angaben wie Ort und Name/Pseudonym gespeichert und redaktionell geprüft. Ein Name oder Pseudonym wird nur veröffentlicht, wenn du die dafür vorgesehene Zustimmung ausdrücklich aktivierst. Bei einer Fehlermeldung zu einem Beitrag werden die Art des Hinweises, die Beschreibung des Fehlers und die betroffene Meldung gespeichert; bei angemeldeten Nutzern kann zusätzlich die Nutzerkennung zugeordnet werden.</p>
         <p>Die redaktionelle Bearbeitung freiwillig übermittelter Hinweise erfolgt auf Grundlage von Art. 6 Abs. 1 lit. f DSGVO. Eine Veröffentlichung eines freiwillig angegebenen Namens/Pseudonyms erfolgt nur auf Grundlage deiner Einwilligung nach Art. 6 Abs. 1 lit. a DSGVO.</p>
 
         <h4>9. Externe Quellen und Links</h4>
-        <p>Good News enthält Links zu externen Text- und Bildquellen. Erst wenn du einen solchen Link öffnest, wird eine Verbindung zum jeweiligen externen Anbieter hergestellt. Für die dortige Datenverarbeitung ist der jeweilige Anbieter verantwortlich.</p>
+        <p>Aufwind enthält Links zu externen Text- und Bildquellen. Erst wenn du einen solchen Link öffnest, wird eine Verbindung zum jeweiligen externen Anbieter hergestellt. Für die dortige Datenverarbeitung ist der jeweilige Anbieter verantwortlich.</p>
 
         <h4>10. Speicherdauer</h4>
         <p>Personenbezogene Daten werden nur so lange gespeichert, wie sie für den jeweiligen Zweck erforderlich sind oder gesetzliche Aufbewahrungspflichten bestehen. Lokale App-Daten können durch Zurücksetzen der Einstellungen, Löschen von Favoriten, Löschen der Website-/App-Daten oder Deinstallation entfernt werden. Nicht mehr benötigte redaktionelle Einsendungen und Fehlermeldungen werden im Rahmen der redaktionellen Pflege gelöscht. Ungültige Push-Abonnements werden beim Versand technisch erkannt und entfernt.</p>
@@ -319,7 +320,7 @@
         <p class="legal-small">Für Verantwortliche mit Sitz in Bremen ist insbesondere der Landesbeauftragte für Datenschutz und Informationsfreiheit der Freien Hansestadt Bremen zuständig: <a href="https://www.datenschutz.bremen.de/" target="_blank" rel="noopener noreferrer">datenschutz.bremen.de</a>.</p>
 
         <h4>12. Änderungen dieser Datenschutzerklärung</h4>
-        <p>Diese Datenschutzerklärung wird angepasst, wenn sich Funktionen, eingesetzte Dienste oder die Datenverarbeitung von Good News wesentlich ändern.</p>
+        <p>Diese Datenschutzerklärung wird angepasst, wenn sich Funktionen, eingesetzte Dienste oder die Datenverarbeitung von Aufwind wesentlich ändern.</p>
       </section>
     </div>
   </dialog>
@@ -327,7 +328,7 @@
   <dialog id="settingsDialog" class="sheet settings-dialog">
     <div class="dialog-head">
       <div>
-        <div class="eyebrow">Good News</div>
+        <div class="eyebrow">Aufwind</div>
         <h2 id="accountDialogTitle">Anmelden</h2>
       </div>
       <button class="icon-btn dialog-close" data-close="settingsDialog">✕</button>
@@ -458,7 +459,7 @@
   <dialog id="passwordRecoveryDialog" class="sheet settings-dialog password-recovery-dialog">
     <div class="dialog-head">
       <div>
-        <div class="eyebrow">Good News</div>
+        <div class="eyebrow">Aufwind</div>
         <h2>Neues Passwort festlegen</h2>
       </div>
       <button class="icon-btn dialog-close" data-close="passwordRecoveryDialog">✕</button>
@@ -480,7 +481,7 @@
   <dialog id="adminDialog" class="admin-dialog">
     <div class="dialog-head">
       <div>
-        <div class="eyebrow">Good News</div>
+        <div class="eyebrow">Aufwind</div>
         <h2>Redaktion</h2>
       </div>
       <button class="icon-btn dialog-close" data-close="adminDialog">✕</button>
@@ -528,7 +529,7 @@
           <summary><span class="admin-nav-summary-icon">📰</span><span><strong>Beiträge</strong><small>Entwürfe, neue Beiträge und Einsendungen</small></span><span class="admin-nav-chevron">⌄</span></summary>
           <div class="admin-nav-items">
             <button class="tab admin-menu-item" data-tab="triple-drafts"><span class="admin-menu-icon">📝</span><span class="admin-menu-copy"><strong>ChatGPT Entwürfe <span id="tripleDraftBadge" class="badge" hidden></span></strong><small>Vorschläge von ChatGPT prüfen</small></span></button>
-            <button class="tab admin-menu-item" data-tab="editor"><span class="admin-menu-icon">✏️</span><span class="admin-menu-copy"><strong>Neuer Beitrag</strong><small>Eine neue Good News erstellen</small></span></button>
+            <button class="tab admin-menu-item" data-tab="editor"><span class="admin-menu-icon">✏️</span><span class="admin-menu-copy"><strong>Neuer Beitrag</strong><small>Eine neue Aufwind-Meldung erstellen</small></span></button>
             <button class="tab admin-menu-item" data-tab="manage"><span class="admin-menu-icon">📰</span><span class="admin-menu-copy"><strong>Beiträge</strong><small>Beiträge bearbeiten und verwalten</small></span></button>
             <button class="tab admin-menu-item" data-tab="submissions"><span class="admin-menu-icon">📬</span><span class="admin-menu-copy"><strong>Einsendungen <span id="submissionBadge" class="badge" hidden></span></strong><small>Vorschläge der Leser prüfen</small></span></button>
           </div>
@@ -581,10 +582,10 @@
         <div id="displayTestInfo" class="message">Wähle oben eine Displaygröße.</div>
         <div id="displayTestStage" class="display-test-stage" hidden>
           <div id="displayTestScaler" class="display-test-scaler">
-            <iframe id="displayTestFrame" title="Good News Display-Vorschau"></iframe>
+            <iframe id="displayTestFrame" title="Aufwind Display-Vorschau"></iframe>
           </div>
         </div>
-        <p class="muted display-test-hint">Hinweis: Die Vorschau wird auf deinem Handy verkleinert dargestellt, behält intern aber exakt die ausgewählte Auflösung. Du kannst darin wischen und die Good News bedienen.</p>
+        <p class="muted display-test-hint">Hinweis: Die Vorschau wird auf deinem Handy verkleinert dargestellt, behält intern aber exakt die ausgewählte Auflösung. Du kannst darin wischen und Aufwind bedienen.</p>
       </section>
 
       <section id="tab-editor" class="tab-panel" hidden>
@@ -820,7 +821,7 @@
           <fieldset>
             <legend>App</legend>
             <label>App-Name
-              <input id="settingAppName" maxlength="40" placeholder="Good News">
+              <input id="settingAppName" maxlength="40" placeholder="Aufwind">
             </label>
             <label>Logo hochladen
               <input id="settingLogoFile" type="file" accept="image/*">
@@ -919,6 +920,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="app.js?v=78"></script>
+  <script src="app.js?v=79"></script>
 </body>
 </html>

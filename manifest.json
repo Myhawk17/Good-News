@@ -1,8 +1,8 @@
 {
   "id": "./",
-  "name": "Good News",
-  "short_name": "Good News",
-  "description": "Jeden Tag passiert auch Gutes – positive Nachrichten kompakt und verständlich.",
+  "name": "Aufwind – Good News aus aller Welt",
+  "short_name": "Aufwind",
+  "description": "Good News aus aller Welt – positive Nachrichten kompakt, transparent und nachvollziehbar.",
   "lang": "de-DE",
   "dir": "ltr",
   "start_url": "./",

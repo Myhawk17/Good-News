@@ -112,7 +112,7 @@ using (bucket_id = 'news-images');
 create table if not exists public.app_settings (
   id int primary key default 1 check (id = 1),
   updated_at timestamptz not null default now(),
-  app_name text not null default 'Good News',
+  app_name text not null default 'Aufwind',
   logo_url text,
   logo_path text,
   background_color text not null default '#0e0e10',

@@ -1,4 +1,4 @@
-GOOD NEWS 1.0
+AUFWIND – GOOD NEWS AUS ALLER WELT
 ================
 
 Enthalten:

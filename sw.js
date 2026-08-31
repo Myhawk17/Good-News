@@ -1,10 +1,10 @@
-const GOOD_NEWS_SW_BUILD=60;
+const GOOD_NEWS_SW_BUILD=61;
 const CACHE=`good-news-build-${GOOD_NEWS_SW_BUILD}`;
 const STATIC=[
   "./",
   "./index.html",
-  "./style.css?v=82",
-  "./app.js?v=78",
+  "./style.css?v=83",
+  "./app.js?v=79",
   "./config.js",
   "./manifest.json",
   "./favicon-32.png",
@@ -110,9 +110,9 @@ self.addEventListener("fetch",event=>{
 self.addEventListener("push",event=>{
   let data={};
   try{data=event.data?.json()||{}}catch{data={body:event.data?.text()||""}}
-  const title=data.title||"Good News";
+  const title=data.title||"Aufwind";
   const options={
-    body:data.body||"Neue Good News sind da.",
+    body:data.body||"Neue Good News aus aller Welt sind da.",
     icon:data.icon||"./icon-192.png",
     badge:data.badge||"./notification-badge.png",
     data:{url:data.url||"./"},

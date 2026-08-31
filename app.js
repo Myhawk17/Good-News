@@ -420,7 +420,7 @@ function setupState() {
   if(renderCachedFeed())return;
   feed.innerHTML = `<section class="empty-state"><div>
     <h1>Verbindung fehlt</h1>
-    <p>Good News konnte gerade keine Verbindung herstellen. Bitte versuche es gleich noch einmal.</p>
+    <p>Aufwind konnte gerade keine Verbindung herstellen. Bitte versuche es gleich noch einmal.</p>
   </div></section>`;
 }
 
@@ -460,7 +460,7 @@ async function fetchPublicNews({preservePosition=true}={}) {
     console.warn("Öffentlicher Feed konnte nicht aktualisiert werden:",err);
     if(!cachedWasShown){
       feed.innerHTML=`<section class="empty-state"><div>
-        <h1>Good News lädt noch</h1>
+        <h1>Aufwind lädt noch</h1>
         <p>Die Verbindung ist gerade langsam. Tippe auf das Logo oder öffne die App gleich noch einmal.</p>
       </div></section>`;
     }
@@ -743,7 +743,7 @@ async function shareItem(item) {
     } else {
       await navigator.clipboard.writeText(`${text}\n\n${url}`);
       trackAnalyticsEvent("share",item.id);
-      alert("Good News und Direktlink wurden kopiert.");
+      alert("Meldung und Direktlink wurden kopiert.");
     }
   } catch {}
 }
@@ -986,7 +986,7 @@ function openAboutUs({onboarding=false}={}){
   const closeBtn=$("aboutCloseBtn");
   const continueBtn=$("aboutContinueBtn");
   if(closeBtn)closeBtn.hidden=aboutIsOnboarding;
-  if(continueBtn)continueBtn.textContent=aboutIsOnboarding?"Good News entdecken":"Schließen";
+  if(continueBtn)continueBtn.textContent=aboutIsOnboarding?"Aufwind entdecken":"Schließen";
   document.documentElement.classList.toggle("about-onboarding-active",aboutIsOnboarding);
   if(!aboutDialog.open)aboutDialog.showModal();
   requestAnimationFrame(()=>{const scroller=aboutDialog.querySelector(".about-scroll");if(scroller)scroller.scrollTop=0;});
@@ -1776,7 +1776,7 @@ async function broadcastPublishedNews(item){
       mode:"broadcast",
       slot:currentPushSlot(),
       category:displayCategory(item),
-      title:"Good News",
+      title:"Aufwind",
       body:displayTitle(item),
       url:newsDeepLink(item),
       tag:`good-news-${item.id}`
@@ -2374,7 +2374,7 @@ queueMicrotask(()=>{
 // selbst alle offenen Good-News-Fenster auf den neuen Build führen. So hängt die
 // installierte PWA nicht mehr an einer alten Cache-/Worker-Version fest.
 // Build 35 – adaptive Überschriften (max. 4 Zeilen) und stärkerer Lesbarkeitsverlauf.
-const GOOD_NEWS_BUILD=60;
+const GOOD_NEWS_BUILD=61;
 let goodNewsSwRegistration=null;
 let goodNewsReloading=false;
 
@@ -2661,8 +2661,8 @@ function applyAppSettings(s){
   document.body.classList.toggle("hide-sources", s.show_sources === false);
   document.body.classList.toggle("hide-counter", s.show_counter === false);
 
-  const name = s.app_name || "Good News";
-  document.title = name;
+  const name = s.app_name || "Aufwind";
+  document.title = name === "Aufwind" ? "Aufwind – Good News aus aller Welt" : name;
   const brandName=document.querySelector(".brand-name");
   if(brandName) brandName.textContent=name;
 
@@ -2683,7 +2683,7 @@ function applyAppSettings(s){
 function populateSettingsForm(s){
   if(!$("settingAppName")) return;
   populateLegalSettingsForm(s);
-  $("settingAppName").value=s.app_name||"Good News";
+  $("settingAppName").value=s.app_name||"Aufwind";
   $("settingLogoUrl").value=s.logo_path?"":(s.logo_url||"");
   $("settingBg").value=s.background_color||"#0e0e10";
   $("settingText").value=s.text_color||"#f5f5f5";
@@ -2707,7 +2707,7 @@ function populateSettingsForm(s){
 
 function readSettingsForm(){
   return {
-    app_name:$("settingAppName").value.trim()||"Good News",
+    app_name:$("settingAppName").value.trim()||"Aufwind",
     background_color:$("settingBg").value,
     text_color:$("settingText").value,
     accent_color:$("settingAccent").value,
@@ -2795,7 +2795,7 @@ if($("settingLogoFile")){
 
   $("resetThemeBtn").onclick=()=>{
     populateSettingsForm({
-      app_name:"Good News",logo_url:null,logo_path:null,
+      app_name:"Aufwind",logo_url:null,logo_path:null,
       background_color:"#0e0e10",text_color:"#f5f5f5",accent_color:"#ffffff",
       title_size:"normal",corner_style:"soft",image_mode:"full",overlay_strength:65,
       show_category:true,show_date:true,show_sources:true,show_counter:true
@@ -3390,7 +3390,7 @@ async function sendAdminTestPush(){
     const {data,error}=await db.functions.invoke("send-good-news-push",{
       body:{
         mode:"test",
-        title:"Good News",
+        title:"Aufwind",
         body:"🎉 Dein Good-News-Push funktioniert!"
       }
     });
@@ -3417,9 +3417,9 @@ function errorBackdrop(){return allNews.find(n=>n.image_url)?.image_url||"date-s
 function renderFriendlyError(kind){
   const states={
     offline:["📴","Kurz offline 🌿","Sobald du wieder verbunden bist, sind die Good News wieder für dich da."],
-    server:["☕","Die Good News machen gerade eine kurze Pause","Die Verbindung konnte nicht hergestellt werden. Versuch es gleich noch einmal."],
+    server:["☕","Aufwind macht gerade eine kurze Pause","Die Verbindung konnte nicht hergestellt werden. Versuch es gleich noch einmal."],
     empty:["🌱","Für diesen Tag haben wir noch keine Good News","Schau später noch einmal vorbei oder öffne einen anderen Tag."],
-    slow:["⏳","Good News sind unterwegs …","Die Verbindung ist gerade etwas langsam. Einen kleinen Moment noch."],
+    slow:["⏳","Good News aus aller Welt sind unterwegs …","Die Verbindung ist gerade etwas langsam. Einen kleinen Moment noch."],
   };
   const s=states[kind]||states.server;
   feed.innerHTML=`<section class="error-state-slide ${kind==='slow'?'simulated-slow':''}"><img src="${esc(errorBackdrop())}" alt="" aria-hidden="true"><div class="error-state-copy"><div class="error-icon">${s[0]}</div><h1>${s[1]}</h1><p>${s[2]}</p>${kind==='empty'?'<button class="secondary" id="errorBackBtn">Zum letzten Tag mit Nachrichten</button>':'<button class="secondary" id="errorRetryBtn">Erneut versuchen</button>'}</div></section>`;
@@ -3450,9 +3450,9 @@ function setErrorTestMode(mode){
   renderFriendlyError(errorTestMode);
 }
 document.querySelectorAll(".error-test-btn").forEach(btn=>btn.addEventListener("click",()=>setErrorTestMode(btn.dataset.errorTest)));
-window.addEventListener("offline",()=>{showConnectionBanner("Offline – gespeicherte Good News werden angezeigt");if(!allNews.length)renderFriendlyError("offline")});
+window.addEventListener("offline",()=>{showConnectionBanner("Offline – gespeicherte Meldungen werden angezeigt");if(!allNews.length)renderFriendlyError("offline")});
 window.addEventListener("online",()=>{hideConnectionBanner();if(errorTestMode==="normal")fetchPublicNews()});
-if(!navigator.onLine)showConnectionBanner("Offline – gespeicherte Good News werden angezeigt");
+if(!navigator.onLine)showConnectionBanner("Offline – gespeicherte Meldungen werden angezeigt");
 
 // Der Testmodus greift auch nach einem Neuladen – ausschließlich lokal im Admin-Gerät.
 if(errorTestMode!=="normal")setTimeout(()=>setErrorTestMode(errorTestMode),250);
@@ -3494,7 +3494,7 @@ async function invokePrivacyFunction(body){
 
 function privacyExportBundle(serverData, includeLocal=false){
   return {
-    service:"Good News",
+    service:"Aufwind",
     export_type:includeLocal?"Selbstauskunft":"Admin-Auskunft",
     generated_at:new Date().toISOString(),
     server_data:serverData,

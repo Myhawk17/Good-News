@@ -1610,3 +1610,18 @@ html.user-theme-light .user-password-card{background:#f6f6f4;border-color:#d8d8d
 
 /* Build 57 – Auge direkt unter dem Hauptmenü; Plus öffnet nur Favorit, Teilen und Fehler melden. */
 .account-password-card{margin-top:18px;margin-bottom:18px}
+
+/* Build 61 – Markenauftritt „Aufwind – Good News aus aller Welt“ */
+.brand-copy{display:flex;flex-direction:column;align-items:flex-start;min-width:0;line-height:1.02;text-shadow:0 1px 8px #0008}
+.brand-copy .brand-name{display:block;font-size:.98rem;font-weight:900;letter-spacing:.01em}
+.brand-tagline{margin-top:3px;font-size:.52rem;line-height:1.08;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#ffffffb8;white-space:nowrap}
+.about-tagline{margin:-8px 0 15px;font-size:.7rem;font-weight:800;letter-spacing:.13em;text-transform:uppercase;color:var(--muted)}
+.feed-loading-copy strong{letter-spacing:.14em}
+.feed-loading-copy span{letter-spacing:.035em}
+@media(max-width:600px){
+  .brand-copy .brand-name{display:block;font-size:.9rem}
+  .brand-tagline{font-size:.46rem;letter-spacing:.065em}
+}
+@media(max-width:360px){
+  .brand-tagline{display:none}
+}
