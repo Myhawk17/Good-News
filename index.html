@@ -39,7 +39,7 @@
         <span class="menu-chevron" aria-hidden="true">›</span>
       </button>
         <button id="accountBtn" type="button"><span>↪</span><span id="accountBtnLabel">Anmelden</span></button>
-        <div class="app-build-label" aria-label="App-Version">Aufwind · Build 62</div>
+        <div class="app-build-label" aria-label="App-Version">Aufwind · Build 63</div>
       </div>
       <button class="icon-btn slide-focus-btn" id="slideFocusBtn" type="button" aria-label="Slide-Text ausblenden" aria-pressed="false" title="Text ausblenden">
           <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -236,9 +236,9 @@
     <div class="about-scroll">
       <section class="about-page">
         <img class="about-logo" src="good-news-logo.png" alt="Aufwind – Good News aus aller Welt">
-        <h2>Über Aufwind</h2>
-        <div class="about-tagline">Good News aus aller Welt</div>
-        <div class="about-copy">
+        <h2 id="aboutTitle">Über Aufwind</h2>
+        <div class="about-tagline" id="aboutTagline">Good News aus aller Welt</div>
+        <div class="about-copy" id="aboutCopy">
           <p>Aufwind ist aus dem Wunsch entstanden, neben Krisen und Problemen auch die positiven Entwicklungen sichtbar zu machen, die in klassischen Nachrichten oft untergehen.</p>
           <p>Wir sammeln gute Nachrichten aus aller Welt, fassen sie kurz zusammen und machen sie für Euch leicht zugänglich. Dabei wollen wir nichts schönreden, sondern Euch auf positive Geschehnisse aufmerksam machen.</p>
           <p>Das Fundament unserer Arbeit sind <strong>nachvollziehbare Quellen</strong>. Jede Meldung verweist auf ihre Originalquelle und bleibt so transparent und überprüfbar.</p>
@@ -539,6 +539,7 @@
           <summary><span class="admin-nav-summary-icon">⚙</span><span><strong>Einstellungen</strong><small>Design, Datenschutz, Tests und Rechtliches</small></span><span class="admin-nav-chevron">⌄</span></summary>
           <div class="admin-nav-items">
             <button class="tab admin-menu-item" data-tab="settings"><span class="admin-menu-icon">🎨</span><span class="admin-menu-copy"><strong>Design der App</strong><small>Farben, Logo und Darstellung</small></span></button>
+            <button class="tab admin-menu-item" data-tab="about-admin"><span class="admin-menu-icon">ⓘ</span><span class="admin-menu-copy"><strong>Über Aufwind</strong><small>Infotext der App bearbeiten</small></span></button>
             <button class="tab admin-menu-item" data-tab="privacy-admin"><span class="admin-menu-icon">🔐</span><span class="admin-menu-copy"><strong>DSGVO-Auskunft</strong><small>Nutzerdaten gezielt per E-Mail abrufen</small></span></button>
             <button class="tab admin-menu-item" data-tab="reports"><span class="admin-menu-icon">⚑</span><span class="admin-menu-copy"><strong>Fehlermeldungen <span id="reportBadge" class="badge" hidden></span></strong><small>Hinweise der Nutzer prüfen</small></span></button>
             <button class="tab admin-menu-item" data-tab="error-tests"><span class="admin-menu-icon">🧪</span><span class="admin-menu-copy"><strong>Fehlerzustände testen</strong><small>Offline, Server, Bild und weitere Zustände simulieren</small></span></button>
@@ -785,6 +786,26 @@
         <div id="pushAdminMessage" class="message" aria-live="polite"></div>
       </section>
 
+      <section id="tab-about-admin" class="tab-panel" hidden>
+        <div class="section-head"><div><h3>ⓘ Über Aufwind</h3><p class="muted">Bearbeite den Infotext, den Nutzer beim ersten Start und über das Menü sehen. Änderungen werden nach dem Speichern sofort für alle Geräte übernommen.</p></div></div>
+        <form id="aboutSettingsForm" class="stack">
+          <label>Überschrift
+            <input id="settingAboutTitle" maxlength="80" placeholder="Über Aufwind" required>
+          </label>
+          <label>Unterzeile
+            <input id="settingAboutTagline" maxlength="120" placeholder="Good News aus aller Welt">
+          </label>
+          <label>Text
+            <textarea id="settingAboutBody" rows="12" maxlength="4000" placeholder="Text über Aufwind …" required></textarea>
+          </label>
+          <p class="muted">Tipp: Eine Leerzeile erzeugt einen neuen Absatz.</p>
+          <div class="sticky-actions">
+            <button class="primary" type="submit">Änderungen speichern</button>
+          </div>
+          <div id="aboutSettingsMessage" class="message" aria-live="polite"></div>
+        </form>
+      </section>
+
       <section id="tab-legal-admin" class="tab-panel" hidden>
         <div class="section-head"><div><h3>⚖ Rechtliches</h3><p class="muted">Diese Angaben werden automatisch im Menü unter „Impressum &amp; Datenschutz“ angezeigt.</p></div></div>
         <form id="legalSettingsForm" class="stack">
@@ -920,6 +941,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="app.js?v=79"></script>
+  <script src="app.js?v=80"></script>
 </body>
 </html>

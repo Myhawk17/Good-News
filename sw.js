@@ -1,4 +1,4 @@
-const GOOD_NEWS_SW_BUILD=62;
+const GOOD_NEWS_SW_BUILD=63;
 const CACHE=`good-news-build-${GOOD_NEWS_SW_BUILD}`;
 const STATIC=[
   "./",

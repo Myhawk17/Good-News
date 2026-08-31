@@ -1071,7 +1071,7 @@ function dialogDirtyForms(dialog){
   if(dialog===userPreferencesDialog)return [$("userPreferencesForm")].filter(Boolean);
   if(dialog===$("submissionDialog"))return [$("submissionForm")].filter(Boolean);
   if(dialog===$("reportDialog"))return [$("reportForm")].filter(Boolean);
-  if(dialog===adminDialog)return [$("newsForm"),$("settingsForm"),$("legalSettingsForm")].filter(Boolean);
+  if(dialog===adminDialog)return [$("newsForm"),$("settingsForm"),$("aboutSettingsForm"),$("legalSettingsForm")].filter(Boolean);
   if(dialog===settingsDialog){
     if($("settingsLoggedIn") && !$("settingsLoggedIn").hidden)return [$("passwordChangeForm")].filter(Boolean);
     if($("settingsRegisterView") && !$("settingsRegisterView").hidden)return [$("settingsRegisterForm")].filter(Boolean);
@@ -1153,7 +1153,7 @@ document.querySelectorAll("[data-close]").forEach(b=>b.onclick=()=>requestDialog
   });
 });
 window.addEventListener("beforeunload",e=>{
-  const forms=[$("userPreferencesForm"),$("passwordChangeForm"),$("submissionForm"),$("reportForm"),$("settingsRegisterForm"),$("settingsForgotForm"),$("passwordRecoveryForm"),$("newsForm"),$("settingsForm"),$("legalSettingsForm")].filter(Boolean);
+  const forms=[$("userPreferencesForm"),$("passwordChangeForm"),$("submissionForm"),$("reportForm"),$("settingsRegisterForm"),$("settingsForgotForm"),$("passwordRecoveryForm"),$("newsForm"),$("settingsForm"),$("aboutSettingsForm"),$("legalSettingsForm")].filter(Boolean);
   if(forms.some(formIsDirty)){e.preventDefault();e.returnValue="";}
 });
 let quickActionScrollTimer;
@@ -1377,6 +1377,10 @@ function discardAdminTabChanges(name){
     if($("settingLogoFile"))$("settingLogoFile").value="";
     markFormClean($("settingsForm"));
   }
+  if(name==="about-admin"&&formIsDirty($("aboutSettingsForm"))&&appSettings){
+    populateAboutSettingsForm(appSettings);
+    markFormClean($("aboutSettingsForm"));
+  }
   if(name==="legal-admin"&&formIsDirty($("legalSettingsForm"))&&appSettings){
     populateLegalSettingsForm(appSettings);
     markFormClean($("legalSettingsForm"));
@@ -1385,7 +1389,7 @@ function discardAdminTabChanges(name){
 function guardedSwitchAdminTab(name){
   const current=activeAdminTab();
   if(current===name)return;
-  if((current==="editor"&&formIsDirty($("newsForm")))||(current==="settings"&&formIsDirty($("settingsForm")))||(current==="legal-admin"&&formIsDirty($("legalSettingsForm")))){
+  if((current==="editor"&&formIsDirty($("newsForm")))||(current==="settings"&&formIsDirty($("settingsForm")))||(current==="about-admin"&&formIsDirty($("aboutSettingsForm")))||(current==="legal-admin"&&formIsDirty($("legalSettingsForm")))){
     if(!confirmDiscard())return;
     discardAdminTabChanges(current);
   }
@@ -2383,7 +2387,7 @@ queueMicrotask(()=>{
 // selbst alle offenen Good-News-Fenster auf den neuen Build führen. So hängt die
 // installierte PWA nicht mehr an einer alten Cache-/Worker-Version fest.
 // Build 35 – adaptive Überschriften (max. 4 Zeilen) und stärkerer Lesbarkeitsverlauf.
-const GOOD_NEWS_BUILD=62;
+const GOOD_NEWS_BUILD=63;
 let goodNewsSwRegistration=null;
 let goodNewsReloading=false;
 
@@ -2578,12 +2582,58 @@ async function loadAppSettings() {
     applyAppSettings(data);
     if(currentAdminSession){
       populateSettingsForm(data);
+      populateAboutSettingsForm(data);
       markFormClean($("settingsForm"));
+      markFormClean($("aboutSettingsForm"));
       markFormClean($("legalSettingsForm"));
     }
   }
 }
 
+
+const DEFAULT_ABOUT_SETTINGS={
+  title:"Über Aufwind",
+  tagline:"Good News aus aller Welt",
+  body:"Aufwind ist aus dem Wunsch entstanden, neben Krisen und Problemen auch die positiven Entwicklungen sichtbar zu machen, die in klassischen Nachrichten oft untergehen.\n\nWir sammeln gute Nachrichten aus aller Welt, fassen sie kurz zusammen und machen sie für Euch leicht zugänglich. Dabei wollen wir nichts schönreden, sondern Euch auf positive Geschehnisse aufmerksam machen.\n\nDas Fundament unserer Arbeit sind nachvollziehbare Quellen. Jede Meldung verweist auf ihre Originalquelle und bleibt so transparent und überprüfbar.\n\nAuch Ihr könnt eigene Nachrichten einsenden – und damit dazu beitragen, dass gute Nachrichten sichtbar werden!"
+};
+
+function normalizedAboutSettings(settings={}){
+  const a=settings?.about_settings||{};
+  return {
+    title:String(a.title||DEFAULT_ABOUT_SETTINGS.title).trim()||DEFAULT_ABOUT_SETTINGS.title,
+    tagline:String(a.tagline??DEFAULT_ABOUT_SETTINGS.tagline).trim(),
+    body:String(a.body||DEFAULT_ABOUT_SETTINGS.body).trim()||DEFAULT_ABOUT_SETTINGS.body
+  };
+}
+
+function applyAboutSettings(settings={}){
+  const a=normalizedAboutSettings(settings);
+  if($("aboutTitle")) $("aboutTitle").textContent=a.title;
+  if($("aboutTagline")){
+    $("aboutTagline").textContent=a.tagline;
+    $("aboutTagline").hidden=!a.tagline;
+  }
+  if($("aboutCopy")){
+    const paragraphs=a.body.split(/\n\s*\n/).map(v=>v.trim()).filter(Boolean);
+    $("aboutCopy").innerHTML=paragraphs.map(text=>`<p>${esc(text).replace(/\n/g,"<br>")}</p>`).join("");
+  }
+}
+
+function populateAboutSettingsForm(settings={}){
+  if(!$("settingAboutTitle")) return;
+  const a=normalizedAboutSettings(settings);
+  $("settingAboutTitle").value=a.title;
+  $("settingAboutTagline").value=a.tagline;
+  $("settingAboutBody").value=a.body;
+}
+
+function readAboutSettingsForm(){
+  return {
+    title:$("settingAboutTitle")?.value.trim()||DEFAULT_ABOUT_SETTINGS.title,
+    tagline:$("settingAboutTagline")?.value.trim()||"",
+    body:$("settingAboutBody")?.value.trim()||DEFAULT_ABOUT_SETTINGS.body
+  };
+}
 
 const DEFAULT_LEGAL_SETTINGS={
   provider_name:"Timo Heinrich Grabbe",
@@ -2650,6 +2700,7 @@ function readLegalSettingsForm(){
 }
 
 function applyAppSettings(s){
+  applyAboutSettings(s);
   applyLegalSettings(s);
   document.body.classList.add("theme-user");
   document.documentElement.style.setProperty("--user-bg", s.background_color || "#0e0e10");
@@ -2816,6 +2867,29 @@ if($("settingLogoFile")){
   };
 }
 
+const aboutSettingsForm=$("aboutSettingsForm");
+trackFormState(aboutSettingsForm,"Über-Aufwind-Text");
+if(aboutSettingsForm){
+  aboutSettingsForm.onsubmit=async(e)=>{
+    e.preventDefault();
+    const msg=$("aboutSettingsMessage");
+    if(msg)msg.textContent="Änderungen werden gespeichert …";
+    try{
+      const {data,error}=await db.from("app_settings").update({
+        about_settings:readAboutSettingsForm(),
+        updated_at:new Date().toISOString()
+      }).eq("id",1).select().single();
+      if(error)throw error;
+      appSettings=data;
+      applyAppSettings(data);
+      populateAboutSettingsForm(data);
+      markFormClean(aboutSettingsForm);
+      setShortMessage(msg,"Gespeichert.");
+      showAppNotice("Gespeichert.");
+    }catch(err){if(msg)msg.textContent=err?.message||String(err);}
+  };
+}
+
 const legalSettingsForm=$("legalSettingsForm");
 trackFormState(legalSettingsForm,"Rechtliche Angaben");
 if(legalSettingsForm){
@@ -2848,6 +2922,11 @@ switchAdminTab = function(name){
     if($("settingLogoFile"))$("settingLogoFile").value="";
     markFormClean($("settingsForm"));
     if($("settingsMessage"))$("settingsMessage").textContent="";
+  }
+  if(name==="about-admin" && appSettings){
+    populateAboutSettingsForm(appSettings);
+    markFormClean($("aboutSettingsForm"));
+    if($("aboutSettingsMessage"))$("aboutSettingsMessage").textContent="";
   }
   if(name==="legal-admin" && appSettings){
     populateLegalSettingsForm(appSettings);
