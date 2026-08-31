@@ -1563,6 +1563,15 @@ $("settingsLoginForm").onsubmit=async(e)=>{
   $("settingsLoginPassword").value="";
   await refreshSettingsAccount();
   await syncPushPreferencesForCurrentAccount().catch(()=>{});
+
+  // Nach erfolgreicher Anmeldung direkt zurück auf den Startscreen
+  // mit der Datumskarte statt im Konto-Dialog zu bleiben.
+  if(settingsDialog?.open) settingsDialog.close();
+  closeMainMenu();
+  requestAnimationFrame(()=>{
+    feed.scrollTo({top:0,behavior:"smooth"});
+    showAppNotice("Angemeldet.");
+  });
 };
 
 function cleanAuthRedirectUrl(){
@@ -2374,7 +2383,7 @@ queueMicrotask(()=>{
 // selbst alle offenen Good-News-Fenster auf den neuen Build führen. So hängt die
 // installierte PWA nicht mehr an einer alten Cache-/Worker-Version fest.
 // Build 35 – adaptive Überschriften (max. 4 Zeilen) und stärkerer Lesbarkeitsverlauf.
-const GOOD_NEWS_BUILD=61;
+const GOOD_NEWS_BUILD=62;
 let goodNewsSwRegistration=null;
 let goodNewsReloading=false;
 
