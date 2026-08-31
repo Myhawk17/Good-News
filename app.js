@@ -1433,6 +1433,45 @@ $("adminBtn").onclick = async () => {
   await refreshAuth();
 };
 
+const PASSWORD_RESET_COOLDOWN_MS=60*1000;
+const PASSWORD_RESET_COOLDOWN_KEY="good_news_password_reset_cooldown_until";
+let passwordResetCooldownTimer=null;
+
+function getPasswordResetCooldownUntil(){
+  try{return Number(localStorage.getItem(PASSWORD_RESET_COOLDOWN_KEY)||0)||0}catch{return 0}
+}
+
+function updatePasswordResetCooldown(){
+  const btn=$("settingsForgotForm")?.querySelector('button[type="submit"]');
+  if(!btn)return;
+  const remaining=getPasswordResetCooldownUntil()-Date.now();
+  if(passwordResetCooldownTimer){clearTimeout(passwordResetCooldownTimer);passwordResetCooldownTimer=null}
+  if(remaining>0){
+    btn.disabled=true;
+    btn.textContent=`Erneut senden in ${Math.ceil(remaining/1000)} s`;
+    passwordResetCooldownTimer=setTimeout(updatePasswordResetCooldown,Math.min(1000,remaining+50));
+  }else{
+    try{localStorage.removeItem(PASSWORD_RESET_COOLDOWN_KEY)}catch{}
+    btn.disabled=false;
+    btn.textContent="Reset-Link senden";
+  }
+}
+
+function startPasswordResetCooldown(duration=PASSWORD_RESET_COOLDOWN_MS){
+  try{localStorage.setItem(PASSWORD_RESET_COOLDOWN_KEY,String(Date.now()+duration))}catch{}
+  updatePasswordResetCooldown();
+}
+
+function passwordResetErrorMessage(err){
+  const code=String(err?.code||"");
+  const text=String(err?.message||err||"");
+  const status=Number(err?.status||0);
+  if(code==="over_email_send_rate_limit" || status===429 || /email rate limit|too many requests|rate limit exceeded/i.test(text)){
+    return "Du hast vor Kurzem bereits eine E-Mail angefordert. Bitte warte etwas und versuche es später erneut.";
+  }
+  return text||"Der Reset-Link konnte gerade nicht gesendet werden. Bitte versuche es später erneut.";
+}
+
 function setSettingsAuthMode(mode="login"){
   const register=mode==="register";
   const forgot=mode==="forgot";
@@ -1450,6 +1489,7 @@ function setSettingsAuthMode(mode="login"){
     if(email && $("settingsForgotEmail")) $("settingsForgotEmail").value=email;
     markFormClean($("settingsForgotForm"));
     if($("settingsForgotMessage")) $("settingsForgotMessage").textContent="";
+    updatePasswordResetCooldown();
   }else{
     markFormClean($("settingsRegisterForm"));
     markFormClean($("settingsForgotForm"));
@@ -1541,18 +1581,27 @@ $("settingsForgotForm")?.addEventListener("submit",async(e)=>{
   const msg=$("settingsForgotMessage");
   const email=$("settingsForgotEmail")?.value.trim()||"";
   if(!configured){if(msg)msg.textContent="Die Anmeldung ist noch nicht verbunden.";return}
+  if(getPasswordResetCooldownUntil()>Date.now()){
+    updatePasswordResetCooldown();
+    if(msg)msg.textContent="Ein Reset-Link wurde gerade erst angefordert. Bitte warte kurz, bevor du einen weiteren Link anforderst.";
+    return;
+  }
   const btn=$("settingsForgotForm")?.querySelector('button[type="submit"]');
-  if(btn)btn.disabled=true;
+  if(btn){btn.disabled=true;btn.textContent="Wird gesendet …"}
   if(msg)msg.textContent="Reset-Link wird gesendet …";
   try{
     const {error}=await db.auth.resetPasswordForEmail(email,{redirectTo:cleanAuthRedirectUrl()});
     if(error)throw error;
     markFormClean($("settingsForgotForm"));
+    startPasswordResetCooldown();
     if(msg)msg.textContent="Wenn zu dieser E-Mail-Adresse ein Konto besteht, wurde ein Link zum Zurücksetzen des Passworts gesendet. Bitte prüfe auch den Spam-Ordner.";
   }catch(err){
-    if(msg)msg.textContent=err?.message||String(err);
+    if(String(err?.code||"")==="over_email_send_rate_limit" || Number(err?.status||0)===429 || /email rate limit|too many requests|rate limit exceeded/i.test(String(err?.message||err||""))){
+      startPasswordResetCooldown();
+    }
+    if(msg)msg.textContent=passwordResetErrorMessage(err);
   }finally{
-    if(btn)btn.disabled=false;
+    updatePasswordResetCooldown();
   }
 });
 
@@ -2325,7 +2374,7 @@ queueMicrotask(()=>{
 // selbst alle offenen Good-News-Fenster auf den neuen Build führen. So hängt die
 // installierte PWA nicht mehr an einer alten Cache-/Worker-Version fest.
 // Build 35 – adaptive Überschriften (max. 4 Zeilen) und stärkerer Lesbarkeitsverlauf.
-const GOOD_NEWS_BUILD=59;
+const GOOD_NEWS_BUILD=60;
 let goodNewsSwRegistration=null;
 let goodNewsReloading=false;
 
