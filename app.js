@@ -1252,19 +1252,27 @@ $("passwordRecoveryForm")?.addEventListener("submit",async(e)=>{
   if(btn)btn.disabled=true;
   if(msg)msg.textContent="Passwort wird gespeichert …";
   try{
+    const {data:{session:recoverySession}}=await db.auth.getSession();
+    const recoveryEmail=recoverySession?.user?.email||"";
     const {error}=await db.auth.updateUser({password:next});
     if(error)throw error;
     passwordRecoveryActive=false;
     clearPasswordRecoveryUrl();
     $("passwordRecoveryForm").reset();
     markFormClean($("passwordRecoveryForm"));
-    setShortMessage(msg,"Passwort geändert. Du bist jetzt angemeldet.");
-    showAppNotice("Passwort geändert.");
+    setShortMessage(msg,"Passwort geändert. Weiter zur Anmeldung …");
+    showAppNotice("Passwort geändert. Bitte melde dich neu an.");
+    await db.auth.signOut();
     setTimeout(async()=>{
       if(passwordRecoveryDialog?.open)passwordRecoveryDialog.close();
-      await refreshPasswordSettings().catch(()=>{});
+      setSettingsAuthMode("login");
+      if(recoveryEmail && $("settingsLoginEmail")) $("settingsLoginEmail").value=recoveryEmail;
+      if($("settingsLoginPassword")) $("settingsLoginPassword").value="";
+      if($("settingsLoginMessage")) $("settingsLoginMessage").textContent="Passwort geändert. Bitte melde dich mit deinem neuen Passwort an.";
       await refreshSettingsAccount().catch(()=>{});
-    },900);
+      if(!settingsDialog.open)settingsDialog.showModal();
+      $("settingsLoginPassword")?.focus();
+    },450);
   }catch(err){
     if(msg)msg.textContent=err?.message||String(err);
   }finally{
@@ -2317,7 +2325,7 @@ queueMicrotask(()=>{
 // selbst alle offenen Good-News-Fenster auf den neuen Build führen. So hängt die
 // installierte PWA nicht mehr an einer alten Cache-/Worker-Version fest.
 // Build 35 – adaptive Überschriften (max. 4 Zeilen) und stärkerer Lesbarkeitsverlauf.
-const GOOD_NEWS_BUILD=58;
+const GOOD_NEWS_BUILD=59;
 let goodNewsSwRegistration=null;
 let goodNewsReloading=false;
 
