@@ -18,25 +18,25 @@
   "prefer_related_applications": false,
   "icons": [
     {
-      "src": "icons/aufwind-icon-192-v68.png",
+      "src": "icons/aufwind-icon-192-v69.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
-      "src": "icons/aufwind-icon-512-v68.png",
+      "src": "icons/aufwind-icon-512-v69.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
-      "src": "icons/aufwind-maskable-192-v68.png",
+      "src": "icons/aufwind-maskable-192-v69.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "maskable"
     },
     {
-      "src": "icons/aufwind-maskable-512-v68.png",
+      "src": "icons/aufwind-maskable-512-v69.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"

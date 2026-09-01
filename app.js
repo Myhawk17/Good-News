@@ -1015,7 +1015,10 @@ function isStandaloneApp(){
 }
 function syncInstallButton(){
   if(!installAppBtn)return;
-  installAppBtn.hidden=isStandaloneApp() || !deferredInstallPrompt;
+  // Im Browser immer anzeigen. Nach einer Deinstallation liefert Chrome das
+  // beforeinstallprompt-Ereignis gelegentlich erst verzögert; der Menüpunkt darf
+  // deshalb nicht einfach verschwinden. In der installierten App bleibt er verborgen.
+  installAppBtn.hidden=isStandaloneApp();
 }
 window.addEventListener("beforeinstallprompt",e=>{
   e.preventDefault();
@@ -1023,11 +1026,14 @@ window.addEventListener("beforeinstallprompt",e=>{
   syncInstallButton();
 });
 installAppBtn?.addEventListener("click",runMenuAction(async()=>{
-  if(!deferredInstallPrompt)return;
-  deferredInstallPrompt.prompt();
-  try{await deferredInstallPrompt.userChoice}catch{}
-  deferredInstallPrompt=null;
-  syncInstallButton();
+  if(deferredInstallPrompt){
+    deferredInstallPrompt.prompt();
+    try{await deferredInstallPrompt.userChoice}catch{}
+    deferredInstallPrompt=null;
+    syncInstallButton();
+    return;
+  }
+  alert("Falls der Installationsdialog nicht automatisch erscheint: Öffne im Browser oben rechts das ⋮-Menü und wähle ‚App installieren‘ bzw. ‚Zum Startbildschirm hinzufügen‘. Lade die Seite vorher einmal neu, falls der Punkt noch nicht angeboten wird.");
 }));
 window.addEventListener("appinstalled",()=>{
   deferredInstallPrompt=null;
@@ -2387,7 +2393,7 @@ queueMicrotask(()=>{
 // selbst alle offenen Good-News-Fenster auf den neuen Build führen. So hängt die
 // installierte PWA nicht mehr an einer alten Cache-/Worker-Version fest.
 // Build 35 – adaptive Überschriften (max. 4 Zeilen) und stärkerer Lesbarkeitsverlauf.
-const GOOD_NEWS_BUILD=68;
+const GOOD_NEWS_BUILD=69;
 let goodNewsSwRegistration=null;
 let goodNewsReloading=false;
 
@@ -2730,11 +2736,11 @@ function applyAppSettings(s){
   if(logo){
     // Das Aufwind-Symbol ist der Fallback. Ein später bewusst in der Redaktion
     // hinterlegtes Logo darf es weiterhin überschreiben.
-    logo.src=s.logo_url || "aufwind-icon-192-v68.png";
+    logo.src=s.logo_url || "aufwind-icon-192-v69.png";
     logo.classList.add("visible");
     logo.onerror=()=>{
-      if(!logo.src.endsWith("/aufwind-icon-192-v68.png") && !logo.src.endsWith("aufwind-icon-192-v68.png")){
-        logo.src="aufwind-icon-192-v68.png";
+      if(!logo.src.endsWith("/aufwind-icon-192-v69.png") && !logo.src.endsWith("aufwind-icon-192-v69.png")){
+        logo.src="aufwind-icon-192-v69.png";
       }
     };
   }
