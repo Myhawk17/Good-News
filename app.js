@@ -1223,9 +1223,10 @@ $("passwordChangeForm")?.addEventListener("submit",async(e)=>{
 });
 
 let passwordRecoveryActive=false;
+let passwordRecoveryCompleted=false;
 try{passwordRecoveryActive=new URLSearchParams(location.hash.slice(1)).get("type")==="recovery"}catch{}
 function openPasswordRecovery(){
-  if(!passwordRecoveryDialog)return;
+  if(!passwordRecoveryDialog || passwordRecoveryCompleted)return;
   passwordRecoveryActive=true;
   $("passwordRecoveryForm")?.reset();
   markFormClean($("passwordRecoveryForm"));
@@ -1253,27 +1254,25 @@ $("passwordRecoveryForm")?.addEventListener("submit",async(e)=>{
   if(btn)btn.disabled=true;
   if(msg)msg.textContent="Passwort wird gespeichert …";
   try{
-    const {data:{session:recoverySession}}=await db.auth.getSession();
-    const recoveryEmail=recoverySession?.user?.email||"";
     const {error}=await db.auth.updateUser({password:next});
     if(error)throw error;
+    passwordRecoveryCompleted=true;
     passwordRecoveryActive=false;
     clearPasswordRecoveryUrl();
     $("passwordRecoveryForm").reset();
     markFormClean($("passwordRecoveryForm"));
-    setShortMessage(msg,"Passwort geändert. Weiter zur Anmeldung …");
-    showAppNotice("Passwort geändert. Bitte melde dich neu an.");
+    if(msg)msg.textContent="Passwort geändert.";
     await db.auth.signOut();
-    setTimeout(async()=>{
-      if(passwordRecoveryDialog?.open)passwordRecoveryDialog.close();
-      setSettingsAuthMode("login");
-      if(recoveryEmail && $("settingsLoginEmail")) $("settingsLoginEmail").value=recoveryEmail;
-      if($("settingsLoginPassword")) $("settingsLoginPassword").value="";
-      if($("settingsLoginMessage")) $("settingsLoginMessage").textContent="Passwort geändert. Bitte melde dich mit deinem neuen Passwort an.";
-      await refreshSettingsAccount().catch(()=>{});
-      if(!settingsDialog.open)settingsDialog.showModal();
-      $("settingsLoginPassword")?.focus();
-    },450);
+
+    // Nach erfolgreichem Reset nie erneut den Recovery-Dialog öffnen.
+    // Stattdessen direkt zurück auf die Startseite mit der Datumskarte.
+    if(passwordRecoveryDialog?.open)passwordRecoveryDialog.close();
+    if(settingsDialog?.open)settingsDialog.close();
+    closeMainMenu();
+    requestAnimationFrame(()=>{
+      feed.scrollTo({top:0,behavior:"auto"});
+      showAppNotice("Passwort geändert.");
+    });
   }catch(err){
     if(msg)msg.textContent=err?.message||String(err);
   }finally{
@@ -2338,7 +2337,7 @@ if(db){
     if($("accountBtnLabel")) $("accountBtnLabel").textContent="Anmelden";
   });
   db.auth.onAuthStateChange((event,session)=>{
-    if(event==="PASSWORD_RECOVERY")passwordRecoveryActive=true;
+    if(event==="PASSWORD_RECOVERY" && !passwordRecoveryCompleted)passwordRecoveryActive=true;
     currentAdminSession=session;
     currentUserIsAdmin=false;
     $("adminBtn").hidden=true;
@@ -2350,7 +2349,7 @@ if(db){
       if(settingsDialog.open)await refreshSettingsAccount();
       if(userPreferencesDialog?.open)await refreshPasswordSettings();
       await syncPushPreferencesForCurrentAccount(session).catch(()=>{});
-      if(event==="PASSWORD_RECOVERY"||passwordRecoveryActive)openPasswordRecovery();
+      if(!passwordRecoveryCompleted && (event==="PASSWORD_RECOVERY"||passwordRecoveryActive))openPasswordRecovery();
     },0);
   });
 }else{
@@ -2388,7 +2387,7 @@ queueMicrotask(()=>{
 // selbst alle offenen Good-News-Fenster auf den neuen Build führen. So hängt die
 // installierte PWA nicht mehr an einer alten Cache-/Worker-Version fest.
 // Build 35 – adaptive Überschriften (max. 4 Zeilen) und stärkerer Lesbarkeitsverlauf.
-const AUFWIND_BUILD=73;
+const AUFWIND_BUILD=74;
 let aufwindSwRegistration=null;
 let aufwindReloading=false;
 
