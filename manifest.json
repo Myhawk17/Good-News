@@ -11,12 +11,35 @@
   "background_color": "#40b9ff",
   "theme_color": "#40b9ff",
   "orientation": "portrait",
-  "categories": ["news", "lifestyle"],
+  "categories": [
+    "news",
+    "lifestyle"
+  ],
   "prefer_related_applications": false,
   "icons": [
-    {"src":"icons/aufwind-icon-192.png","sizes":"192x192","type":"image/png","purpose":"any"},
-    {"src":"icons/aufwind-icon-512.png","sizes":"512x512","type":"image/png","purpose":"any"},
-    {"src":"icons/aufwind-maskable-192.png","sizes":"192x192","type":"image/png","purpose":"maskable"},
-    {"src":"icons/aufwind-maskable-512.png","sizes":"512x512","type":"image/png","purpose":"maskable"}
+    {
+      "src": "aufwind-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "aufwind-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "aufwind-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "aufwind-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
   ]
 }

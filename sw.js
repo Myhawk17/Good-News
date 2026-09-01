@@ -1,18 +1,18 @@
-const AUFWIND_SW_BUILD=72;
+const AUFWIND_SW_BUILD=73;
 const CACHE=`aufwind-build-${AUFWIND_SW_BUILD}`;
 const STATIC=[
   "./",
   "./index.html",
-  "./style.css?v=89",
-  "./app.js?v=86",
+  "./style.css?v=90",
+  "./app.js?v=87",
   "./config.js",
-  "./manifest.json?v=72",
+  "./manifest.json?v=73",
   "./aufwind-favicon-32.png",
   "./aufwind-apple-touch-icon.png",
-  "./icons/aufwind-icon-192.png",
-  "./icons/aufwind-icon-512.png",
-  "./icons/aufwind-maskable-192.png",
-  "./icons/aufwind-maskable-512.png",
+  "./aufwind-icon-192.png",
+  "./aufwind-icon-512.png",
+  "./aufwind-maskable-192.png",
+  "./aufwind-maskable-512.png",
   "./date-slide-background-v2.png",
   "./aufwind-icon-192.png",
   "./notification-badge.png"
