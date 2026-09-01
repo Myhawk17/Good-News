@@ -1625,3 +1625,9 @@ html.user-theme-light .user-password-card{background:#f6f6f4;border-color:#d8d8d
 @media(max-width:360px){
   .brand-tagline{display:none}
 }
+
+
+/* Build 66 – Kopfzeile: nur das Aufwind-Symbol, ohne Schriftzug */
+.appbar .brand-copy{display:none!important}
+.appbar .brand-btn{gap:0}
+.appbar .brand-logo{width:38px;height:38px;border-radius:11px}

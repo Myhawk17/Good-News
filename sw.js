@@ -1,20 +1,20 @@
-const GOOD_NEWS_SW_BUILD=65;
+const GOOD_NEWS_SW_BUILD=68;
 const CACHE=`good-news-build-${GOOD_NEWS_SW_BUILD}`;
 const STATIC=[
   "./",
   "./index.html",
-  "./style.css?v=83",
-  "./app.js?v=79",
+  "./style.css?v=85",
+  "./app.js?v=82",
   "./config.js",
-  "./manifest.json",
-  "./favicon-32.png",
-  "./apple-touch-icon.png",
-  "./icons/icon-192.png",
-  "./icons/icon-512.png",
-  "./icons/maskable-192.png",
-  "./icons/maskable-512.png",
+  "./manifest.json?v=68",
+  "./aufwind-favicon-32-v68.png",
+  "./aufwind-apple-touch-icon-v68.png",
+  "./icons/aufwind-icon-192-v68.png",
+  "./icons/aufwind-icon-512-v68.png",
+  "./icons/aufwind-maskable-192-v68.png",
+  "./icons/aufwind-maskable-512-v68.png",
   "./date-slide-background-v2.png",
-  "./icon-192.png",
+  "./aufwind-icon-192-v68.png",
   "./notification-badge.png"
 ];
 
@@ -113,7 +113,7 @@ self.addEventListener("push",event=>{
   const title=data.title||"Aufwind";
   const options={
     body:data.body||"Neue Good News aus aller Welt sind da.",
-    icon:data.icon||"./icon-192.png",
+    icon:data.icon||"./aufwind-icon-192-v68.png",
     badge:data.badge||"./notification-badge.png",
     data:{url:data.url||"./"},
     tag:data.tag||"good-news-daily"

@@ -2387,7 +2387,7 @@ queueMicrotask(()=>{
 // selbst alle offenen Good-News-Fenster auf den neuen Build führen. So hängt die
 // installierte PWA nicht mehr an einer alten Cache-/Worker-Version fest.
 // Build 35 – adaptive Überschriften (max. 4 Zeilen) und stärkerer Lesbarkeitsverlauf.
-const GOOD_NEWS_BUILD=63;
+const GOOD_NEWS_BUILD=68;
 let goodNewsSwRegistration=null;
 let goodNewsReloading=false;
 
@@ -2728,13 +2728,13 @@ function applyAppSettings(s){
 
   const logo=$("brandLogo");
   if(logo){
-    // Das Good-News-Appsymbol ist immer der Fallback. Ein in der Redaktion
+    // Das Aufwind-Symbol ist der Fallback. Ein später bewusst in der Redaktion
     // hinterlegtes Logo darf es weiterhin überschreiben.
-    logo.src=s.logo_url || "icon-192.png";
+    logo.src=s.logo_url || "aufwind-icon-192-v68.png";
     logo.classList.add("visible");
     logo.onerror=()=>{
-      if(!logo.src.endsWith("/icon-192.png") && !logo.src.endsWith("icon-192.png")){
-        logo.src="icon-192.png";
+      if(!logo.src.endsWith("/aufwind-icon-192-v68.png") && !logo.src.endsWith("aufwind-icon-192-v68.png")){
+        logo.src="aufwind-icon-192-v68.png";
       }
     };
   }

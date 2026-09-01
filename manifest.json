@@ -8,8 +8,8 @@
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#0e0e10",
-  "theme_color": "#0e0e10",
+  "background_color": "#40b9ff",
+  "theme_color": "#40b9ff",
   "orientation": "portrait",
   "categories": [
     "news",
@@ -18,25 +18,25 @@
   "prefer_related_applications": false,
   "icons": [
     {
-      "src": "icons/icon-192.png",
+      "src": "icons/aufwind-icon-192-v68.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any"
+      "purpose": "any maskable"
     },
     {
-      "src": "icons/icon-512.png",
+      "src": "icons/aufwind-icon-512-v68.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any"
+      "purpose": "any maskable"
     },
     {
-      "src": "icons/maskable-192.png",
+      "src": "icons/aufwind-maskable-192-v68.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "maskable"
     },
     {
-      "src": "icons/maskable-512.png",
+      "src": "icons/aufwind-maskable-512-v68.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
