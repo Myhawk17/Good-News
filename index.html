@@ -11,25 +11,15 @@
   <meta name="apple-mobile-web-app-title" content="Aufwind">
   <meta name="description" content="Aufwind – Good News aus aller Welt. Positive Nachrichten kompakt, transparent und nachvollziehbar.">
   <title>Aufwind – Good News aus aller Welt</title>
-  <link rel="manifest" href="manifest-aufwind-v70.json">
-  <script>
-    // Installationsereignis so früh wie möglich sichern. Auf schnellen Android-Geräten
-    // kann Chrome es bereits auslösen, bevor das große App-Script geladen ist.
-    window.__aufwindInstallPrompt = null;
-    window.addEventListener("beforeinstallprompt", function(e){
-      e.preventDefault();
-      window.__aufwindInstallPrompt = e;
-      window.dispatchEvent(new Event("aufwindinstallready"));
-    });
-  </script>
-  <link rel="icon" type="image/png" sizes="32x32" href="aufwind-favicon-32-v70.png">
-  <link rel="apple-touch-icon" sizes="180x180" href="aufwind-apple-touch-icon-v70.png">
-  <link rel="stylesheet" href="style.css?v=87">
+  <link rel="manifest" href="manifest.json?v=72">
+  <link rel="icon" type="image/png" sizes="32x32" href="aufwind-favicon-32.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="aufwind-apple-touch-icon.png">
+  <link rel="stylesheet" href="style.css?v=89">
 </head>
 <body>
 <header class="appbar">
     <button class="brand-btn" id="homeBtn" aria-label="Zum neuesten Beitrag">
-      <img id="brandLogo" class="brand-logo" src="aufwind-icon-192-v70.png" alt="Aufwind App-Logo">
+      <img id="brandLogo" class="brand-logo" src="aufwind-icon-192.png" alt="Aufwind App-Logo">
     </button>
     <div class="appbar-actions">
       <button class="icon-btn menu-toggle-btn" id="menuBtn" aria-label="Menü öffnen" aria-expanded="false" aria-controls="mainMenu">☰</button>
@@ -48,7 +38,7 @@
         <span class="menu-chevron" aria-hidden="true">›</span>
       </button>
         <button id="accountBtn" type="button"><span>↪</span><span id="accountBtnLabel">Anmelden</span></button>
-        <div class="app-build-label" aria-label="App-Version">Aufwind · Build 70</div>
+        <div class="app-build-label" aria-label="App-Version">Aufwind · Build 72</div>
       </div>
       <button class="icon-btn slide-focus-btn" id="slideFocusBtn" type="button" aria-label="Slide-Text ausblenden" aria-pressed="false" title="Text ausblenden">
           <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -195,7 +185,7 @@
       <section class="user-setting-card update-check-card">
         <div class="user-setting-copy">
           <strong>App-Update</strong>
-          <span>Prüft, ob eine neuere Good-News-Version verfügbar ist.</span>
+          <span>Prüft, ob eine neuere Aufwind-Version verfügbar ist.</span>
         </div>
         <button class="secondary" id="checkUpdateBtn" type="button"><span>↻</span> Nach Update suchen</button>
       </section>
@@ -244,7 +234,7 @@
     <button class="icon-btn dialog-close about-close" id="aboutCloseBtn" type="button" aria-label="Über Aufwind schließen">✕</button>
     <div class="about-scroll">
       <section class="about-page">
-        <img class="about-logo" src="good-news-logo.png" alt="Aufwind – Good News aus aller Welt">
+        <img class="about-logo" src="aufwind-logo.png" alt="Aufwind – Good News aus aller Welt">
         <h2 id="aboutTitle">Über Aufwind</h2>
         <div class="about-tagline" id="aboutTagline">Good News aus aller Welt</div>
         <div class="about-copy" id="aboutCopy">
@@ -296,7 +286,7 @@
         <p class="legal-small">Anbieter: GitHub, Inc. / GitHub B.V. · <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement" target="_blank" rel="noopener noreferrer">Datenschutzhinweise von GitHub</a></p>
 
         <h4>3. Datenbank, Anmeldung und Speicherfunktionen</h4>
-        <p>Für Nachrichteninhalte, redaktionelle Funktionen, Anmeldungen, Einsendungen, Fehlermeldungen und Push-Abonnements wird Supabase eingesetzt. Dabei können je nach genutzter Funktion Inhaltsdaten, Konto- bzw. Nutzerkennungen, Zeitstempel und technisch erforderliche Verbindungsdaten verarbeitet werden. Das Good-News-Projekt ist derzeit in der Supabase-Region <strong>eu-west-1 (Irland)</strong> angelegt. Supabase kann zur Leistungserbringung weitere Unterauftragsverarbeiter einsetzen.</p>
+        <p>Für Nachrichteninhalte, redaktionelle Funktionen, Anmeldungen, Einsendungen, Fehlermeldungen und Push-Abonnements wird Supabase eingesetzt. Dabei können je nach genutzter Funktion Inhaltsdaten, Konto- bzw. Nutzerkennungen, Zeitstempel und technisch erforderliche Verbindungsdaten verarbeitet werden. Das Aufwind-Projekt ist derzeit in der Supabase-Region <strong>eu-west-1 (Irland)</strong> angelegt. Supabase kann zur Leistungserbringung weitere Unterauftragsverarbeiter einsetzen.</p>
         <p>Die Verarbeitung erfolgt – je nach Funktion – zur Bereitstellung der App und ihrer Sicherheitsfunktionen auf Grundlage von Art. 6 Abs. 1 lit. f DSGVO, bei einer ausdrücklich angeforderten Kontofunktion zur Durchführung dieser Funktion sowie bei einwilligungsabhängigen Funktionen auf Grundlage von Art. 6 Abs. 1 lit. a DSGVO.</p>
         <p class="legal-small">Anbieter: Supabase, Inc. · <a href="https://supabase.com/privacy" target="_blank" rel="noopener noreferrer">Datenschutzhinweise von Supabase</a></p>
 
@@ -325,7 +315,7 @@
         <p>Personenbezogene Daten werden nur so lange gespeichert, wie sie für den jeweiligen Zweck erforderlich sind oder gesetzliche Aufbewahrungspflichten bestehen. Lokale App-Daten können durch Zurücksetzen der Einstellungen, Löschen von Favoriten, Löschen der Website-/App-Daten oder Deinstallation entfernt werden. Nicht mehr benötigte redaktionelle Einsendungen und Fehlermeldungen werden im Rahmen der redaktionellen Pflege gelöscht. Ungültige Push-Abonnements werden beim Versand technisch erkannt und entfernt.</p>
 
         <h4>11. Deine Rechte</h4>
-        <p>Du hast im Rahmen der gesetzlichen Voraussetzungen insbesondere Rechte auf Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung, Datenübertragbarkeit und Widerspruch. Erteilte Einwilligungen kannst du jederzeit mit Wirkung für die Zukunft widerrufen. Angemeldete Nutzer können die ihrem Konto zugeordneten Good-News-Daten zusätzlich direkt im Kontobereich einsehen und herunterladen sowie ihr Konto und die direkt zugeordneten Serverdaten löschen. Außerdem besteht ein Beschwerderecht bei einer Datenschutzaufsichtsbehörde.</p>
+        <p>Du hast im Rahmen der gesetzlichen Voraussetzungen insbesondere Rechte auf Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung, Datenübertragbarkeit und Widerspruch. Erteilte Einwilligungen kannst du jederzeit mit Wirkung für die Zukunft widerrufen. Angemeldete Nutzer können die ihrem Konto zugeordneten Aufwind-Daten zusätzlich direkt im Kontobereich einsehen und herunterladen sowie ihr Konto und die direkt zugeordneten Serverdaten löschen. Außerdem besteht ein Beschwerderecht bei einer Datenschutzaufsichtsbehörde.</p>
         <p class="legal-small">Für Verantwortliche mit Sitz in Bremen ist insbesondere der Landesbeauftragte für Datenschutz und Informationsfreiheit der Freien Hansestadt Bremen zuständig: <a href="https://www.datenschutz.bremen.de/" target="_blank" rel="noopener noreferrer">datenschutz.bremen.de</a>.</p>
 
         <h4>12. Änderungen dieser Datenschutzerklärung</h4>
@@ -346,7 +336,7 @@
     <section class="settings-section account-settings">
       <div id="settingsLoggedOut">
         <div id="settingsLoginView">
-          <p class="muted">Melde dich mit deinem Good-News-Konto an.</p>
+          <p class="muted">Melde dich mit deinem Aufwind-Konto an.</p>
           <form id="settingsLoginForm" class="stack">
             <label>E-Mail
               <input id="settingsLoginEmail" type="email" autocomplete="email" required>
@@ -367,7 +357,7 @@
         </div>
 
         <div id="settingsRegisterView" hidden>
-          <p class="muted">Erstelle dein Good-News-Konto. Neue Konten erhalten automatisch normale Nutzerrechte.</p>
+          <p class="muted">Erstelle dein Aufwind-Konto. Neue Konten erhalten automatisch normale Nutzerrechte.</p>
           <form id="settingsRegisterForm" class="stack">
             <label>E-Mail
               <input id="settingsRegisterEmail" type="email" autocomplete="email" required>
@@ -389,7 +379,7 @@
         </div>
 
         <div id="settingsForgotView" hidden>
-          <p class="muted">Gib die E-Mail-Adresse deines Good-News-Kontos ein. Wir senden dir einen Link, mit dem du ein neues Passwort festlegen kannst.</p>
+          <p class="muted">Gib die E-Mail-Adresse deines Aufwind-Kontos ein. Wir senden dir einen Link, mit dem du ein neues Passwort festlegen kannst.</p>
           <form id="settingsForgotForm" class="stack">
             <label>E-Mail
               <input id="settingsForgotEmail" type="email" autocomplete="email" required>
@@ -419,7 +409,7 @@
           <div class="section-head compact">
             <div>
               <h3 id="passwordSettingsTitle">Passwort ändern</h3>
-              <p class="muted">Ändere hier das Passwort deines Good-News-Kontos.</p>
+              <p class="muted">Ändere hier das Passwort deines Aufwind-Kontos.</p>
             </div>
           </div>
           <div class="account-card password-account-card">
@@ -445,7 +435,7 @@
           <div class="section-head compact">
             <div>
               <h3 id="myDataTitle">Meine Daten</h3>
-              <p class="muted">Hier kannst du die deinem Konto zugeordneten Good-News-Daten selbst einsehen und als JSON-Datei herunterladen.</p>
+              <p class="muted">Hier kannst du die deinem Konto zugeordneten Aufwind-Daten selbst einsehen und als JSON-Datei herunterladen.</p>
             </div>
           </div>
           <div class="privacy-actions">
@@ -457,7 +447,7 @@
 
           <details class="privacy-delete-box">
             <summary>Konto und Serverdaten löschen</summary>
-            <p class="muted">Löscht dein Good-News-Konto sowie die direkt damit verknüpften Serverdaten. Lokale App-Daten auf diesem Gerät werden anschließend ebenfalls entfernt. Diese Aktion kann nicht rückgängig gemacht werden.</p>
+            <p class="muted">Löscht dein Aufwind-Konto sowie die direkt damit verknüpften Serverdaten. Lokale App-Daten auf diesem Gerät werden anschließend ebenfalls entfernt. Diese Aktion kann nicht rückgängig gemacht werden.</p>
             <button class="danger" id="deleteMyAccountBtn" type="button">Konto endgültig löschen</button>
           </details>
         </section>
@@ -770,7 +760,7 @@
         <div class="section-head">
           <div>
             <h3>🔐 DSGVO-Auskunft</h3>
-            <p class="muted">Suche gezielt nach einem Good-News-Konto. Die Suche steht nur der Redaktion mit Adminrechten zur Verfügung.</p>
+            <p class="muted">Suche gezielt nach einem Aufwind-Konto. Die Suche steht nur der Redaktion mit Adminrechten zur Verfügung.</p>
           </div>
         </div>
         <form id="privacyAdminForm" class="stack privacy-admin-form">
@@ -950,6 +940,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="app.js?v=84"></script>
+  <script src="app.js?v=86"></script>
 </body>
 </html>

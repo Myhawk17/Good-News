@@ -1,20 +1,20 @@
-const GOOD_NEWS_SW_BUILD=70;
-const CACHE=`good-news-build-${GOOD_NEWS_SW_BUILD}`;
+const AUFWIND_SW_BUILD=72;
+const CACHE=`aufwind-build-${AUFWIND_SW_BUILD}`;
 const STATIC=[
   "./",
   "./index.html",
-  "./style.css?v=87",
-  "./app.js?v=84",
+  "./style.css?v=89",
+  "./app.js?v=86",
   "./config.js",
-  "./manifest-aufwind-v70.json",
-  "./aufwind-favicon-32-v70.png",
-  "./aufwind-apple-touch-icon-v70.png",
-  "./icons/aufwind-icon-192-v70.png",
-  "./icons/aufwind-icon-512-v70.png",
-  "./icons/aufwind-maskable-192-v70.png",
-  "./icons/aufwind-maskable-512-v70.png",
+  "./manifest.json?v=72",
+  "./aufwind-favicon-32.png",
+  "./aufwind-apple-touch-icon.png",
+  "./icons/aufwind-icon-192.png",
+  "./icons/aufwind-icon-512.png",
+  "./icons/aufwind-maskable-192.png",
+  "./icons/aufwind-maskable-512.png",
   "./date-slide-background-v2.png",
-  "./aufwind-icon-192-v70.png",
+  "./aufwind-icon-192.png",
   "./notification-badge.png"
 ];
 
@@ -32,9 +32,9 @@ function freshClientUrl(rawUrl){
   const url=new URL(rawUrl);
   if(url.origin!==self.location.origin) return null;
   const shownBuild=Number(url.searchParams.get("gn_sw"));
-  if(shownBuild===GOOD_NEWS_SW_BUILD) return null;
-  url.searchParams.set("gn_build",String(GOOD_NEWS_SW_BUILD));
-  url.searchParams.set("gn_sw",String(GOOD_NEWS_SW_BUILD));
+  if(shownBuild===AUFWIND_SW_BUILD) return null;
+  url.searchParams.set("gn_build",String(AUFWIND_SW_BUILD));
+  url.searchParams.set("gn_sw",String(AUFWIND_SW_BUILD));
   url.searchParams.set("gn_refresh",String(Date.now()));
   return url.href;
 }
@@ -42,11 +42,11 @@ function freshClientUrl(rawUrl){
 self.addEventListener("activate",event=>{
   event.waitUntil((async()=>{
     const keys=await caches.keys();
-    const hadOlderGoodNewsCache=keys.some(k=>k.startsWith("good-news-") && k!==CACHE);
-    await Promise.all(keys.filter(k=>k.startsWith("good-news-") && k!==CACHE).map(k=>caches.delete(k)));
+    const hadOlderGoodNewsCache=keys.some(k=>(k.startsWith("good-news-") || k.startsWith("aufwind-")) && k!==CACHE);
+    await Promise.all(keys.filter(k=>(k.startsWith("good-news-") || k.startsWith("aufwind-")) && k!==CACHE).map(k=>caches.delete(k)));
     await self.clients.claim();
 
-    // Migrationshilfe nur beim Wechsel von einem älteren Good-News-Build. Bei einer
+    // Migrationshilfe nur beim Wechsel von einem älteren Aufwind-Build. Bei einer
     // frischen Erstinstallation gibt es keinen alten Cache und damit keinen unnötigen
     // Zusatz-Reload. So kann Build 37 trotzdem eine festhängende ältere Android-PWA
     // selbst auf die neue Version führen.
@@ -113,10 +113,10 @@ self.addEventListener("push",event=>{
   const title=data.title||"Aufwind";
   const options={
     body:data.body||"Neue Good News aus aller Welt sind da.",
-    icon:data.icon||"./aufwind-icon-192-v70.png",
+    icon:data.icon||"./aufwind-icon-192.png",
     badge:data.badge||"./notification-badge.png",
     data:{url:data.url||"./"},
-    tag:data.tag||"good-news-daily"
+    tag:data.tag||"aufwind-daily"
   };
   event.waitUntil(self.registration.showNotification(title,options));
 });

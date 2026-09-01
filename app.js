@@ -24,7 +24,7 @@ let activeCategory = "Alle";
 let currentAdminSession = null;
 
 const USER_PREFS_KEY="goodNewsUserPreferencesV1";
-const GOOD_NEWS_CATEGORIES=[
+const AUFWIND_CATEGORIES=[
   "Was war....",
   "Tiere",
   "Sport",
@@ -68,7 +68,7 @@ function readUserPreferences(){
       ...USER_PREF_DEFAULTS,
       ...saved,
       notifyCategories:Array.isArray(saved.notifyCategories)
-        ? [...new Set(saved.notifyCategories.map(migrateNotifyCategoryLabel).filter(x=>GOOD_NEWS_CATEGORIES.includes(x)))]
+        ? [...new Set(saved.notifyCategories.map(migrateNotifyCategoryLabel).filter(x=>AUFWIND_CATEGORIES.includes(x)))]
         : [...USER_PREF_DEFAULTS.notifyCategories]
     };
     if(!["dark","light"].includes(normalized.appearance))normalized.appearance="dark";
@@ -856,7 +856,7 @@ function openStory(storyKey) {
 }
 
 function openSearch() {
-  const categories = ["Alle",...GOOD_NEWS_CATEGORIES];
+  const categories = ["Alle",...AUFWIND_CATEGORIES];
   openReader("Suche","Nachrichten finden",`
     <input id="readerSearchInput" class="search-input" type="search" placeholder="Suchbegriff eingeben">
     <div class="category-chips">${categories.map(c=>`<button class="chip ${c===activeCategory?"active":""}" data-cat="${esc(c)}">${esc(c)}</button>`).join("")}</div>
@@ -1008,37 +1008,27 @@ aboutDialog?.addEventListener("cancel",e=>{
 
 
 // ---------------- PWA INSTALLATION ----------------
-let deferredInstallPrompt=window.__aufwindInstallPrompt || null;
+let deferredInstallPrompt=null;
 const installAppBtn=$("installAppBtn");
 function isStandaloneApp(){
   return window.matchMedia?.("(display-mode: standalone)").matches || window.navigator.standalone===true;
 }
 function syncInstallButton(){
   if(!installAppBtn)return;
-  // Im Browser immer anzeigen. Nach einer Deinstallation liefert Chrome das
-  // beforeinstallprompt-Ereignis gelegentlich erst verzögert; der Menüpunkt darf
-  // deshalb nicht einfach verschwinden. In der installierten App bleibt er verborgen.
-  installAppBtn.hidden=isStandaloneApp();
+  installAppBtn.hidden=isStandaloneApp() || !deferredInstallPrompt;
 }
 window.addEventListener("beforeinstallprompt",e=>{
   e.preventDefault();
   deferredInstallPrompt=e;
-  window.__aufwindInstallPrompt=e;
-  syncInstallButton();
-});
-window.addEventListener("aufwindinstallready",()=>{
-  if(window.__aufwindInstallPrompt) deferredInstallPrompt=window.__aufwindInstallPrompt;
   syncInstallButton();
 });
 installAppBtn?.addEventListener("click",runMenuAction(async()=>{
-  if(deferredInstallPrompt){
-    deferredInstallPrompt.prompt();
-    try{await deferredInstallPrompt.userChoice}catch{}
-    deferredInstallPrompt=null;
-    syncInstallButton();
-    return;
-  }
-  alert("Chrome hat den Installationsdialog noch nicht freigegeben. Bleib kurz auf der Seite und tippe einmal hinein; Chrome verlangt für den Installationshinweis etwas Seiteninteraktion. Öffne danach erneut Menü → App installieren. Alternativ: Browser-Menü ⋮ → App installieren.");
+  if(!deferredInstallPrompt)return;
+  const promptEvent=deferredInstallPrompt;
+  deferredInstallPrompt=null;
+  await promptEvent.prompt();
+  try{await promptEvent.userChoice}catch{}
+  syncInstallButton();
 }));
 window.addEventListener("appinstalled",()=>{
   deferredInstallPrompt=null;
@@ -1187,7 +1177,7 @@ trackFormState($("passwordRecoveryForm"),"Neues Passwort");
 async function refreshPasswordSettings(){
   if(!configured)return;
   const {data:{session}}=await db.auth.getSession();
-  if(session && $("passwordSettingsEmail"))$("passwordSettingsEmail").textContent=session.user.email||"Good-News-Konto";
+  if(session && $("passwordSettingsEmail"))$("passwordSettingsEmail").textContent=session.user.email||"Aufwind-Konto";
 }
 
 function passwordPolicyError(password){
@@ -1559,8 +1549,8 @@ async function refreshSettingsAccount(){
   }
   if(message&&!session)message.textContent="";
   if(session){
-    $("settingsWhoAmI").textContent=session.user.email||"Good-News-Konto";
-    if($("passwordSettingsEmail"))$("passwordSettingsEmail").textContent=session.user.email||"Good-News-Konto";
+    $("settingsWhoAmI").textContent=session.user.email||"Aufwind-Konto";
+    if($("passwordSettingsEmail"))$("passwordSettingsEmail").textContent=session.user.email||"Aufwind-Konto";
   }
 }
 
@@ -1803,7 +1793,7 @@ async function broadcastPublishedNews(item){
       title:"Aufwind",
       body:displayTitle(item),
       url:newsDeepLink(item),
-      tag:`good-news-${item.id}`
+      tag:`aufwind-${item.id}`
     }
   });
   if(error) throw error;
@@ -2173,7 +2163,7 @@ async function cropVisibleImage(){
   const blob=await new Promise(resolve=>canvas.toBlob(resolve,"image/jpeg",.90));
   if(!blob)throw new Error("Der Bildausschnitt konnte nicht erstellt werden.");
 
-  editorCroppedFile=new File([blob],`good-news-9x16-${Date.now()}.jpg`,{type:"image/jpeg"});
+  editorCroppedFile=new File([blob],`aufwind-9x16-${Date.now()}.jpg`,{type:"image/jpeg"});
   const url=URL.createObjectURL(blob);
   setEditorImage(url,{preserveOriginal:false});
   $("imageFit").value="cover";
@@ -2398,21 +2388,21 @@ queueMicrotask(()=>{
 // selbst alle offenen Good-News-Fenster auf den neuen Build führen. So hängt die
 // installierte PWA nicht mehr an einer alten Cache-/Worker-Version fest.
 // Build 35 – adaptive Überschriften (max. 4 Zeilen) und stärkerer Lesbarkeitsverlauf.
-const GOOD_NEWS_BUILD=70;
-let goodNewsSwRegistration=null;
-let goodNewsReloading=false;
+const AUFWIND_BUILD=72;
+let aufwindSwRegistration=null;
+let aufwindReloading=false;
 
-function goodNewsFreshUrl(remoteBuild){
+function aufwindFreshUrl(remoteBuild){
   const url=new URL(location.href);
-  url.searchParams.set("gn_build",String(remoteBuild||GOOD_NEWS_BUILD));
+  url.searchParams.set("gn_build",String(remoteBuild||AUFWIND_BUILD));
   url.searchParams.set("gn_refresh",String(Date.now()));
   return url.href;
 }
 
-function cleanGoodNewsUpdateParams(){
+function cleanAufwindUpdateParams(){
   const url=new URL(location.href);
   const target=Number(url.searchParams.get("gn_build"));
-  if(Number.isFinite(target) && target<=GOOD_NEWS_BUILD){
+  if(Number.isFinite(target) && target<=AUFWIND_BUILD){
     url.searchParams.delete("gn_build");
     url.searchParams.delete("gn_refresh");
     url.searchParams.delete("gn_sw");
@@ -2432,10 +2422,10 @@ async function getRemoteBuild(){
   return build;
 }
 
-async function clearGoodNewsCaches(){
+async function clearAufwindCaches(){
   if(!("caches" in window)) return;
   const keys=await caches.keys();
-  await Promise.all(keys.filter(key=>key.startsWith("good-news-")).map(key=>caches.delete(key)));
+  await Promise.all(keys.filter(key=>key.startsWith("good-news-") || key.startsWith("aufwind-")).map(key=>caches.delete(key)));
 }
 
 function waitForServiceWorkerActivation(reg,timeoutMs=12000){
@@ -2484,7 +2474,7 @@ async function installRemoteBuild(remoteBuild){
     scope:"./",
     updateViaCache:"none"
   });
-  goodNewsSwRegistration=reg;
+  aufwindSwRegistration=reg;
   await reg.update();
 
   if(reg.waiting) reg.waiting.postMessage({type:"SKIP_WAITING"});
@@ -2501,19 +2491,19 @@ async function forceFreshAppNavigation(remoteBuild){
     const now=Date.now();
     const previous=JSON.parse(sessionStorage.getItem("goodNewsUpdateAttempt")||"null");
     if(previous && Number(previous.build)===Number(remoteBuild) && now-Number(previous.at||0)<30000){
-      console.warn("Good News: erneuten Update-Reload verhindert",remoteBuild);
+      console.warn("Aufwind: erneuten Update-Reload verhindert",remoteBuild);
       return false;
     }
     sessionStorage.setItem("goodNewsUpdateAttempt",JSON.stringify({build:Number(remoteBuild),at:now}));
     sessionStorage.setItem("goodNewsUpdateTarget",String(remoteBuild));
   }catch{}
 
-  goodNewsReloading=true;
+  aufwindReloading=true;
 
   // Die Caches löschen, BEVOR navigiert wird. Selbst falls der alte Worker das
   // aktuelle Fenster noch kontrolliert, muss er danach den Server benutzen.
-  await clearGoodNewsCaches().catch(()=>{});
-  location.replace(goodNewsFreshUrl(remoteBuild));
+  await clearAufwindCaches().catch(()=>{});
+  location.replace(aufwindFreshUrl(remoteBuild));
   return true;
 }
 
@@ -2532,10 +2522,10 @@ async function checkForAppUpdate({manual=false}={}){
     }
 
     const remoteBuild=await getRemoteBuild();
-    if(remoteBuild<=GOOD_NEWS_BUILD){
-      const reg=goodNewsSwRegistration || await navigator.serviceWorker.getRegistration();
+    if(remoteBuild<=AUFWIND_BUILD){
+      const reg=aufwindSwRegistration || await navigator.serviceWorker.getRegistration();
       if(reg) await reg.update().catch(()=>{});
-      if(manual) alert(`Du nutzt bereits die aktuelle Version (Build ${GOOD_NEWS_BUILD}).`);
+      if(manual) alert(`Du nutzt bereits die aktuelle Version (Build ${AUFWIND_BUILD}).`);
       return;
     }
 
@@ -2549,14 +2539,14 @@ async function checkForAppUpdate({manual=false}={}){
     console.warn("App-Update konnte nicht geprüft werden",e);
     if(manual) alert("Die Update-Prüfung hat gerade nicht geklappt. Bitte versuche es erneut.");
   }finally{
-    if(manual && button && !goodNewsReloading){
+    if(manual && button && !aufwindReloading){
       button.disabled=false;
       if(oldText!=null) button.innerHTML=oldText;
     }
   }
 }
 
-cleanGoodNewsUpdateParams();
+cleanAufwindUpdateParams();
 
 if("serviceWorker" in navigator){
   navigator.serviceWorker.addEventListener("controllerchange",()=>{
@@ -2567,11 +2557,11 @@ if("serviceWorker" in navigator){
     try{
       // Stabile URL ab Build 37. updateViaCache:none zwingt die Update-Prüfung
       // am Browser-HTTP-Cache vorbei.
-      goodNewsSwRegistration=await navigator.serviceWorker.register("sw.js",{
+      aufwindSwRegistration=await navigator.serviceWorker.register("sw.js",{
         scope:"./",
         updateViaCache:"none"
       });
-      await goodNewsSwRegistration.update().catch(()=>{});
+      await aufwindSwRegistration.update().catch(()=>{});
       await checkForAppUpdate();
     }catch(e){
       console.warn("Service Worker konnte nicht aktualisiert werden",e);
@@ -2741,11 +2731,11 @@ function applyAppSettings(s){
   if(logo){
     // Das Aufwind-Symbol ist der Fallback. Ein später bewusst in der Redaktion
     // hinterlegtes Logo darf es weiterhin überschreiben.
-    logo.src=s.logo_url || "aufwind-icon-192-v70.png";
+    logo.src=s.logo_url || "aufwind-icon-192.png";
     logo.classList.add("visible");
     logo.onerror=()=>{
-      if(!logo.src.endsWith("/aufwind-icon-192-v70.png") && !logo.src.endsWith("aufwind-icon-192-v70.png")){
-        logo.src="aufwind-icon-192-v70.png";
+      if(!logo.src.endsWith("/aufwind-icon-192.png") && !logo.src.endsWith("aufwind-icon-192.png")){
+        logo.src="aufwind-icon-192.png";
       }
     };
   }
@@ -3377,7 +3367,7 @@ async function savePushSubscription(sub,prefs=userPrefs){
   const j=sub.toJSON();
   const {data:{session}}=await db.auth.getSession();
   const user=session?.user||null;
-  const categories=Array.isArray(prefs?.notifyCategories)?prefs.notifyCategories.map(migrateNotifyCategoryLabel).filter(x=>GOOD_NEWS_CATEGORIES.includes(x)):[...GOOD_NEWS_CATEGORIES];
+  const categories=Array.isArray(prefs?.notifyCategories)?prefs.notifyCategories.map(migrateNotifyCategoryLabel).filter(x=>AUFWIND_CATEGORIES.includes(x)):[...AUFWIND_CATEGORIES];
   const deviceKey=getPushDeviceKey();
   const payload={
     user_id:user?.id||null,
@@ -3454,10 +3444,10 @@ async function syncPushPreferencesForCurrentAccount(sessionOverride=null){
       notifyMorning:enabled ? row?.notify_morning!==false : true,
       notifyEvening:enabled ? row?.notify_evening!==false : true,
       notifyCategories:enabled && Array.isArray(row?.notify_categories)
-        ? row.notify_categories.map(migrateNotifyCategoryLabel).filter(x=>GOOD_NEWS_CATEGORIES.includes(x))
-        : [...GOOD_NEWS_CATEGORIES]
+        ? row.notify_categories.map(migrateNotifyCategoryLabel).filter(x=>AUFWIND_CATEGORIES.includes(x))
+        : [...AUFWIND_CATEGORIES]
     };
-    userPrefs={...USER_PREF_DEFAULTS,...next,notifyCategories:[...(next.notifyCategories||GOOD_NEWS_CATEGORIES)]};
+    userPrefs={...USER_PREF_DEFAULTS,...next,notifyCategories:[...(next.notifyCategories||AUFWIND_CATEGORIES)]};
     try{localStorage.setItem(USER_PREFS_KEY,JSON.stringify(userPrefs));}catch{}
     localStorage.setItem("goodnews_push_enabled",enabled?"1":"0");
     if(input && !userPreferencesDialog?.open){
@@ -3682,7 +3672,7 @@ $("loadMyDataBtn")?.addEventListener("click",loadMyPrivacyData);
 $("downloadMyDataBtn")?.addEventListener("click",()=>{
   if(!myPrivacyExportCache)return;
   const stamp=new Date().toISOString().slice(0,10);
-  downloadJsonFile(`good-news-datenauskunft-${stamp}.json`,myPrivacyExportCache);
+  downloadJsonFile(`aufwind-datenauskunft-${stamp}.json`,myPrivacyExportCache);
 });
 
 async function clearGoodNewsLocalAccountData(){
@@ -3696,7 +3686,7 @@ async function clearGoodNewsLocalAccountData(){
 
 $("deleteMyAccountBtn")?.addEventListener("click",async()=>{
   const msg=$("myDataMessage");
-  if(!confirm("Möchtest du dein Good-News-Konto und die damit verknüpften Serverdaten wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden."))return;
+  if(!confirm("Möchtest du dein Aufwind-Konto und die damit verknüpften Serverdaten wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden."))return;
   const phrase=prompt('Zur Bestätigung bitte LÖSCHEN eingeben:');
   if(phrase!=="LÖSCHEN"){
     if(msg)msg.textContent="Löschung abgebrochen.";
@@ -3707,7 +3697,7 @@ $("deleteMyAccountBtn")?.addEventListener("click",async()=>{
     await invokePrivacyFunction({mode:"self_delete",confirm:"LÖSCHEN"});
     await clearGoodNewsLocalAccountData();
     try{await db.auth.signOut()}catch{}
-    alert("Dein Good-News-Konto und die direkt zugeordneten Serverdaten wurden gelöscht.");
+    alert("Dein Aufwind-Konto und die direkt zugeordneten Serverdaten wurden gelöscht.");
     location.reload();
   }catch(err){
     if(msg)msg.textContent=err?.message||String(err);
@@ -3740,6 +3730,6 @@ $("privacyAdminDownloadBtn")?.addEventListener("click",()=>{
   if(!adminPrivacyExportCache)return;
   const email=String(adminPrivacyExportCache?.server_data?.account?.email||"nutzer").replace(/[^a-z0-9._-]+/gi,"-");
   const stamp=new Date().toISOString().slice(0,10);
-  downloadJsonFile(`good-news-dsgvo-${email}-${stamp}.json`,adminPrivacyExportCache);
+  downloadJsonFile(`aufwind-dsgvo-${email}-${stamp}.json`,adminPrivacyExportCache);
 });
 

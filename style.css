@@ -191,11 +191,11 @@ input[type="range"]{padding:0}
   .toggle-grid{grid-template-columns:1fr}
 }
 
-/* Good News 2.0 */
+/* Aufwind 2.0 */
 .feel-good-box{margin-top:16px;padding:15px;border:1px solid #ffffff2b;border-radius:15px;background:#ffffff12;line-height:1.45}
 .feel-good-box strong{display:block;margin-bottom:6px}
 
-/* Good News 2.1 – Community & Tagesdashboard */
+/* Aufwind 2.1 – Community & Tagesdashboard */
 .badge{display:inline-flex;min-width:20px;height:20px;padding:0 6px;border-radius:999px;align-items:center;justify-content:center;background:#fff;color:#111;font-size:.72rem;font-weight:800;margin-left:4px}
 .submission-dialog{max-width:680px}
 .consent-row{display:flex!important;gap:10px;align-items:flex-start;font-size:.86rem;line-height:1.35}.consent-row input{width:auto;margin-top:3px}
@@ -205,7 +205,7 @@ input[type="range"]{padding:0}
 
 .crop-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.crop-save-btn{flex:1;min-width:190px}.image-crop-message{min-height:1.2em;margin:9px 0 0;color:#d8d8dc}
 
-/* Good News 2.5 – Reaktionen */
+/* Aufwind 2.5 – Reaktionen */
 .reaction-bar{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px}
 .reaction-btn{border:1px solid rgba(255,255,255,.28);background:rgba(10,10,12,.46);color:#fff;border-radius:999px;padding:9px 12px;font:inherit;font-size:13px;backdrop-filter:blur(8px);display:flex;align-items:center;gap:6px}
 .reaction-btn span{opacity:.72;font-variant-numeric:tabular-nums}
@@ -213,7 +213,7 @@ input[type="range"]{padding:0}
 @media(max-width:430px){.reaction-bar{gap:6px}.reaction-btn{padding:8px 10px;font-size:12px}}
 
 
-/* Good News 2.6 – Redaktion kompakter und vertikal */
+/* Aufwind 2.6 – Redaktion kompakter und vertikal */
 .metric-grid-compact{
   display:grid;
   grid-template-columns:repeat(3,minmax(0,1fr));
@@ -306,7 +306,7 @@ input[type="range"]{padding:0}
 }
 
 
-/* Good News 2.7 – ruhige Quellenzeile, keine Reaktionen/Seitennummer */
+/* Aufwind 2.7 – ruhige Quellenzeile, keine Reaktionen/Seitennummer */
 .quiet-link{
   color:inherit;
   text-decoration:none;
@@ -330,7 +330,7 @@ input[type="range"]{padding:0}
   max-width:100%;
 }
 
-/* Good News 2.9 – Datumsfolie */
+/* Aufwind 2.9 – Datumsfolie */
 .date-slide{position:relative;min-height:100%;height:100%;scroll-snap-align:start;overflow:hidden;background:#000;color:#fff;display:flex;flex-direction:column;justify-content:space-between;padding:clamp(22px,5vh,48px) 24px max(34px,env(safe-area-inset-bottom))}
 .date-slide.past{background:linear-gradient(160deg,#29292d 0%,#171719 100%);color:#e8e8ea}
 .date-slide-logo-wrap{flex:1 1 auto;min-height:0;display:flex;align-items:center;justify-content:center;padding:4vh 0 1vh}
@@ -347,7 +347,7 @@ input[type="range"]{padding:0}
 .date-slide.past .date-slide-special{background:rgba(255,255,255,.035);border-color:rgba(255,255,255,.10)}
 
 
-/* Good News 3.0 – Vollbildmotiv für Datumsfolien */
+/* Aufwind 3.0 – Vollbildmotiv für Datumsfolien */
 .date-slide{
   isolation:isolate;
   padding:0;
@@ -441,18 +441,18 @@ input[type="range"]{padding:0}
 }
 
 
-/* Good News 3.0 – Entwürfe - Dreier */
+/* Aufwind 3.0 – Entwürfe - Dreier */
 .triple-draft-card{background:#19191c;border:1px solid #303035;border-radius:16px;padding:16px;margin:10px 0}
 .triple-draft-source{font-size:.78rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:#d5d5da;margin:0 0 10px}
 .triple-grid-drafts .triple-slot p{font-size:.84rem;line-height:1.45;color:#d0d0d5;white-space:pre-wrap}
 .draft-feel{margin-top:10px;padding-top:10px;border-top:1px solid #ffffff18;font-size:.8rem;line-height:1.4;color:#f0e7b7}
 
-/* Good News 3.1 – kompakte Bildrechte */
+/* Aufwind 3.1 – kompakte Bildrechte */
 .image-rights-help{margin:6px 0 0;line-height:1.4}
 .image-source-link{border:0;background:transparent;color:#d7d7dc;padding:2px 0;margin-top:4px;font:inherit;font-size:.78rem;text-decoration:underline;text-decoration-color:#777;text-underline-offset:3px;cursor:pointer;align-self:flex-start}
 .image-source-link:hover{color:#fff}.source-dialog{max-width:440px;width:calc(100% - 28px);border:1px solid #34343a;border-radius:22px;background:#17171a;color:#f5f5f5;padding:18px}.source-dialog::backdrop{background:#000a}.image-source-details{line-height:1.5}.image-source-details p{margin:10px 0}.source-detail-link{color:#fff;text-decoration:underline;text-underline-offset:3px}.draft-image-note{font-size:.85rem;color:#cfcfd4;margin-top:8px}
 
-/* Good News 3.1 – kompakte Kopfzeile / Deckblatt */
+/* Aufwind 3.1 – kompakte Kopfzeile / Deckblatt */
 .appbar{align-items:flex-start;padding:max(10px,env(safe-area-inset-top)) 14px 8px;background:transparent}
 .brand-logo{width:30px;height:30px;border-radius:9px}
 .appbar-actions{position:absolute;right:12px;top:max(10px,env(safe-area-inset-top));display:flex;flex-direction:column;gap:5px;align-items:flex-end}
@@ -479,7 +479,7 @@ input[type="range"]{padding:0}
 }
 
 
-/* Good News 3.2 – kompaktes Dropdown-Menü */
+/* Aufwind 3.2 – kompaktes Dropdown-Menü */
 .appbar-actions{align-items:flex-end}
 .menu-toggle-btn,.admin-quick-btn{flex:0 0 auto}
 .main-menu{
@@ -513,12 +513,12 @@ input[type="range"]{padding:0}
 .main-menu button span{width:22px;text-align:center;font-size:1.08rem}
 .admin-quick-btn{margin-top:5px}
 
-/* Good News 3.3 – App-Logo statt altem Daylie-"D" */
+/* Aufwind 3.3 – App-Logo statt altem Daylie-"D" */
 .brand-mark{display:none!important}
 .brand-logo{display:block!important;opacity:1!important;visibility:visible!important;object-fit:cover}
 
 
-/* Good News 3.4 – private Nutzerstatistik im Adminbereich */
+/* Aufwind 3.4 – private Nutzerstatistik im Adminbereich */
 .analytics-panel{
   margin:14px 0 18px;
   padding:14px;
@@ -555,7 +555,7 @@ input[type="range"]{padding:0}
 }
 
 
-/* Good News 3.5 – kompakte Admin-Nutzerstatistik wie die oberen Kennzahlen */
+/* Aufwind 3.5 – kompakte Admin-Nutzerstatistik wie die oberen Kennzahlen */
 .analytics-panel-compact{
   margin:10px 0 16px;
   padding:0;
@@ -643,7 +643,7 @@ input[type="range"]{padding:0}
 }
 
 
-/* Good News – Namensfreigabe bei Leser-Einsendungen */
+/* Aufwind – Namensfreigabe bei Leser-Einsendungen */
 .submission-name-choice{
   display:flex;
   align-items:center;
@@ -733,7 +733,7 @@ input[type="range"]{padding:0}
 }
 
 
-/* Good News – Autorenzeile in veröffentlichten Slides */
+/* Aufwind – Autorenzeile in veröffentlichten Slides */
 .slide .news-byline,
 .preview-card .news-byline{
   margin:0 0 9px;
@@ -751,7 +751,7 @@ input[type="range"]{padding:0}
 }
 
 
-/* Good News – schlanker Bildeditor mit festem Handy-Ausschnitt */
+/* Aufwind – schlanker Bildeditor mit festem Handy-Ausschnitt */
 .image-fieldset-slim{padding-bottom:14px}
 .image-input-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .image-source-fields{margin-top:10px}
@@ -810,7 +810,7 @@ input[type="range"]{padding:0}
 }
 
 
-/* Good News – Morgen-/Abend-Auswahl mit 2 Vorschlägen je Rubrik */
+/* Aufwind – Morgen-/Abend-Auswahl mit 2 Vorschlägen je Rubrik */
 .candidate-batch-card{padding:14px}
 .batch-draft-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:14px}
 .batch-title{font-size:1.05rem;font-weight:850;margin-bottom:4px}
@@ -859,7 +859,7 @@ input[type="range"]{padding:0}
 }
 
 
-/* Good News – dauerhaftes Einstellungsmenü mit Konto-Anmeldung */
+/* Aufwind – dauerhaftes Einstellungsmenü mit Konto-Anmeldung */
 .settings-dialog{max-width:620px}
 .settings-section{padding:4px 0 18px}
 .settings-section + .settings-section{border-top:1px solid #ffffff18;padding-top:18px}
@@ -879,7 +879,7 @@ input[type="range"]{padding:0}
 .admin-quick-btn{margin-top:0}
 
 
-/* Good News – Login im Hauptmenü, Redaktionsrad nur nach Anmeldung */
+/* Aufwind – Login im Hauptmenü, Redaktionsrad nur nach Anmeldung */
 .main-menu .menu-separator{
   height:1px;
   margin:5px 7px;
@@ -891,7 +891,7 @@ input[type="range"]{padding:0}
 .admin-quick-btn[hidden]{display:none!important}
 
 
-/* Good News – kein schwarzer Leerzustand beim App-Start */
+/* Aufwind – kein schwarzer Leerzustand beim App-Start */
 .feed-loading{
   position:relative;
   min-height:100dvh;
@@ -933,7 +933,7 @@ input[type="range"]{padding:0}
 }
 
 
-/* Good News – Nutzereinstellungen im Hauptmenü */
+/* Aufwind – Nutzereinstellungen im Hauptmenü */
 .user-preferences-dialog{
   width:min(760px,calc(100% - 16px));
   max-height:92dvh;
@@ -1043,7 +1043,7 @@ html.user-text-large .slide .summary{font-size:clamp(1.08rem,4.3vw,1.58rem)}
 html.user-data-saver .slide-bg-blur{display:none!important}
 
 
-/* Good News – kompakte rechte Buttonleiste: Menü, Auge, Redaktion */
+/* Aufwind – kompakte rechte Buttonleiste: Menü, Auge, Redaktion */
 .appbar-actions{
   flex-direction:column;
   align-items:center;
@@ -1089,7 +1089,7 @@ html.slide-text-hidden .slide.has-image::before{
 }
 
 
-/* Good News – rechte Steuerleiste stabil und immer sichtbar */
+/* Aufwind – rechte Steuerleiste stabil und immer sichtbar */
 .appbar-actions{
   position:fixed;
   right:16px;
@@ -1198,7 +1198,7 @@ html.slide-text-hidden .slide.has-image::before{
 #reportList .submission-card{margin-bottom:10px}
 
 
-/* Good News 3.2 – freundliche Fehlerzustände */
+/* Aufwind 3.2 – freundliche Fehlerzustände */
 .connection-banner{position:fixed;z-index:60;left:50%;top:max(10px,env(safe-area-inset-top));transform:translateX(-50%);max-width:calc(100% - 110px);padding:8px 13px;border-radius:999px;background:rgba(18,18,20,.88);color:#fff;font-size:.72rem;font-weight:750;box-shadow:0 5px 18px rgba(0,0,0,.22);backdrop-filter:blur(12px);text-align:center}
 .error-state-slide{position:relative;min-height:100dvh;height:100dvh;scroll-snap-align:start;overflow:hidden;display:grid;place-items:center;color:#fff;text-align:center;background:#222}
 .error-state-slide>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:grayscale(1) brightness(.42);z-index:0}
@@ -1319,7 +1319,7 @@ html.user-theme-light .app-notice{background:rgba(255,255,255,.98);color:#111114
 .account-auth-switch .secondary{width:auto;min-width:140px}
 .field-hint{display:block;margin-top:5px;font-size:.82rem;opacity:.72}
 
-/* Good News Build 47 – stabiles Menü auf mobilen Geräten */
+/* Aufwind Build 47 – stabiles Menü auf mobilen Geräten */
 .main-menu{
   max-height:calc(100dvh - max(20px,env(safe-area-inset-top)) - 12px);
   overflow-y:auto;
@@ -1491,7 +1491,7 @@ html.main-menu-open .main-menu{pointer-events:auto}
   .compact-list-title{font-size:.84rem!important}
 }
 
-/* Good News Build 54 – Über uns, Update in Einstellungen und neue Redaktionsstruktur */
+/* Aufwind Build 54 – Über uns, Update in Einstellungen und neue Redaktionsstruktur */
 .update-check-card .secondary{
   margin:0;
   min-width:170px;
@@ -1499,7 +1499,7 @@ html.main-menu-open .main-menu{pointer-events:auto}
 }
 .update-check-card .secondary span{display:inline-block;margin-right:4px}
 
-/* Good News Build 58 – kompakter „Über Good News“-Bereich */
+/* Aufwind Build 58 – kompakter „Über Good News“-Bereich */
 .about-dialog{
   position:relative;
   width:min(560px,calc(100% - 18px));
