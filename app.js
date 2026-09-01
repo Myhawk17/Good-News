@@ -1008,7 +1008,7 @@ aboutDialog?.addEventListener("cancel",e=>{
 
 
 // ---------------- PWA INSTALLATION ----------------
-let deferredInstallPrompt=null;
+let deferredInstallPrompt=window.__aufwindInstallPrompt || null;
 const installAppBtn=$("installAppBtn");
 function isStandaloneApp(){
   return window.matchMedia?.("(display-mode: standalone)").matches || window.navigator.standalone===true;
@@ -1023,6 +1023,11 @@ function syncInstallButton(){
 window.addEventListener("beforeinstallprompt",e=>{
   e.preventDefault();
   deferredInstallPrompt=e;
+  window.__aufwindInstallPrompt=e;
+  syncInstallButton();
+});
+window.addEventListener("aufwindinstallready",()=>{
+  if(window.__aufwindInstallPrompt) deferredInstallPrompt=window.__aufwindInstallPrompt;
   syncInstallButton();
 });
 installAppBtn?.addEventListener("click",runMenuAction(async()=>{
@@ -1033,7 +1038,7 @@ installAppBtn?.addEventListener("click",runMenuAction(async()=>{
     syncInstallButton();
     return;
   }
-  alert("Falls der Installationsdialog nicht automatisch erscheint: Öffne im Browser oben rechts das ⋮-Menü und wähle ‚App installieren‘ bzw. ‚Zum Startbildschirm hinzufügen‘. Lade die Seite vorher einmal neu, falls der Punkt noch nicht angeboten wird.");
+  alert("Chrome hat den Installationsdialog noch nicht freigegeben. Bleib kurz auf der Seite und tippe einmal hinein; Chrome verlangt für den Installationshinweis etwas Seiteninteraktion. Öffne danach erneut Menü → App installieren. Alternativ: Browser-Menü ⋮ → App installieren.");
 }));
 window.addEventListener("appinstalled",()=>{
   deferredInstallPrompt=null;
@@ -2393,7 +2398,7 @@ queueMicrotask(()=>{
 // selbst alle offenen Good-News-Fenster auf den neuen Build führen. So hängt die
 // installierte PWA nicht mehr an einer alten Cache-/Worker-Version fest.
 // Build 35 – adaptive Überschriften (max. 4 Zeilen) und stärkerer Lesbarkeitsverlauf.
-const GOOD_NEWS_BUILD=69;
+const GOOD_NEWS_BUILD=70;
 let goodNewsSwRegistration=null;
 let goodNewsReloading=false;
 
@@ -2736,11 +2741,11 @@ function applyAppSettings(s){
   if(logo){
     // Das Aufwind-Symbol ist der Fallback. Ein später bewusst in der Redaktion
     // hinterlegtes Logo darf es weiterhin überschreiben.
-    logo.src=s.logo_url || "aufwind-icon-192-v69.png";
+    logo.src=s.logo_url || "aufwind-icon-192-v70.png";
     logo.classList.add("visible");
     logo.onerror=()=>{
-      if(!logo.src.endsWith("/aufwind-icon-192-v69.png") && !logo.src.endsWith("aufwind-icon-192-v69.png")){
-        logo.src="aufwind-icon-192-v69.png";
+      if(!logo.src.endsWith("/aufwind-icon-192-v70.png") && !logo.src.endsWith("aufwind-icon-192-v70.png")){
+        logo.src="aufwind-icon-192-v70.png";
       }
     };
   }

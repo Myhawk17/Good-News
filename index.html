@@ -11,15 +11,25 @@
   <meta name="apple-mobile-web-app-title" content="Aufwind">
   <meta name="description" content="Aufwind – Good News aus aller Welt. Positive Nachrichten kompakt, transparent und nachvollziehbar.">
   <title>Aufwind – Good News aus aller Welt</title>
-  <link rel="manifest" href="manifest.json?v=69">
-  <link rel="icon" type="image/png" sizes="32x32" href="aufwind-favicon-32-v69.png">
-  <link rel="apple-touch-icon" sizes="180x180" href="aufwind-apple-touch-icon-v69.png">
-  <link rel="stylesheet" href="style.css?v=86">
+  <link rel="manifest" href="manifest-aufwind-v70.json">
+  <script>
+    // Installationsereignis so früh wie möglich sichern. Auf schnellen Android-Geräten
+    // kann Chrome es bereits auslösen, bevor das große App-Script geladen ist.
+    window.__aufwindInstallPrompt = null;
+    window.addEventListener("beforeinstallprompt", function(e){
+      e.preventDefault();
+      window.__aufwindInstallPrompt = e;
+      window.dispatchEvent(new Event("aufwindinstallready"));
+    });
+  </script>
+  <link rel="icon" type="image/png" sizes="32x32" href="aufwind-favicon-32-v70.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="aufwind-apple-touch-icon-v70.png">
+  <link rel="stylesheet" href="style.css?v=87">
 </head>
 <body>
 <header class="appbar">
     <button class="brand-btn" id="homeBtn" aria-label="Zum neuesten Beitrag">
-      <img id="brandLogo" class="brand-logo" src="aufwind-icon-192-v69.png" alt="Aufwind App-Logo">
+      <img id="brandLogo" class="brand-logo" src="aufwind-icon-192-v70.png" alt="Aufwind App-Logo">
     </button>
     <div class="appbar-actions">
       <button class="icon-btn menu-toggle-btn" id="menuBtn" aria-label="Menü öffnen" aria-expanded="false" aria-controls="mainMenu">☰</button>
@@ -38,7 +48,7 @@
         <span class="menu-chevron" aria-hidden="true">›</span>
       </button>
         <button id="accountBtn" type="button"><span>↪</span><span id="accountBtnLabel">Anmelden</span></button>
-        <div class="app-build-label" aria-label="App-Version">Aufwind · Build 69</div>
+        <div class="app-build-label" aria-label="App-Version">Aufwind · Build 70</div>
       </div>
       <button class="icon-btn slide-focus-btn" id="slideFocusBtn" type="button" aria-label="Slide-Text ausblenden" aria-pressed="false" title="Text ausblenden">
           <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -940,6 +950,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="app.js?v=83"></script>
+  <script src="app.js?v=84"></script>
 </body>
 </html>
