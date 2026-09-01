@@ -1222,9 +1222,24 @@ $("passwordChangeForm")?.addEventListener("submit",async(e)=>{
   }
 });
 
+const PASSWORD_RECOVERY_DONE_KEY="aufwind_password_recovery_done";
 let passwordRecoveryActive=false;
 let passwordRecoveryCompleted=false;
-try{passwordRecoveryActive=new URLSearchParams(location.hash.slice(1)).get("type")==="recovery"}catch{}
+try{
+  const url=new URL(location.href);
+  const resetDone=url.searchParams.get("pwreset")==="done" || sessionStorage.getItem(PASSWORD_RECOVERY_DONE_KEY)==="1";
+  if(resetDone){
+    passwordRecoveryCompleted=true;
+    passwordRecoveryActive=false;
+    sessionStorage.removeItem(PASSWORD_RECOVERY_DONE_KEY);
+    url.hash="";
+    ["code","type","pwreset"].forEach(key=>url.searchParams.delete(key));
+    history.replaceState(null,"",url.pathname+url.search);
+    window.addEventListener("DOMContentLoaded",()=>setTimeout(()=>showAppNotice("Passwort geändert."),150),{once:true});
+  }else{
+    passwordRecoveryActive=new URLSearchParams(location.hash.slice(1)).get("type")==="recovery" || url.searchParams.get("type")==="recovery";
+  }
+}catch{}
 function openPasswordRecovery(){
   if(!passwordRecoveryDialog || passwordRecoveryCompleted)return;
   passwordRecoveryActive=true;
@@ -1240,6 +1255,15 @@ function clearPasswordRecoveryUrl(){
     ["code","type"].forEach(key=>url.searchParams.delete(key));
     history.replaceState(null,"",url.pathname+url.search);
   }catch{}
+}
+function passwordResetHomeUrl(){
+  try{
+    const url=new URL(location.href);
+    url.hash="";
+    url.search="";
+    url.searchParams.set("pwreset","done");
+    return url.href;
+  }catch{return cleanAuthRedirectUrl()}
 }
 
 $("passwordRecoveryForm")?.addEventListener("submit",async(e)=>{
@@ -1262,17 +1286,18 @@ $("passwordRecoveryForm")?.addEventListener("submit",async(e)=>{
     $("passwordRecoveryForm").reset();
     markFormClean($("passwordRecoveryForm"));
     if(msg)msg.textContent="Passwort geändert.";
-    await db.auth.signOut();
+    sessionStorage.setItem(PASSWORD_RECOVERY_DONE_KEY,"1");
+    await db.auth.signOut().catch(()=>{});
 
-    // Nach erfolgreichem Reset nie erneut den Recovery-Dialog öffnen.
-    // Stattdessen direkt zurück auf die Startseite mit der Datumskarte.
+    // Recovery-Links aus E-Mail-Apps landen auf Android häufig im Browser statt in
+    // der installierten PWA. Nach dem Speichern deshalb hart auf die saubere
+    // Aufwind-Start-URL wechseln. Der Marker verhindert, dass PASSWORD_RECOVERY
+    // beim Neuaufbau das Passwortfenster noch einmal öffnet.
     if(passwordRecoveryDialog?.open)passwordRecoveryDialog.close();
     if(settingsDialog?.open)settingsDialog.close();
     closeMainMenu();
-    requestAnimationFrame(()=>{
-      feed.scrollTo({top:0,behavior:"auto"});
-      showAppNotice("Passwort geändert.");
-    });
+    location.replace(passwordResetHomeUrl());
+    return;
   }catch(err){
     if(msg)msg.textContent=err?.message||String(err);
   }finally{
@@ -1363,6 +1388,7 @@ function switchAdminTab(name) {
   document.querySelectorAll(".tab-panel").forEach(p=>p.hidden = target==="home" || p.id !== `tab-${target}`);
   if(target==="manage") renderAdminList();
   if(target==="reports") loadNewsReports();
+  if(target==="admins") loadAdminRights();
   // Der bevorzugte Referenz-Viewport ist 360 × 640 (auf dem Testgerät ca. 77 % Vorschau).
   if(target==="display-tests" && !displayTestSize) openDisplayTest(360,640);
 }
@@ -2387,7 +2413,7 @@ queueMicrotask(()=>{
 // selbst alle offenen Good-News-Fenster auf den neuen Build führen. So hängt die
 // installierte PWA nicht mehr an einer alten Cache-/Worker-Version fest.
 // Build 35 – adaptive Überschriften (max. 4 Zeilen) und stärkerer Lesbarkeitsverlauf.
-const AUFWIND_BUILD=74;
+const AUFWIND_BUILD=75;
 let aufwindSwRegistration=null;
 let aufwindReloading=false;
 
@@ -3479,7 +3505,7 @@ async function sendAdminTestPush(){
       body:{
         mode:"test",
         title:"Aufwind",
-        body:"🎉 Dein Good-News-Push funktioniert!"
+        body:"🎉 Dein Aufwind-Push funktioniert!"
       }
     });
     if(error) throw error;
@@ -3545,6 +3571,81 @@ if(!navigator.onLine)showConnectionBanner("Offline – gespeicherte Meldungen we
 // Der Testmodus greift auch nach einem Neuladen – ausschließlich lokal im Admin-Gerät.
 if(errorTestMode!=="normal")setTimeout(()=>setErrorTestMode(errorTestMode),250);
 
+
+// ---------------- AUFWIND: ADMIN-RECHTE VERWALTEN ----------------
+let adminRightsCache=[];
+let adminRightsCallerId=null;
+
+async function invokeAdminRights(body){
+  if(!configured || !db) throw new Error("Die Kontofunktionen sind derzeit nicht verbunden.");
+  const {data,error}=await db.functions.invoke("manage-admins",{body});
+  if(error){
+    let message=error.message||"Die Anfrage konnte nicht ausgeführt werden.";
+    try{
+      if(error.context && typeof error.context.clone==="function"){
+        const payload=await error.context.clone().json();
+        if(payload?.error)message=payload.error;
+      }
+    }catch{}
+    throw new Error(message);
+  }
+  if(!data?.ok)throw new Error(data?.error||"Die Anfrage konnte nicht ausgeführt werden.");
+  return data;
+}
+function renderAdminRights(){
+  const root=$("adminRightsList");
+  if(!root)return;
+  root.innerHTML=adminRightsCache.map(row=>{
+    const own=String(row.user_id)===String(adminRightsCallerId);
+    return `<article class="admin-item"><div class="admin-item-head"><div><h4>${esc(row.email||"Unbekanntes Konto")}</h4><div class="admin-meta">Admin</div></div><span class="status published">Admin</span></div><div class="admin-item-actions">${own?'<span class="muted">Dein Konto</span>':`<button class="danger revoke-admin-right" data-email="${esc(row.email||"")}">Admin-Rechte entziehen</button>`}</div></article>`;
+  }).join("")||'<p class="muted">Keine Admin-Konten gefunden.</p>';
+  root.querySelectorAll(".revoke-admin-right").forEach(btn=>btn.addEventListener("click",async()=>{
+    const email=btn.dataset.email||"";
+    if(!email)return;
+    if(!confirm(`Admin-Rechte von ${email} wirklich entziehen?`))return;
+    const msg=$("adminRightsMessage");
+    if(msg)msg.textContent="Admin-Rechte werden geändert …";
+    btn.disabled=true;
+    try{
+      const result=await invokeAdminRights({action:"revoke",email});
+      adminRightsCache=result.admins||[];
+      adminRightsCallerId=result.caller_id||adminRightsCallerId;
+      renderAdminRights();
+      if(msg)msg.textContent=result.message||"Admin-Rechte wurden entzogen.";
+    }catch(err){if(msg)msg.textContent=err?.message||String(err)}
+    finally{btn.disabled=false}
+  }));
+}
+async function loadAdminRights(){
+  const msg=$("adminRightsMessage");
+  if(msg)msg.textContent="Admin-Konten werden geladen …";
+  try{
+    const result=await invokeAdminRights({action:"list"});
+    adminRightsCache=result.admins||[];
+    adminRightsCallerId=result.caller_id||null;
+    renderAdminRights();
+    if(msg)msg.textContent="";
+  }catch(err){if(msg)msg.textContent=err?.message||String(err)}
+}
+$("adminRightsForm")?.addEventListener("submit",async e=>{
+  e.preventDefault();
+  const email=$("adminRightsEmail")?.value.trim()||"";
+  const msg=$("adminRightsMessage");
+  if(!email){if(msg)msg.textContent="Bitte gib eine E-Mail-Adresse ein.";return}
+  if(!confirm(`${email} wirklich Admin-Rechte geben? Admins können Beiträge, Einstellungen und Nutzerdaten verwalten.`))return;
+  const btn=$("adminRightsForm")?.querySelector('button[type="submit"]');
+  if(btn)btn.disabled=true;
+  if(msg)msg.textContent="Admin-Rechte werden vergeben …";
+  try{
+    const result=await invokeAdminRights({action:"grant",email});
+    adminRightsCache=result.admins||[];
+    adminRightsCallerId=result.caller_id||adminRightsCallerId;
+    renderAdminRights();
+    $("adminRightsForm")?.reset();
+    if(msg)msg.textContent=result.message||"Admin-Rechte wurden vergeben.";
+  }catch(err){if(msg)msg.textContent=err?.message||String(err)}
+  finally{if(btn)btn.disabled=false}
+});
 
 // ---------------- GOOD NEWS 4.0: DSGVO SELBSTAUSKUNFT + ADMIN-AUSKUNFT ----------------
 let myPrivacyExportCache=null;

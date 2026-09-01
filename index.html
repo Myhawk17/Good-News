@@ -11,7 +11,7 @@
   <meta name="apple-mobile-web-app-title" content="Aufwind">
   <meta name="description" content="Aufwind – Good News aus aller Welt. Positive Nachrichten kompakt, transparent und nachvollziehbar.">
   <title>Aufwind – Good News aus aller Welt</title>
-  <link rel="manifest" href="manifest.json?v=74">
+  <link rel="manifest" href="manifest.json?v=75">
   <link rel="icon" type="image/png" sizes="32x32" href="aufwind-favicon-32.png">
   <link rel="icon" type="image/png" sizes="192x192" href="aufwind-icon-192.png">
   <link rel="icon" type="image/png" sizes="512x512" href="aufwind-icon-512.png">
@@ -40,7 +40,7 @@
         <span class="menu-chevron" aria-hidden="true">›</span>
       </button>
         <button id="accountBtn" type="button"><span>↪</span><span id="accountBtnLabel">Anmelden</span></button>
-        <div class="app-build-label" aria-label="App-Version">Aufwind · Build 74</div>
+        <div class="app-build-label" aria-label="App-Version">Aufwind · Build 75</div>
       </div>
       <button class="icon-btn slide-focus-btn" id="slideFocusBtn" type="button" aria-label="Slide-Text ausblenden" aria-pressed="false" title="Text ausblenden">
           <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -542,6 +542,7 @@
             <button class="tab admin-menu-item" data-tab="settings"><span class="admin-menu-icon">🎨</span><span class="admin-menu-copy"><strong>Design der App</strong><small>Farben, Logo und Darstellung</small></span></button>
             <button class="tab admin-menu-item" data-tab="about-admin"><span class="admin-menu-icon">ⓘ</span><span class="admin-menu-copy"><strong>Über Aufwind</strong><small>Infotext der App bearbeiten</small></span></button>
             <button class="tab admin-menu-item" data-tab="privacy-admin"><span class="admin-menu-icon">🔐</span><span class="admin-menu-copy"><strong>DSGVO-Auskunft</strong><small>Nutzerdaten gezielt per E-Mail abrufen</small></span></button>
+            <button class="tab admin-menu-item" data-tab="admins"><span class="admin-menu-icon">👥</span><span class="admin-menu-copy"><strong>Admin-Rechte</strong><small>Weitere Redaktionskonten verwalten</small></span></button>
             <button class="tab admin-menu-item" data-tab="reports"><span class="admin-menu-icon">⚑</span><span class="admin-menu-copy"><strong>Fehlermeldungen <span id="reportBadge" class="badge" hidden></span></strong><small>Hinweise der Nutzer prüfen</small></span></button>
             <button class="tab admin-menu-item" data-tab="error-tests"><span class="admin-menu-icon">🧪</span><span class="admin-menu-copy"><strong>Fehlerzustände testen</strong><small>Offline, Server, Bild und weitere Zustände simulieren</small></span></button>
             <button class="tab admin-menu-item" data-tab="display-tests"><span class="admin-menu-icon">📱</span><span class="admin-menu-copy"><strong>Displaygrößen testen</strong><small>Typische Handy-Displays simulieren</small></span></button>
@@ -779,6 +780,19 @@
         <p class="muted privacy-admin-note">Hinweis: Lokale Favoriten und App-Einstellungen liegen nur auf dem jeweiligen Gerät. Die freiwillige Nutzungsstatistik ist nicht mit dem Benutzerkonto verknüpft. Lesereinsendungen besitzen derzeit keine Konto-ID und können deshalb nicht automatisch zugeordnet werden.</p>
       </section>
 
+      <section id="tab-admins" class="tab-panel" hidden>
+        <div class="section-head"><div><h3>👥 Admin-Rechte</h3><p class="muted">Vergib Admin-Rechte nur an Personen, die den vollständigen Redaktionszugriff erhalten sollen. Das Konto muss vorher bereits bei Aufwind registriert sein.</p></div></div>
+        <form id="adminRightsForm" class="stack">
+          <label>E-Mail-Adresse des Aufwind-Kontos
+            <input id="adminRightsEmail" type="email" autocomplete="off" placeholder="name@example.de" required>
+          </label>
+          <button class="primary" type="submit">Admin-Rechte vergeben</button>
+          <div id="adminRightsMessage" class="message" aria-live="polite"></div>
+        </form>
+        <h4>Aktuelle Admins</h4>
+        <div id="adminRightsList"></div>
+      </section>
+
       <section id="tab-push-test" class="tab-panel" hidden>
         <div class="section-head"><div><h3>🔔 Test-Push</h3><p class="muted">Prüfe, ob der Push-Versand auf deinem Gerät und mit deinem aktuellen Konto funktioniert.</p></div></div>
         <div class="push-admin-actions">
@@ -942,6 +956,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="app.js?v=87"></script>
+  <script src="app.js?v=88"></script>
 </body>
 </html>
