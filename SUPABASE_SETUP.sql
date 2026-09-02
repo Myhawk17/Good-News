@@ -524,3 +524,62 @@ execute function private.sync_news_scheduled_flag();
 -- Edge Function process-scheduled-publications. Diese Server-Konfiguration
 -- enthält geheime Schlüssel und gehört deshalb absichtlich nicht in diese Datei.
 
+
+
+-- ============================================================
+-- BUILD 80: Reaktionen sicher über RLS + öffentliche Zählwerte
+-- ============================================================
+create table if not exists public.news_reaction_counts (
+  news_id bigint primary key references public.news(id) on delete cascade,
+  hope bigint not null default 0 check (hope >= 0),
+  touched bigint not null default 0 check (touched >= 0),
+  wow bigint not null default 0 check (wow >= 0),
+  updated_at timestamptz not null default now()
+);
+
+alter table public.news_reaction_counts enable row level security;
+drop policy if exists news_reaction_counts_select on public.news_reaction_counts;
+create policy news_reaction_counts_select on public.news_reaction_counts for select to anon, authenticated using (true);
+revoke all on table public.news_reaction_counts from anon, authenticated;
+grant select on table public.news_reaction_counts to anon, authenticated;
+
+create schema if not exists private;
+create or replace function private.refresh_news_reaction_counts()
+returns trigger language plpgsql security definer set search_path = '' as $$
+declare target_news_id bigint;
+begin
+  target_news_id := coalesce(new.news_id, old.news_id);
+  insert into public.news_reaction_counts(news_id,hope,touched,wow,updated_at)
+  select target_news_id,
+    count(*) filter (where reaction='hope')::bigint,
+    count(*) filter (where reaction='touched')::bigint,
+    count(*) filter (where reaction='wow')::bigint, now()
+  from public.news_reactions where news_id=target_news_id
+  on conflict (news_id) do update set hope=excluded.hope,touched=excluded.touched,wow=excluded.wow,updated_at=excluded.updated_at;
+  return coalesce(new,old);
+end; $$;
+revoke all on function private.refresh_news_reaction_counts() from public, anon, authenticated;
+drop trigger if exists news_reactions_refresh_counts on public.news_reactions;
+create trigger news_reactions_refresh_counts after insert or update or delete on public.news_reactions
+for each row execute function private.refresh_news_reaction_counts();
+
+alter table public.news_reactions enable row level security;
+drop policy if exists news_reactions_select on public.news_reactions;
+drop policy if exists news_reactions_insert on public.news_reactions;
+drop policy if exists news_reactions_update on public.news_reactions;
+drop policy if exists news_reactions_delete on public.news_reactions;
+drop policy if exists news_reactions_select_own on public.news_reactions;
+drop policy if exists news_reactions_insert_own on public.news_reactions;
+drop policy if exists news_reactions_update_own on public.news_reactions;
+drop policy if exists news_reactions_delete_own on public.news_reactions;
+create policy news_reactions_select_own on public.news_reactions for select to anon, authenticated
+using (device_id=coalesce((current_setting('request.headers',true)::jsonb->>'x-device-id'),''));
+create policy news_reactions_insert_own on public.news_reactions for insert to anon, authenticated
+with check (device_id=coalesce((current_setting('request.headers',true)::jsonb->>'x-device-id'),'') and reaction in ('hope','touched','wow') and char_length(device_id) between 1 and 128);
+create policy news_reactions_update_own on public.news_reactions for update to anon, authenticated
+using (device_id=coalesce((current_setting('request.headers',true)::jsonb->>'x-device-id'),''))
+with check (device_id=coalesce((current_setting('request.headers',true)::jsonb->>'x-device-id'),'') and reaction in ('hope','touched','wow') and char_length(device_id) between 1 and 128);
+create policy news_reactions_delete_own on public.news_reactions for delete to anon, authenticated
+using (device_id=coalesce((current_setting('request.headers',true)::jsonb->>'x-device-id'),''));
+revoke all on table public.news_reactions from anon, authenticated;
+grant select,insert,update,delete on table public.news_reactions to anon, authenticated;

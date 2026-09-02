@@ -359,23 +359,43 @@ async function loadAnalyticsSummary(){
 }
 let reactionCounts = {};
 let myReactions = {};
+let reactionDb = null;
+let reactionDbDeviceId = "";
+function getReactionDb(){
+  if(!configured) return null;
+  const deviceId=getDeviceId();
+  if(!reactionDb || reactionDbDeviceId!==deviceId){
+    reactionDbDeviceId=deviceId;
+    reactionDb=window.supabase.createClient(cfg.SUPABASE_URL,cfg.SUPABASE_ANON_KEY,{
+      global:{headers:{"x-device-id":deviceId}},
+      auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}
+    });
+  }
+  return reactionDb;
+}
 async function loadReactions(){
-  if(!db || !allNews.length) return;
+  if(!allNews.length) return;
+  const rdb=getReactionDb();
+  if(!rdb) return;
   const ids=allNews.map(n=>n.id);
-  const [{data:rows,error},{data:mine,error:mineErr}] = await Promise.all([
-    db.from("news_reactions").select("news_id,reaction").in("news_id",ids),
-    db.from("news_reactions").select("news_id,reaction").eq("device_id",getDeviceId()).in("news_id",ids)
+  const [{data:counts,error},{data:mine,error:mineErr}] = await Promise.all([
+    rdb.from("news_reaction_counts").select("news_id,hope,touched,wow").in("news_id",ids),
+    rdb.from("news_reactions").select("news_id,reaction").in("news_id",ids)
   ]);
   if(error || mineErr){ console.warn("Reaktionen nicht verfügbar:", (error||mineErr).message); return; }
   reactionCounts={}; myReactions={};
-  (rows||[]).forEach(r=>{const k=String(r.news_id);reactionCounts[k]??={hope:0,touched:0,wow:0};reactionCounts[k][r.reaction]=(reactionCounts[k][r.reaction]||0)+1});
+  (counts||[]).forEach(r=>{
+    reactionCounts[String(r.news_id)]={hope:Number(r.hope||0),touched:Number(r.touched||0),wow:Number(r.wow||0)};
+  });
   (mine||[]).forEach(r=>myReactions[String(r.news_id)]=r.reaction);
 }
 async function reactToNews(newsId,reaction){
+  const rdb=getReactionDb();
+  if(!rdb) return;
   const key=String(newsId), current=myReactions[key];
   let error;
-  if(current===reaction){ ({error}=await db.from("news_reactions").delete().eq("news_id",newsId).eq("device_id",getDeviceId())); }
-  else { ({error}=await db.from("news_reactions").upsert({news_id:newsId,device_id:getDeviceId(),reaction},{onConflict:"news_id,device_id"})); }
+  if(current===reaction){ ({error}=await rdb.from("news_reactions").delete().eq("news_id",newsId).eq("device_id",getDeviceId())); }
+  else { ({error}=await rdb.from("news_reactions").upsert({news_id:newsId,device_id:getDeviceId(),reaction},{onConflict:"news_id,device_id"})); }
   if(error){alert("Reaktion konnte nicht gespeichert werden: "+error.message);return;}
   await loadReactions(); renderFeed({startId:newsId});
 }
@@ -2503,7 +2523,7 @@ queueMicrotask(()=>{
 // selbst alle offenen Good-News-Fenster auf den neuen Build führen. So hängt die
 // installierte PWA nicht mehr an einer alten Cache-/Worker-Version fest.
 // Build 35 – adaptive Überschriften (max. 4 Zeilen) und stärkerer Lesbarkeitsverlauf.
-const AUFWIND_BUILD=79;
+const AUFWIND_BUILD=80;
 let aufwindSwRegistration=null;
 let aufwindReloading=false;
 

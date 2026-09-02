@@ -1,12 +1,12 @@
-const AUFWIND_SW_BUILD=79;
+const AUFWIND_SW_BUILD=80;
 const CACHE=`aufwind-build-${AUFWIND_SW_BUILD}`;
 const STATIC=[
   "./",
   "./index.html",
   "./style.css?v=91",
-  "./app.js?v=90",
+  "./app.js?v=91",
   "./config.js",
-  "./manifest.json?v=79",
+  "./manifest.json?v=80",
   "./aufwind-favicon-32.png",
   "./aufwind-apple-touch-icon.png",
   "./aufwind-icon-192.png",
