@@ -1,158 +1,135 @@
 AUFWIND – GOOD NEWS AUS ALLER WELT
-================
+=================================
 
-Enthalten:
-- Vollbild-Swipe-Feed
-- Bilder
-- Kategorien
-- Topmeldungen
-- mehrere Quellen
-- Kurz-erklärt/Kontext
-- Teilen
-- Favoriten lokal auf dem Gerät
-- Suche
-- Archiv
-- zusammengehörige Meldungen / "Was bisher geschah"
-- Redaktionslogin
-- Dashboard
-- Entwürfe
-- Vorschau
-- Veröffentlichen
-- Bearbeiten
-- Löschen
-- Bild-Upload über Supabase Storage
-- kostenlose PWA, geeignet für GitHub Pages
+Stand dieses Pakets: Build 84
 
-EINRICHTUNG
------------
+Aufwind ist eine installierbare Web-App/PWA für positive, redaktionell geprüfte Nachrichten. Die Leseransicht ist mobil und slide-basiert; Redaktion, Nutzerkonten, Push-Funktionen und App-Einstellungen sind über Supabase angebunden.
 
-1. Supabase-Projekt erstellen.
-2. Supabase → SQL Editor → Inhalt von SUPABASE_SETUP.sql komplett ausführen.
-3. Supabase → Authentication → einen eigenen Benutzer mit E-Mail + Passwort anlegen.
-4. Danach öffentliche Registrierungen/Signups deaktivieren.
-   Hintergrund: Jeder authentifizierte Benutzer dieses Projekts darf redaktionell arbeiten.
-5. Supabase → Project Settings / API:
-   - Project URL kopieren
-   - Publishable Key bzw. anon key kopieren
-6. config.js öffnen und die beiden Platzhalter ersetzen.
-   NIEMALS einen service_role/secret key in config.js eintragen.
-7. Alle Dateien dieses Ordners in dein GitHub-Repository hochladen.
-8. GitHub Pages aktivieren bzw. bestehende Pages-Seite aktualisieren.
-9. App öffnen → ⚙ → mit deinem Supabase-Konto anmelden.
+WICHTIGSTE FUNKTIONEN
+---------------------
+- Vollbild-News-Feed mit Swipe-Navigation
+- Kategorien, Topmeldungen und historische Meldungen „Was war....“
+- mehrere Textquellen und getrennte Bildquellen
+- Symbolbild-Kennzeichnung
+- Suche mit Treffer-Hervorhebung
+- Archiv und „Meine Favoriten“
+- Teilen und Fehler melden
+- freiwillige Nachrichteneinsendungen durch Leser
+- Nutzerkonten, Passwort-Reset, Passwortänderung und DSGVO-Selbstauskunft
+- freiwillige Push-Benachrichtigungen nach Zeiten und Kategorien
+- freiwillige, einwilligungsbasierte Nutzungsstatistik
+- Redaktionsbereich mit Entwürfen, Planung, Vorschau, Veröffentlichung und Admin-Rechten
+- bearbeitbare App-, „Über Aufwind“- und rechtliche Einstellungen
+- Bild-Upload in Supabase Storage
+- Wikimedia-Commons-Linkauflösung
+- Pexels-Bildsuche für die Redaktion
+- PWA-Updateprüfung und synchronisierte Buildnummer
 
-BILDER
-------
-Bilder werden in den öffentlichen Bucket "news-images" hochgeladen.
-Bitte nur Bilder verwenden, für die du die nötigen Nutzungsrechte besitzt, und Bildnachweise angeben.
+PROJEKTSTRUKTUR
+---------------
+index.html             Oberfläche und Dialoge
+style.css              Design
+app.js                 App- und Redaktionslogik
+config.js              öffentliche Supabase-Verbindung; niemals Secret/Service-Role-Key eintragen
+SUPABASE_SETUP.sql     Grundschema für ein neues Supabase-Projekt
+manifest.json          PWA-Metadaten
+sw.js                  Service Worker, Offline-/Updateverhalten
+version.json           veröffentlichte Buildnummer
+package.json           lokale Hilfsbefehle für die Buildnummer
+tools/bump-build.mjs   synchronisiert alle Buildstellen automatisch
+supabase/functions/    versionierte Quellen zusätzlicher Edge Functions
 
-QUELLEN
--------
-Pro Beitrag ist mindestens eine Quelle vorgesehen.
-Bei Veröffentlichungen fremde Artikel nicht einfach kopieren, sondern eigene Zusammenfassungen verfassen.
+SUPABASE
+--------
+Die produktive App verwendet Supabase für Datenbank, Auth, Storage und Edge Functions. In allen öffentlich erreichbaren Tabellen muss RLS aktiviert bleiben. Adminrechte werden über die Tabelle user_roles vergeben; ein normales angemeldetes Konto erhält dadurch nicht automatisch Redaktionszugriff.
 
-INSTALLATION AUF ANDROID
-------------------------
-App über die GitHub-Pages-Adresse in Chrome öffnen → Menü → "App installieren"
-oder "Zum Startbildschirm hinzufügen".
+Für eine komplett neue Installation:
+1. Supabase-Projekt anlegen.
+2. SUPABASE_SETUP.sql im SQL Editor prüfen und ausführen.
+3. Project URL und Publishable Key bzw. kompatiblen anon key in config.js eintragen.
+4. Niemals service_role-, Secret- oder sonstige private Schlüssel in config.js oder andere öffentliche Dateien schreiben.
+5. Edge Functions aus supabase/functions/ bereitstellen, soweit sie für die Installation benötigt werden.
 
-WICHTIGE DATEIEN
+Bei einem bestehenden produktiven Projekt SUPABASE_SETUP.sql nicht blind erneut ausführen. Schemaänderungen gezielt prüfen bzw. über Migrationen einspielen.
+
+PASSWORTSICHERHEIT
+------------------
+Aufwind verlangt mindestens:
+- 8 Zeichen
+- einen Großbuchstaben
+- einen Kleinbuchstaben
+- eine Zahl
+- ein Sonderzeichen
+
+Zusätzlich prüft die App neue bzw. geänderte Passwörter gegen „Pwned Passwords“ von Have I Been Pwned. Das Passwort wird lokal im Browser per SHA-1 gehasht; übertragen werden nur die ersten fünf Hash-Zeichen (k-Anonymität). Das Klartextpasswort und der vollständige Hash verlassen das Gerät nicht. Ist der Prüfdienst vorübergehend nicht erreichbar, wird die lokale Passwortregel weiterhin erzwungen.
+
+Supabases eigener Schalter „Leaked Password Protection“ ist auf kostenpflichtigen Plänen verfügbar. Im aktuell genutzten Free-Plan ersetzt die oben beschriebene kostenlose Prüfung diese Funktion auf App-Ebene; der Supabase Security Advisor kann den kostenpflichtigen Schalter deshalb weiterhin als deaktiviert anzeigen.
+
+PEXELS-BILDSUCHE
 ----------------
-index.html           Oberfläche
-style.css            Design
-app.js               App-Logik
-config.js            Supabase-Verbindung
-SUPABASE_SETUP.sql   Datenbank + Rechte + Bildspeicher
-manifest.json        PWA-Einstellungen
-sw.js                Offline-/Cache-Grundlage
+Die Redaktion kann im Beitragseditor bevorzugt nach Pexels-Fotos im Hochformat suchen. Bei Auswahl werden automatisch übernommen:
+- Bild-URL
+- Pexels-Seitenlink als Bildquelle
+- Fotograf / Pexels als Bildnachweis
+- Pexels-Lizenz als Lizenzangabe
+- Symbolbild-Kennzeichnung (kann anschließend manuell geändert werden)
 
+Die Pexels-API verlangt einen API-Key. Dieser darf nicht im öffentlichen Frontend gespeichert werden. Deshalb läuft die Suche über die geschützte Supabase Edge Function:
 
-NEU IN VERSION 1.1 – DESIGN & APP
----------------------------------
-Im Redaktionsbereich gibt es jetzt den Tab "Design & App".
+  pexels-search
 
-Dort kannst du ohne Code ändern:
-- App-Name
-- Logo
-- Hintergrundfarbe
-- Textfarbe
-- Akzentfarbe
-- Überschriftengröße
-- runde/eckige Darstellung
-- Bildmodus: Vollbild / Bild oben / Bilder aus
-- Stärke der Bildabdunklung
-- Kategorie ein-/ausblenden
-- Datum ein-/ausblenden
-- Quellen ein-/ausblenden
-- Slide-Zähler ein-/ausblenden
+Einmalige Einrichtung im Supabase Dashboard:
+1. Bei Pexels einen API-Key erzeugen.
+2. Supabase → Edge Functions → Secrets öffnen.
+3. Secret mit dem Namen PEXELS_API_KEY und dem Pexels-Key als Wert speichern.
+4. Kein erneutes Deployment der Function ist danach nötig.
 
-Die Einstellungen werden zentral in Supabase gespeichert und gelten danach für alle Leser.
+Fehlt der Key, bietet der Editor automatisch eine normale Pexels-Websuche als Fallback an. Die Function selbst ist nur mit gültigem Login aufrufbar und prüft zusätzlich die Adminrolle.
 
+Pexels verlangt bei API-Nutzung einen sichtbaren Link zu Pexels und empfiehlt die Nennung des Fotografen. Beides ist in der Redaktionsauswahl bzw. den übernommenen Bildangaben vorgesehen.
 
-GOOD NEWS 3.0 – ENTWÜRFE - DREIER
-----------------------------------
-Neu in der Redaktion: „Entwürfe - Dreier“. Automatisch eingehende Dreier werden dort nur als Vorschläge gespeichert. Mit „Als 3 Entwürfe übernehmen“ entstehen drei redaktionelle Beiträge mit Status ENTWURF. Es erfolgt keine automatische Veröffentlichung.
+BILDER UND RECHTE
+-----------------
+Nur Bilder verwenden, für die die nötigen Nutzungsrechte bestehen. Bildquelle, Urheber/Bildnachweis und Lizenz möglichst vollständig pflegen. Generische Motivbilder, die nicht das konkrete Nachrichtenereignis zeigen, als „Symbolbild“ markieren.
 
-WICHTIG: Nach dem Update den neuen Abschnitt aus SUPABASE_SETUP.sql im Supabase SQL Editor ausführen, damit die Tabelle triple_drafts existiert.
+Für Pexels-Fotos gelten die jeweils aktuellen Pexels-Nutzungsbedingungen. Für Wikimedia- oder andere Quellen gelten deren jeweilige Lizenzbedingungen.
 
-BUILD 36 – UPDATE-SUCHE
-- Update-Suche wartet jetzt auf die Aktivierung des neuen Service Workers und lädt erst danach neu.
-- version.json liefert die aktuelle Build-Nummer cachefrei.
-- Cache-Buster verhindert, dass nach dem Neustart nochmals die alte index.html erscheint.
-- Service-Worker-Installation blockiert nicht mehr am Vorladen aller Dateien; dadurch funktioniert auch der Wechsel von Build 35 schneller.
+BUILDNUMMER UND UPDATE
+----------------------
+Die Buildnummer wird nicht mehr an mehreren Stellen von Hand geändert.
 
-BUILD 35 – MOBILE NEWS-SLIDES
+Voraussetzung: Node.js.
+
+Nächsten Build erzeugen:
+  npm run build:next
+
+Synchronität prüfen:
+  npm run build:check
+
+Der Befehl aktualisiert automatisch:
+- version.json
+- AUFWIND_BUILD in app.js
+- AUFWIND_SW_BUILD in sw.js
+- sichtbare Buildanzeige in index.html
+- Cache-Buster von style.css, app.js und manifest.json in index.html und sw.js
+
+Vor jedem neuen veröffentlichten Paket einmal „npm run build:next“ ausführen und danach „npm run build:check“.
+
+DEPLOYMENT AUF GITHUB PAGES
+---------------------------
+Alle Dateien aus dem Projektstamm einschließlich der neuen tools-, package.json- und supabase/-Dateien im Repository behalten. Für die eigentliche statische GitHub-Pages-Auslieferung werden index.html, CSS, JavaScript, Manifest und Assets verwendet; die Supabase-Function-Quellen dienen der Versionskontrolle und werden nicht vom Browser ausgeführt.
+
+Nach einem Deployment kann in Aufwind unter Einstellungen → „Nach Update suchen“ geprüft werden, ob der neue Build erreichbar ist.
+
+MINDESTTEST VOR EINEM RELEASE
 -----------------------------
-- Referenzansicht im Displaytest: 360 × 640 (auf dem verwendeten Testgerät etwa 77 % Vorschaugröße)
-- Lange Überschriften werden automatisch verkleinert, damit sie möglichst auf höchstens vier Zeilen bleiben
-- Stärkerer dunkler Verlauf hinter dem unteren Textbereich für bessere Lesbarkeit auf hellen Bildern
-- PWA-Cache auf Build 35 angehoben
-
-BUILD 42 – DATENSCHUTZ-SELBSTAUSKUNFT
--------------------------------------
-- Angemeldete Nutzer: Konto → „Meine Daten“ → Daten anzeigen / JSON herunterladen.
-- Angemeldete Nutzer können ihr Konto und direkt verknüpfte Serverdaten selbst löschen.
-- Redaktion: neuer Menüpunkt „DSGVO-Auskunft“ mit gezielter Suche nach Konto-E-Mail und JSON-Export.
-- Die dafür verwendete Supabase Edge Function `good-news-privacy` ist im verbundenen Supabase-Projekt deployed und verlangt ein gültiges Login; Admin-Suchen werden serverseitig zusätzlich auf die Adminrolle geprüft.
-- Lokale Favoriten/Einstellungen werden beim Selbsexport auf dem jeweiligen Gerät ergänzt; anonyme Statistikdaten sind absichtlich nicht mit dem Konto verknüpft.
-
-BUILD 43
-- Nutzer-Einstellungen werden erst mit dem neuen Speichern-Button vollständig übernommen.
-- Push-Zeiten und Kategorien sind während der Bearbeitung frei auswählbar und werden pro Push-Abo gespeichert.
-- Nicht gespeicherte Änderungen werden beim Schließen, Tabwechsel und Seitenverlassen abgefragt.
-- Redaktionelle App-Einstellungen und Beitragseditor nutzen denselben Verlassensschutz.
-- Nach erfolgreichem Speichern erscheint kurz „Gespeichert.“.
-- Supabase-Push-Abos unterstützen notify_morning, notify_evening und notify_categories.
-
-
-BUILD 44
-- Push-Abos erhalten eine zufällige Installationskennung (device_key).
-- Mehrere alte Push-Endpunkte derselben Installation werden beim Speichern bereinigt.
-- Der Versand kann pro Installation entdoppeln, ohne andere Geräte desselben Kontos zu verlieren.
-
-
-BUILD 49 – RELOAD-SCHLEIFE BEHOBEN
-- Buildnummern in App, Service Worker, UI und version.json sind wieder identisch.
-- Verhindert die wiederholte automatische Update-Navigation, die sich wie ein Seiten-Refresh alle paar Sekunden auswirkte.
-- Zusätzliche 30-Sekunden-Sicherheitsbremse verhindert Reload-Schleifen bei einem unvollständigen Deployment.
-
-Build 51
-- Rechter Feed-Bereich zeigt nur noch das allgemeine Menü und direkt darunter das Auge.
-- Das zusätzliche Drei-Punkte-Meldungsmenü wurde entfernt.
-- Aktionen für die aktuelle Meldung (merken/aus Favoriten entfernen, teilen, Fehler melden) liegen jetzt im allgemeinen Menü.
-
-BUILD 52 – SYMBOLBILD-KENNZEICHNUNG
-- Redaktion: Symbolbild ist jetzt ein eigener Ja/Nein-Schalter unter den Bildangaben und unabhängig von der Bildart (Foto/KI).
-- Feed: Quellenzeile bleibt dreigeteilt: links Textquelle, mittig nur bei Bedarf „Symbolbild“, rechts Bildquelle.
-- Automatische Entwürfe können is_symbol_image=true/false mitliefern; die App übernimmt die Kennzeichnung beim Import.
-- Supabase: news.is_symbol_image speichert die Kennzeichnung dauerhaft.
-
-BUILD 53 – PLUS-MENÜ, SUCHE & KOMPAKTE LISTEN
-- Rechter Slide-Bereich: Menüzeichen und Plus sind dauerhaft sichtbar. Das Plus klappt Auge, Favorit, Teilen und Fehler melden untereinander auf.
-- Hauptmenü: „Favoriten“ heißt jetzt „Meine Favoriten“.
-- Suche: Beim Öffnen eines Suchtreffers wird der eingegebene Begriff im Slide sichtbar markiert.
-- Archiv und Meine Favoriten: kompaktere Zeilen mit kleiner Meta-Spalte, zweizeilig begrenzter Überschrift und Pfeil statt großer Titelblöcke.
-- Fehlermeldungen: Beschreibung ist Pflicht (mindestens 5 Zeichen); die Datenbank erzwingt dies ebenfalls.
-
-Build 55:
-- Kompakte Redaktionsstatistik wiederhergestellt, ohne die entfernte Übersicht zurückzubringen.
-- Die Redaktions-Hauptmaske bleibt bei den zwei Bereichen Beiträge und Einstellungen.
+1. Startseite/Feed öffnen und mehrere Slides wischen.
+2. Suche, Archiv, Favoriten, Teilen und Fehler melden prüfen.
+3. Registrierung, Login, Passwortänderung und Passwort-Reset testen.
+4. Redaktion öffnen und einen Entwurf speichern/bearbeiten.
+5. Pexels-Suche bzw. deren Fallback testen und Bildnachweise kontrollieren.
+6. geplante und sofortige Veröffentlichung prüfen.
+7. Push-Einstellungen und – sofern gewünscht – Test-Push prüfen.
+8. Impressum, Datenschutz, „Über Aufwind“ und DSGVO-Selbstauskunft öffnen.
+9. PWA installieren/aktualisieren und Buildnummer kontrollieren.
+10. Supabase Security- und Performance-Advisor nach Schemaänderungen erneut prüfen.

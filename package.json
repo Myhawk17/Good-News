@@ -1,0 +1,8 @@
+{
+  "name": "aufwind-good-news",
+  "private": true,
+  "scripts": {
+    "build:next": "node tools/bump-build.mjs --next",
+    "build:check": "node tools/bump-build.mjs --check"
+  }
+}

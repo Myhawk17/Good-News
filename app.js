@@ -139,7 +139,7 @@ function updateNotificationPreferencesVisibility(){
 const trackedFormStates=new WeakMap();
 function serializeFormState(form){
   if(!form)return "";
-  return [...form.querySelectorAll("input,select,textarea")].map((el,index)=>{
+  return [...form.querySelectorAll("input:not([data-transient]),select:not([data-transient]),textarea:not([data-transient])")].map((el,index)=>{
     const key=el.id||el.name||`${el.tagName}:${index}`;
     let value="";
     if(el.type==="checkbox"||el.type==="radio") value=el.checked?"1":"0";
@@ -1297,13 +1297,54 @@ function passwordPolicyError(password){
   return "";
 }
 
+async function sha1Hex(value){
+  const bytes=new TextEncoder().encode(String(value||""));
+  const digest=await crypto.subtle.digest("SHA-1",bytes);
+  return [...new Uint8Array(digest)].map(b=>b.toString(16).padStart(2,"0")).join("").toUpperCase();
+}
+
+async function leakedPasswordCount(password){
+  // Datenschutzfreundliche k-Anonymitäts-Abfrage: Das Passwort verlässt das Gerät
+  // nie. An Have I Been Pwned gehen nur die ersten fünf Zeichen des SHA-1-Hashes.
+  const hash=await sha1Hex(password);
+  const prefix=hash.slice(0,5),suffix=hash.slice(5);
+  const response=await fetch(`https://api.pwnedpasswords.com/range/${prefix}`,{
+    method:"GET",
+    mode:"cors",
+    cache:"no-store",
+    headers:{"Add-Padding":"true"}
+  });
+  if(!response.ok)throw new Error(`Passwort-Sicherheitsprüfung HTTP ${response.status}`);
+  const lines=(await response.text()).split(/\r?\n/);
+  for(const line of lines){
+    const [candidate,countRaw]=line.trim().split(":");
+    if(candidate===suffix)return Number(countRaw)||0;
+  }
+  return 0;
+}
+
+async function passwordSecurityError(password){
+  const localError=passwordPolicyError(password);
+  if(localError)return localError;
+  try{
+    const leakedCount=await leakedPasswordCount(password);
+    if(leakedCount>0){
+      return "Dieses Passwort ist bereits in bekannten Datenlecks aufgetaucht. Bitte wähle ein anderes Passwort.";
+    }
+  }catch(err){
+    // Ein Ausfall des externen Prüfdienstes soll Konten nicht aussperren.
+    console.warn("Aufwind: Prüfung auf kompromittierte Passwörter nicht erreichbar",err);
+  }
+  return "";
+}
+
 $("passwordChangeForm")?.addEventListener("submit",async(e)=>{
   e.preventDefault();
   const msg=$("passwordChangeMessage");
   const current=$("currentPassword")?.value||"";
   const next=$("newPassword")?.value||"";
   const confirmNext=$("newPasswordConfirm")?.value||"";
-  const policyError=passwordPolicyError(next);
+  const policyError=await passwordSecurityError(next);
   if(policyError){if(msg)msg.textContent=policyError;return}
   if(next!==confirmNext){if(msg)msg.textContent="Die neuen Passwörter stimmen nicht überein.";return}
   if(current===next){if(msg)msg.textContent="Das neue Passwort muss sich vom aktuellen Passwort unterscheiden.";return}
@@ -1379,7 +1420,7 @@ $("passwordRecoveryForm")?.addEventListener("submit",async(e)=>{
   const msg=$("passwordRecoveryMessage");
   const next=$("recoveryNewPassword")?.value||"";
   const confirmNext=$("recoveryNewPasswordConfirm")?.value||"";
-  const policyError=passwordPolicyError(next);
+  const policyError=await passwordSecurityError(next);
   if(policyError){if(msg)msg.textContent=policyError;return}
   if(next!==confirmNext){if(msg)msg.textContent="Die Passwörter stimmen nicht überein.";return}
   const btn=$("passwordRecoveryForm")?.querySelector('button[type="submit"]');
@@ -1760,7 +1801,7 @@ $("settingsRegisterForm")?.addEventListener("submit",async(e)=>{
   const password=$("settingsRegisterPassword")?.value||"";
   const confirmPassword=$("settingsRegisterPasswordConfirm")?.value||"";
   if(!configured){if(msg)msg.textContent="Die Registrierung ist noch nicht verbunden.";return}
-  const policyError=passwordPolicyError(password);
+  const policyError=await passwordSecurityError(password);
   if(policyError){if(msg)msg.textContent=policyError;return}
   if(password!==confirmPassword){if(msg)msg.textContent="Die Passwörter stimmen nicht überein.";return}
   const submitBtn=$("settingsRegisterForm")?.querySelector('button[type="submit"]');
@@ -2144,6 +2185,9 @@ function resetEditor(){
   if($("imageFit")) $("imageFit").value="cover"; if($("imageZoom")) $("imageZoom").value="1"; if($("imagePosX")) $("imagePosX").value="50"; if($("imagePosY")) $("imagePosY").value="50";
   applyImageEditorState();
   $("editorMessage").textContent="";
+  if($("pexelsQuery"))$("pexelsQuery").value="";
+  if($("pexelsResults")){$("pexelsResults").innerHTML="";$("pexelsResults").hidden=true;}
+  if($("pexelsMessage"))$("pexelsMessage").textContent="";
   markFormClean($("newsForm"));
 }
 $("cancelEditBtn").onclick=()=>{
@@ -2306,6 +2350,102 @@ function endCropGesture(e){
 cropSelection?.addEventListener("pointerup",endCropGesture);
 cropSelection?.addEventListener("pointercancel",endCropGesture);
 
+
+function pexelsSearchUrl(query){
+  const q=String(query||"").trim();
+  return q?`https://www.pexels.com/search/${encodeURIComponent(q)}/`:"https://www.pexels.com/";
+}
+function defaultPexelsQuery(){
+  return String($("pexelsQuery")?.value||$("title")?.value||$("storyKey")?.value||"").trim();
+}
+function isPexelsCdnUrl(raw){
+  try{
+    const host=new URL(String(raw||"")).hostname.toLowerCase();
+    return host==="images.pexels.com" || host.endsWith(".images.pexels.com");
+  }catch{return false}
+}
+function renderPexelsResults(photos=[]){
+  const root=$("pexelsResults");
+  if(!root)return;
+  root.innerHTML="";
+  if(!photos.length){
+    root.hidden=true;
+    return;
+  }
+  for(const photo of photos){
+    const card=document.createElement("button");
+    card.type="button";
+    card.className="pexels-result-card";
+    card.dataset.transient="";
+    const thumb=photo?.src?.medium||photo?.src?.portrait||photo?.src?.large||"";
+    const author=String(photo?.photographer||"Pexels");
+    card.innerHTML=`<img src="${esc(thumb)}" alt="${esc(photo?.alt||"Pexels-Foto")}" loading="lazy"><span><strong>${esc(author)}</strong><small>Foto übernehmen</small></span>`;
+    card.addEventListener("click",()=>{
+      const imageUrl=photo?.src?.large2x||photo?.src?.portrait||photo?.src?.large||photo?.src?.original;
+      if(!imageUrl)return;
+      if($("imageFile"))$("imageFile").value="";
+      if($("existingImagePath"))$("existingImagePath").value="";
+      $("imageUrl").value=imageUrl;
+      $("imageSourceUrl").value=photo?.url||"https://www.pexels.com/";
+      $("imageCredit").value=`${author} / Pexels`;
+      $("imageLicense").value="Pexels-Lizenz";
+      $("imageKind").value="photo";
+      $("imageIsSymbol").checked=true;
+      editorCroppedFile=null;
+      editorOriginalPreviewSrc=null;
+      setEditorImage(imageUrl);
+      markFormDirty($("newsForm"));
+      saveEditorDraft();
+      if($("pexelsMessage"))$("pexelsMessage").textContent=`Foto von ${author} übernommen. Als Symbolbild markiert; bitte bei Bedarf anpassen.`;
+    });
+    root.appendChild(card);
+  }
+  root.hidden=false;
+}
+
+async function searchPexels(){
+  const query=defaultPexelsQuery();
+  const msg=$("pexelsMessage"),root=$("pexelsResults"),btn=$("pexelsSearchBtn");
+  if(!query){
+    if(msg)msg.textContent="Bitte zuerst einen Suchbegriff oder eine Überschrift eingeben.";
+    $("pexelsQuery")?.focus();
+    return;
+  }
+  if(!configured || !currentAdminSession){
+    if(msg)msg.textContent="Bitte zuerst als Redaktion anmelden.";
+    return;
+  }
+  if(btn)btn.disabled=true;
+  if(msg)msg.textContent="Pexels wird durchsucht …";
+  if(root)root.hidden=true;
+  try{
+    const {data,error}=await db.functions.invoke("pexels-search",{body:{query,per_page:12}});
+    if(error)throw error;
+    if(data?.error)throw new Error(data.error);
+    const photos=Array.isArray(data?.photos)?data.photos:[];
+    renderPexelsResults(photos);
+    if(msg)msg.textContent=photos.length
+      ? `${photos.length} passende Hochformat-Fotos gefunden.`
+      : "Keine passenden Pexels-Fotos gefunden.";
+  }catch(err){
+    console.warn("Pexels-Suche:",err);
+    if(msg)msg.innerHTML=`Die direkte Pexels-Suche ist noch nicht vollständig eingerichtet. <a href="${esc(pexelsSearchUrl(query))}" target="_blank" rel="noopener noreferrer">Suche auf Pexels öffnen</a>.`;
+  }finally{
+    if(btn)btn.disabled=false;
+  }
+}
+$("pexelsSearchBtn")?.addEventListener("click",searchPexels);
+$("pexelsQuery")?.addEventListener("keydown",e=>{
+  if(e.key==="Enter"){
+    e.preventDefault();
+    void searchPexels();
+  }
+});
+$("pexelsOpenBtn")?.addEventListener("click",()=>{
+  const query=defaultPexelsQuery();
+  window.open(pexelsSearchUrl(query),"_blank","noopener,noreferrer");
+});
+
 $("imageFile").onchange=()=>{
   const f=$("imageFile").files?.[0];
   if(!f)return;
@@ -2316,7 +2456,10 @@ $("imageFile").onchange=()=>{
 $("imageUrl").oninput=()=>{
   if($("imageFile").files?.[0])return;
   const url=$("imageUrl").value.trim();
-  if(url)setEditorImage(url);
+  if(url){
+    if($("existingImagePath"))$("existingImagePath").value="";
+    setEditorImage(url);
+  }
 };
 
 async function cropVisibleImage(){
@@ -2436,6 +2579,9 @@ function previewSaved(id){const n=adminNews.find(x=>String(x.id)===String(id));i
 
 async function editArticle(id){
   const n=adminNews.find(x=>String(x.id)===String(id));if(!n)return;
+  if($("pexelsQuery"))$("pexelsQuery").value="";
+  if($("pexelsResults")){$("pexelsResults").innerHTML="";$("pexelsResults").hidden=true;}
+  if($("pexelsMessage"))$("pexelsMessage").textContent="";
   $("newsId").value=n.id;$("publishedDate").value=n.published_date;
   $("publishedTime").value=n.published_time?.slice(0,5)||"00:00";$("category").value=categoryBucket(n)||"Kultur/Natur";
   $("storyKey").value=n.story_key||"";$("title").value=n.title;$("summary").value=n.summary;
@@ -2598,7 +2744,7 @@ queueMicrotask(()=>{
 // selbst alle offenen Good-News-Fenster auf den neuen Build führen. So hängt die
 // installierte PWA nicht mehr an einer alten Cache-/Worker-Version fest.
 // Build 35 – adaptive Überschriften (max. 4 Zeilen) und stärkerer Lesbarkeitsverlauf.
-const AUFWIND_BUILD=83;
+const AUFWIND_BUILD=84;
 let aufwindSwRegistration=null;
 let aufwindReloading=false;
 

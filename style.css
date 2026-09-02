@@ -1666,3 +1666,31 @@ html.analytics-consent-active #swipeHint{pointer-events:none;user-select:none}
   .analytics-consent-inner{padding:20px}
   .analytics-consent-actions{grid-template-columns:1fr}
 }
+
+
+/* Build 84 – Pexels-Auswahl in der Redaktion */
+.pexels-picker{margin:10px 0 2px;padding:12px;border:1px solid var(--line);border-radius:14px;background:#17171b}
+.pexels-picker-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:9px}
+.pexels-picker-head>div{display:flex;flex-direction:column;gap:2px}
+.pexels-picker-head strong{font-size:.9rem}
+.pexels-picker-head span,.pexels-picker-head a{font-size:.72rem;color:var(--muted)}
+.pexels-picker-head a{text-decoration:underline;text-underline-offset:2px}
+.pexels-search-row{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:8px;align-items:center}
+.pexels-search-row input{min-width:0}
+.pexels-message{min-height:1.2em;margin:8px 2px 0;font-size:.76rem}
+.pexels-message a{text-decoration:underline;text-underline-offset:2px}
+.pexels-results{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:10px}
+.pexels-result-card{appearance:none;border:1px solid var(--line);background:#202025;color:inherit;border-radius:12px;padding:0;overflow:hidden;text-align:left;cursor:pointer}
+.pexels-result-card:hover,.pexels-result-card:focus-visible{border-color:#777;outline:none}
+.pexels-result-card img{display:block;width:100%;aspect-ratio:9/12;object-fit:cover;background:#111}
+.pexels-result-card span{display:flex;flex-direction:column;gap:2px;padding:7px 8px}
+.pexels-result-card strong{font-size:.72rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pexels-result-card small{font-size:.64rem;color:var(--muted)}
+html.user-theme-light .pexels-picker{background:#f5f5f3}
+html.user-theme-light .pexels-result-card{background:#fff}
+@media(max-width:680px){
+  .pexels-picker-head{flex-direction:column;gap:5px}
+  .pexels-search-row{grid-template-columns:1fr 1fr}
+  .pexels-search-row input{grid-column:1/-1}
+  .pexels-results{grid-template-columns:repeat(2,minmax(0,1fr))}
+}

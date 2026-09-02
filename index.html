@@ -11,12 +11,12 @@
   <meta name="apple-mobile-web-app-title" content="Aufwind">
   <meta name="description" content="Aufwind – Good News aus aller Welt. Positive Nachrichten kompakt, transparent und nachvollziehbar.">
   <title>Aufwind – Good News aus aller Welt</title>
-  <link rel="manifest" href="manifest.json?v=83">
+  <link rel="manifest" href="manifest.json?v=84">
   <link rel="icon" type="image/png" sizes="32x32" href="aufwind-favicon-32.png">
   <link rel="icon" type="image/png" sizes="192x192" href="aufwind-icon-192.png">
   <link rel="icon" type="image/png" sizes="512x512" href="aufwind-icon-512.png">
   <link rel="apple-touch-icon" sizes="180x180" href="aufwind-apple-touch-icon.png">
-  <link rel="stylesheet" href="style.css?v=92">
+  <link rel="stylesheet" href="style.css?v=84">
 </head>
 <body>
 <header class="appbar">
@@ -40,7 +40,7 @@
         <span class="menu-chevron" aria-hidden="true">›</span>
       </button>
         <button id="accountBtn" type="button"><span>↪</span><span id="accountBtnLabel">Anmelden</span></button>
-        <div class="app-build-label" aria-label="App-Version">Aufwind · Build 83</div>
+        <div class="app-build-label" aria-label="App-Version">Aufwind · Build 84</div>
       </div>
       <button class="icon-btn slide-focus-btn" id="slideFocusBtn" type="button" aria-label="Slide-Text ausblenden" aria-pressed="false" title="Text ausblenden">
           <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -292,7 +292,7 @@
 
       <section class="legal-panel" data-legal-panel="privacy">
         <h3>Datenschutzerklärung</h3>
-        <p class="legal-small">Stand: 30. August 2026</p>
+        <p class="legal-small">Stand: 2. September 2026</p>
 
         <h4>1. Verantwortlicher</h4>
         <p id="legalPrivacyResponsible">Timo Heinrich Grabbe<br>c/o Online-Impressum 10641<br>Europaring 90<br>53757 Sankt Augustin<br><a href="mailto:good-news@mail.online-impressum.de">good-news@mail.online-impressum.de</a></p>
@@ -305,6 +305,8 @@
         <p>Für Nachrichteninhalte, redaktionelle Funktionen, Anmeldungen, Einsendungen, Fehlermeldungen und Push-Abonnements wird Supabase eingesetzt. Dabei können je nach genutzter Funktion Inhaltsdaten, Konto- bzw. Nutzerkennungen, Zeitstempel und technisch erforderliche Verbindungsdaten verarbeitet werden. Das Aufwind-Projekt ist derzeit in der Supabase-Region <strong>eu-west-1 (Irland)</strong> angelegt. Supabase kann zur Leistungserbringung weitere Unterauftragsverarbeiter einsetzen.</p>
         <p>Die Verarbeitung erfolgt – je nach Funktion – zur Bereitstellung der App und ihrer Sicherheitsfunktionen auf Grundlage von Art. 6 Abs. 1 lit. f DSGVO, bei einer ausdrücklich angeforderten Kontofunktion zur Durchführung dieser Funktion sowie bei einwilligungsabhängigen Funktionen auf Grundlage von Art. 6 Abs. 1 lit. a DSGVO.</p>
         <p class="legal-small">Anbieter: Supabase, Inc. · <a href="https://supabase.com/privacy" target="_blank" rel="noopener noreferrer">Datenschutzhinweise von Supabase</a></p>
+        <p>Bei der Registrierung sowie beim Festlegen oder Ändern eines Passworts prüft Aufwind zusätzlich, ob das gewählte Passwort in bekannten Datenlecks vorkommt. Dafür wird das Passwort ausschließlich lokal im Browser gehasht; an den Dienst „Pwned Passwords“ von Have I Been Pwned werden nur die ersten fünf Zeichen des SHA-1-Hashes übertragen (k-Anonymität). Das Klartext-Passwort und der vollständige Hash werden nicht übertragen. Die Prüfung dient der Kontosicherheit auf Grundlage von Art. 6 Abs. 1 lit. f DSGVO.</p>
+        <p class="legal-small"><a href="https://haveibeenpwned.com/API/v3#PwnedPasswords" target="_blank" rel="noopener noreferrer">Informationen zu Pwned Passwords</a></p>
 
         <h4>4. Technische Bibliothek (jsDelivr)</h4>
         <p>Beim Laden der App wird die für die Verbindung zu Supabase erforderliche JavaScript-Bibliothek über das Content-Delivery-Network jsDelivr geladen. Dabei wird technisch bedingt eine Verbindung zu jsDelivr aufgebaut; hierbei können insbesondere IP-Adresse, Browserinformationen, Referrer, angeforderte URL sowie Zeitpunkt des Abrufs verarbeitet werden. Dies dient der technischen Bereitstellung der App und beruht auf Art. 6 Abs. 1 lit. f DSGVO.</p>
@@ -324,8 +326,9 @@
         <p>Wenn du eine gute Nachricht einreichst, werden Überschrift, Text, Quellenlink, Kategorie sowie freiwillige Angaben wie Ort und Name/Pseudonym gespeichert und redaktionell geprüft. Ein Name oder Pseudonym wird nur veröffentlicht, wenn du die dafür vorgesehene Zustimmung ausdrücklich aktivierst. Bei einer Fehlermeldung zu einem Beitrag werden die Art des Hinweises, die Beschreibung des Fehlers und die betroffene Meldung gespeichert; bei angemeldeten Nutzern kann zusätzlich die Nutzerkennung zugeordnet werden.</p>
         <p>Die redaktionelle Bearbeitung freiwillig übermittelter Hinweise erfolgt auf Grundlage von Art. 6 Abs. 1 lit. f DSGVO. Eine Veröffentlichung eines freiwillig angegebenen Namens/Pseudonyms erfolgt nur auf Grundlage deiner Einwilligung nach Art. 6 Abs. 1 lit. a DSGVO.</p>
 
-        <h4>9. Externe Quellen und Links</h4>
-        <p>Aufwind enthält Links zu externen Text- und Bildquellen. Erst wenn du einen solchen Link öffnest, wird eine Verbindung zum jeweiligen externen Anbieter hergestellt. Für die dortige Datenverarbeitung ist der jeweilige Anbieter verantwortlich.</p>
+        <h4>9. Externe Quellen, Bilddienste und Links</h4>
+        <p>Aufwind enthält Links zu externen Text- und Bildquellen. Beim Öffnen eines solchen Links wird eine Verbindung zum jeweiligen externen Anbieter hergestellt. Redaktionell eingebundene Bilder können außerdem unmittelbar von einem externen Bildserver geladen werden, beispielsweise von Pexels. In diesem Fall erhält der jeweilige Bildanbieter bereits beim Anzeigen der Meldung technisch erforderliche Verbindungsdaten wie insbesondere die IP-Adresse und Browserinformationen. Für die weitere Datenverarbeitung des externen Anbieters gelten dessen Datenschutzbestimmungen.</p>
+        <p class="legal-small">Pexels: <a href="https://www.pexels.com/privacy-policy/" target="_blank" rel="noopener noreferrer">Datenschutzhinweise von Pexels</a></p>
 
         <h4>10. Speicherdauer</h4>
         <p>Personenbezogene Daten werden nur so lange gespeichert, wie sie für den jeweiligen Zweck erforderlich sind oder gesetzliche Aufbewahrungspflichten bestehen. Lokale App-Daten können durch Zurücksetzen der Einstellungen, Löschen von Favoriten, Löschen der Website-/App-Daten oder Deinstallation entfernt werden. Nicht mehr benötigte redaktionelle Einsendungen und Fehlermeldungen werden im Rahmen der redaktionellen Pflege gelöscht. Ungültige Push-Abonnements werden beim Versand technisch erkannt und entfernt.</p>
@@ -380,7 +383,7 @@
             </label>
             <label>Passwort
               <input id="settingsRegisterPassword" type="password" autocomplete="new-password" minlength="8" required>
-              <span class="field-hint">Mindestens 8 Zeichen sowie mindestens ein Großbuchstabe, ein Kleinbuchstabe, eine Zahl und ein Sonderzeichen.</span>
+              <span class="field-hint">Mindestens 8 Zeichen sowie mindestens ein Großbuchstabe, ein Kleinbuchstabe, eine Zahl und ein Sonderzeichen. Bekannte kompromittierte Passwörter werden zusätzlich abgewiesen.</span>
             </label>
             <label>Passwort bestätigen
               <input id="settingsRegisterPasswordConfirm" type="password" autocomplete="new-password" minlength="8" required>
@@ -437,7 +440,7 @@
             </label>
             <label>Neues Passwort
               <input id="newPassword" type="password" autocomplete="new-password" minlength="8" required>
-              <span class="field-hint">Mindestens 8 Zeichen sowie mindestens ein Großbuchstabe, ein Kleinbuchstabe, eine Zahl und ein Sonderzeichen.</span>
+              <span class="field-hint">Mindestens 8 Zeichen sowie mindestens ein Großbuchstabe, ein Kleinbuchstabe, eine Zahl und ein Sonderzeichen. Bekannte kompromittierte Passwörter werden zusätzlich abgewiesen.</span>
             </label>
             <label>Neues Passwort bestätigen
               <input id="newPasswordConfirm" type="password" autocomplete="new-password" minlength="8" required>
@@ -483,7 +486,7 @@
     <form id="passwordRecoveryForm" class="stack">
       <label>Neues Passwort
         <input id="recoveryNewPassword" type="password" autocomplete="new-password" minlength="8" required>
-        <span class="field-hint">Mindestens 8 Zeichen sowie mindestens ein Großbuchstabe, ein Kleinbuchstabe, eine Zahl und ein Sonderzeichen.</span>
+        <span class="field-hint">Mindestens 8 Zeichen sowie mindestens ein Großbuchstabe, ein Kleinbuchstabe, eine Zahl und ein Sonderzeichen. Bekannte kompromittierte Passwörter werden zusätzlich abgewiesen.</span>
       </label>
       <label>Neues Passwort bestätigen
         <input id="recoveryNewPasswordConfirm" type="password" autocomplete="new-password" minlength="8" required>
@@ -679,6 +682,23 @@
               <label>Alternativ Bild-URL
                 <input id="imageUrl" type="url" placeholder="https://…">
               </label>
+            </div>
+
+            <div class="pexels-picker" aria-labelledby="pexelsPickerTitle">
+              <div class="pexels-picker-head">
+                <div>
+                  <strong id="pexelsPickerTitle">Pexels-Bildsuche</strong>
+                  <span>Bevorzugte Quelle für hochwertige freie Motivbilder</span>
+                </div>
+                <a href="https://www.pexels.com/" target="_blank" rel="noopener noreferrer">Fotos von Pexels</a>
+              </div>
+              <div class="pexels-search-row">
+                <input id="pexelsQuery" data-transient type="search" maxlength="120" placeholder="z. B. Meeresschutz, Forschung, Wald">
+                <button class="secondary compact" id="pexelsSearchBtn" data-transient type="button">Pexels durchsuchen</button>
+                <button class="secondary compact" id="pexelsOpenBtn" data-transient type="button">Auf Pexels öffnen</button>
+              </div>
+              <div id="pexelsMessage" class="muted pexels-message" aria-live="polite"></div>
+              <div id="pexelsResults" class="pexels-results" hidden></div>
             </div>
 
             <div class="image-source-fields">
@@ -983,6 +1003,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="app.js?v=94"></script>
+  <script src="app.js?v=84"></script>
 </body>
 </html>
