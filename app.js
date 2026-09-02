@@ -433,7 +433,7 @@ async function fetchPublicNews({preservePosition=true}={}) {
   url.searchParams.set("select","*");
   url.searchParams.set("status","eq.published");
   url.searchParams.set("publish_at",`lte.${nowIso}`);
-  url.searchParams.set("order","priority_rank.desc,publish_at.desc");
+  url.searchParams.set("order","published_date.desc,priority_rank.desc,publish_at.desc");
 
   const controller=new AbortController();
   const timeout=setTimeout(()=>controller.abort(),8000);
@@ -493,9 +493,16 @@ const SPECIAL_DAYS={
 function easterSunday(y){let a=y%19,b=Math.floor(y/100),c=y%100,d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),h=(19*a+b-d-g+15)%30,i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7,m=Math.floor((a+11*h+22*l)/451),mo=Math.floor((h+l-7*m+114)/31),da=(h+l-7*m+114)%31+1;return new Date(y,mo-1,da,12)}
 function datePlus(d,n){let x=new Date(d);x.setDate(x.getDate()+n);return x}
 function isoLocal(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`}
+function currentFeedDate(){
+  // Der Nachrichtenkalender folgt dem deutschen Kalendertag, unabhängig davon,
+  // in welcher Zeitzone der Browser intern Date-Objekte verarbeitet.
+  const parts=new Intl.DateTimeFormat("de-DE",{timeZone:"Europe/Berlin",year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(new Date());
+  const get=t=>parts.find(p=>p.type===t)?.value||"";
+  return `${get("year")}-${get("month")}-${get("day")}`;
+}
 function germanHolidayMap(y){let e=easterSunday(y),m={},add=(d,i,t)=>m[isoLocal(d)]=[i,t];add(new Date(y,0,1,12),"🎆","Neujahr");add(datePlus(e,-2),"✝️","Karfreitag");add(datePlus(e,1),"🌷","Ostermontag");add(new Date(y,4,1,12),"🌼","Tag der Arbeit");add(datePlus(e,39),"☁️","Christi Himmelfahrt");add(datePlus(e,50),"🕊️","Pfingstmontag");add(new Date(y,9,3,12),"🇩🇪","Tag der Deutschen Einheit");add(new Date(y,11,25,12),"🎄","1. Weihnachtstag");add(new Date(y,11,26,12),"🎄","2. Weihnachtstag");return m}
 function specialDayFor(s){let d=new Date(`${s}T12:00:00`),h=germanHolidayMap(d.getFullYear());return h[s]||SPECIAL_DAYS[s.slice(5)]||null}
-function buildDateSlide(s){let today=isoLocal(new Date()),past=s<today,d=new Date(`${s}T12:00:00`),wd=new Intl.DateTimeFormat("de-DE",{weekday:"long"}).format(d).toUpperCase(),dm=new Intl.DateTimeFormat("de-DE",{day:"2-digit",month:"long"}).format(d),sp=specialDayFor(s),sec=document.createElement("section");sec.className=`date-slide${past?" past":""}`;sec.dataset.feedKey=`date:${s}`;sec.innerHTML=`<img class="date-slide-art" src="date-slide-background-v2.png" alt="" aria-hidden="true"><div class="date-slide-overlay"></div><div class="date-slide-bottom"><div class="date-slide-weekday">${esc(wd)}</div><div class="date-slide-date">${esc(dm)}</div><div class="date-slide-year">${d.getFullYear()}</div>${sp?`<div class="date-slide-special"><span>HEUTE IST</span><strong>${esc(sp[0])} ${esc(sp[1])}</strong></div>`:""}<div class="date-slide-hint">↓ Zu den Good News</div></div>`;return sec}
+function buildDateSlide(s){let today=currentFeedDate(),past=s<today,d=new Date(`${s}T12:00:00`),wd=new Intl.DateTimeFormat("de-DE",{weekday:"long"}).format(d).toUpperCase(),dm=new Intl.DateTimeFormat("de-DE",{day:"2-digit",month:"long"}).format(d),sp=specialDayFor(s),sec=document.createElement("section");sec.className=`date-slide${past?" past":""}`;sec.dataset.feedKey=`date:${s}`;sec.innerHTML=`<img class="date-slide-art" src="date-slide-background-v2.png" alt="" aria-hidden="true"><div class="date-slide-overlay"></div><div class="date-slide-bottom"><div class="date-slide-weekday">${esc(wd)}</div><div class="date-slide-date">${esc(dm)}</div><div class="date-slide-year">${d.getFullYear()}</div>${sp?`<div class="date-slide-special"><span>HEUTE IST</span><strong>${esc(sp[0])} ${esc(sp[1])}</strong></div>`:""}<div class="date-slide-hint">↓ Zu den Good News</div></div>`;return sec}
 
 
 function headlineLineCount(headline){
@@ -581,13 +588,26 @@ function restoreFeedPosition(anchor){
 }
 function renderFeed({startId=null,preservePosition=false}={}) {
   const anchor=preservePosition?captureFeedPosition():null;
-  const data = activeCategory === "Alle" ? allNews : allNews.filter(n => categoryBucket(n) === activeCategory);
+  const source = activeCategory === "Alle" ? allNews : allNews.filter(n => categoryBucket(n) === activeCategory);
+  // Die Datumskarten müssen immer streng absteigend laufen. Die Reihenfolge der
+  // Meldungen innerhalb desselben Tages bleibt so, wie sie vom Backend geliefert wurde.
+  const data = source.map((item,originalIndex)=>({item,originalIndex}))
+    .sort((a,b)=>String(b.item?.published_date||"").localeCompare(String(a.item?.published_date||"")) || a.originalIndex-b.originalIndex)
+    .map(x=>x.item);
+  const today=currentFeedDate();
   feed.innerHTML = "";
+
+  // Der aktuelle Kalendertag steht IMMER ganz oben – auch dann, wenn für heute
+  // noch keine Meldung veröffentlicht wurde.
+  feed.appendChild(buildDateSlide(today));
+
   if (!data.length) {
-    feed.innerHTML = `<section class="empty-state"><div><h1>Keine Beiträge</h1><p>Für diese Auswahl gibt es noch keine veröffentlichten Nachrichten.</p></div></section>`;
+    feed.insertAdjacentHTML("beforeend", `<section class="empty-state"><div><h1>Keine Beiträge</h1><p>Für diese Auswahl gibt es noch keine veröffentlichten Nachrichten.</p></div></section>`);
+    scheduleSlideFit();
     return;
   }
-  let prevDate = null;
+
+  let prevDate = today;
   data.forEach((item, index) => {
     if (item.published_date !== prevDate) feed.appendChild(buildDateSlide(item.published_date));
     feed.appendChild(buildSlide(item, index, data.length));
@@ -2413,7 +2433,7 @@ queueMicrotask(()=>{
 // selbst alle offenen Good-News-Fenster auf den neuen Build führen. So hängt die
 // installierte PWA nicht mehr an einer alten Cache-/Worker-Version fest.
 // Build 35 – adaptive Überschriften (max. 4 Zeilen) und stärkerer Lesbarkeitsverlauf.
-const AUFWIND_BUILD=75;
+const AUFWIND_BUILD=76;
 let aufwindSwRegistration=null;
 let aufwindReloading=false;
 
