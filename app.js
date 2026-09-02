@@ -1855,7 +1855,7 @@ async function quickPublish(id){
   const n=adminNews.find(x=>String(x.id)===String(id)); if(!n)return;
   const publishAt=new Date().toISOString();
   const {data:saved,error}=await db.from("news")
-    .update({status:"published",publish_at:publishAt,updated_at:publishAt})
+    .update({status:"published",publish_at:publishAt,is_scheduled:false,scheduled_push_processed_at:null,scheduled_push_result:null,updated_at:publishAt})
     .eq("id",id)
     .select("*")
     .single();
@@ -2398,7 +2398,8 @@ $("newsForm").onsubmit=async(e)=>{
       image_url:imageUrl,image_path:imagePath,image_credit:d.image_credit,
       image_license:d.image_license,image_source_url:d.image_source_url,image_kind:d.image_kind,is_symbol_image:d.is_symbol_image,
       image_fit:d.image_fit,image_zoom:d.image_zoom,image_x:d.image_pos_x,image_y:d.image_pos_y,
-      sources:d.sources,publish_at:publishAt,updated_at:new Date().toISOString()
+      sources:d.sources,publish_at:publishAt,is_scheduled:Boolean(d.scheduled_publish),
+      scheduled_push_processed_at:null,scheduled_push_result:null,updated_at:new Date().toISOString()
     };
     const id=$("newsId").value;
     const previous=id?adminNews.find(x=>String(x.id)===String(id)):null;
@@ -2473,6 +2474,17 @@ if(localStorage.getItem("goodNewsAdminTab")==="editor"){
 renderCachedFeed();
 trackDailyActive();
 fetchPublicNews({preservePosition:false});
+
+// Geplante Veröffentlichungen werden serverseitig im 30-Sekunden-Takt freigegeben.
+// Ist Aufwind bereits geöffnet, wird der Feed deshalb ebenfalls regelmäßig und
+// nur im sichtbaren Zustand aktualisiert, ohne die aktuelle Leseposition zu verlieren.
+setInterval(()=>{
+  if(!document.hidden) void fetchPublicNews();
+},30000);
+document.addEventListener("visibilitychange",()=>{
+  if(!document.hidden) void fetchPublicNews();
+});
+
 // Beim ersten Start dieser Installation erscheint „Über uns“ einmal vor dem Lesen.
 queueMicrotask(()=>{
   let seen=false;
@@ -2491,7 +2503,7 @@ queueMicrotask(()=>{
 // selbst alle offenen Good-News-Fenster auf den neuen Build führen. So hängt die
 // installierte PWA nicht mehr an einer alten Cache-/Worker-Version fest.
 // Build 35 – adaptive Überschriften (max. 4 Zeilen) und stärkerer Lesbarkeitsverlauf.
-const AUFWIND_BUILD=78;
+const AUFWIND_BUILD=79;
 let aufwindSwRegistration=null;
 let aufwindReloading=false;
 

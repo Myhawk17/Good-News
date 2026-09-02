@@ -481,3 +481,46 @@ create index if not exists push_subscriptions_device_key_idx
 alter table public.news_reports alter column comment set not null;
 alter table public.news_reports drop constraint if exists news_reports_comment_required;
 alter table public.news_reports add constraint news_reports_comment_required check (char_length(btrim(comment)) >= 5);
+
+-- =========================================================
+-- AUFWIND BUILD 79 – Geplante Veröffentlichung + automatischer Push
+-- =========================================================
+alter table public.news
+  add column if not exists is_scheduled boolean not null default false,
+  add column if not exists scheduled_push_processed_at timestamptz,
+  add column if not exists scheduled_push_result jsonb;
+
+create index if not exists news_scheduled_due_idx
+  on public.news (publish_at)
+  where is_scheduled = true
+    and status = 'published'
+    and scheduled_push_processed_at is null;
+
+-- Hält das Planungskennzeichen auch bei älteren Clients konsistent.
+create schema if not exists private;
+create or replace function private.sync_news_scheduled_flag()
+returns trigger
+language plpgsql
+set search_path = public
+as $$
+begin
+  if new.status = 'published' and new.publish_at > now() then
+    new.is_scheduled := true;
+  else
+    new.is_scheduled := false;
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists sync_news_scheduled_flag on public.news;
+create trigger sync_news_scheduled_flag
+before insert or update of status, publish_at
+on public.news
+for each row
+execute function private.sync_news_scheduled_flag();
+
+-- Der produktive Supabase-Server besitzt zusätzlich einen Cron-Job und die
+-- Edge Function process-scheduled-publications. Diese Server-Konfiguration
+-- enthält geheime Schlüssel und gehört deshalb absichtlich nicht in diese Datei.
+
