@@ -537,7 +537,7 @@ function currentFeedDate(){
 }
 function germanHolidayMap(y){let e=easterSunday(y),m={},add=(d,i,t)=>m[isoLocal(d)]=[i,t];add(new Date(y,0,1,12),"🎆","Neujahr");add(datePlus(e,-2),"✝️","Karfreitag");add(datePlus(e,1),"🌷","Ostermontag");add(new Date(y,4,1,12),"🌼","Tag der Arbeit");add(datePlus(e,39),"☁️","Christi Himmelfahrt");add(datePlus(e,50),"🕊️","Pfingstmontag");add(new Date(y,9,3,12),"🇩🇪","Tag der Deutschen Einheit");add(new Date(y,11,25,12),"🎄","1. Weihnachtstag");add(new Date(y,11,26,12),"🎄","2. Weihnachtstag");return m}
 function specialDayFor(s){let d=new Date(`${s}T12:00:00`),h=germanHolidayMap(d.getFullYear());return h[s]||SPECIAL_DAYS[s.slice(5)]||null}
-function buildDateSlide(s){let today=currentFeedDate(),past=s<today,d=new Date(`${s}T12:00:00`),wd=new Intl.DateTimeFormat("de-DE",{weekday:"long"}).format(d).toUpperCase(),dm=new Intl.DateTimeFormat("de-DE",{day:"2-digit",month:"long"}).format(d),sp=specialDayFor(s),sec=document.createElement("section");sec.className=`date-slide${past?" past":""}`;sec.dataset.feedKey=`date:${s}`;sec.innerHTML=`<img class="date-slide-art" src="date-slide-background-v2.png" alt="" aria-hidden="true"><div class="date-slide-overlay"></div><div class="date-slide-bottom"><div class="date-slide-weekday">${esc(wd)}</div><div class="date-slide-date">${esc(dm)}</div><div class="date-slide-year">${d.getFullYear()}</div>${sp?`<div class="date-slide-special"><span>HEUTE IST</span><strong>${esc(sp[0])} ${esc(sp[1])}</strong></div>`:""}<div class="date-slide-hint">↓ Zu den Good News</div></div>`;return sec}
+function buildDateSlide(s){let today=currentFeedDate(),past=s<today,d=new Date(`${s}T12:00:00`),wd=new Intl.DateTimeFormat("de-DE",{weekday:"long"}).format(d).toUpperCase(),dm=new Intl.DateTimeFormat("de-DE",{day:"2-digit",month:"long"}).format(d),sp=specialDayFor(s),sec=document.createElement("section");sec.className=`date-slide${past?" past":""}`;sec.dataset.feedKey=`date:${s}`;sec.innerHTML=`<img class="date-slide-art" src="date-slide-background-v2.png" alt="" aria-hidden="true"><div class="date-slide-overlay"></div><div class="date-slide-bottom"><div class="date-slide-weekday">${esc(wd)}</div><div class="date-slide-date">${esc(dm)}</div><div class="date-slide-year">${d.getFullYear()}</div>${sp?`<div class="date-slide-special"><span>HEUTE IST</span><strong>${esc(sp[0])} ${esc(sp[1])}</strong></div>`:""}<div class="date-slide-hint">Scrollen für frischen Aufwind</div></div>`;return sec}
 
 
 function headlineLineCount(headline){
@@ -2598,7 +2598,7 @@ queueMicrotask(()=>{
 // selbst alle offenen Good-News-Fenster auf den neuen Build führen. So hängt die
 // installierte PWA nicht mehr an einer alten Cache-/Worker-Version fest.
 // Build 35 – adaptive Überschriften (max. 4 Zeilen) und stärkerer Lesbarkeitsverlauf.
-const AUFWIND_BUILD=82;
+const AUFWIND_BUILD=83;
 let aufwindSwRegistration=null;
 let aufwindReloading=false;
 
@@ -3715,10 +3715,10 @@ let errorTestMode=localStorage.getItem(ERROR_TEST_KEY)||"normal";
 function errorBackdrop(){return allNews.find(n=>n.image_url)?.image_url||"date-slide-background-v2.png"}
 function renderFriendlyError(kind){
   const states={
-    offline:["📴","Kurz offline 🌿","Sobald du wieder verbunden bist, sind die Good News wieder für dich da."],
+    offline:["📴","Kurz offline 🌿","Sobald du wieder verbunden bist, kommt der frische Aufwind."],
     server:["☕","Aufwind macht gerade eine kurze Pause","Die Verbindung konnte nicht hergestellt werden. Versuch es gleich noch einmal."],
-    empty:["🌱","Für diesen Tag haben wir noch keine Good News","Schau später noch einmal vorbei oder öffne einen anderen Tag."],
-    slow:["⏳","Good News aus aller Welt sind unterwegs …","Die Verbindung ist gerade etwas langsam. Einen kleinen Moment noch."],
+    empty:["🌱","Heute erreicht dich der morgendliche Aufwind später.","Schau später noch einmal vorbei oder öffne einen anderen Tag."],
+    slow:["⏳","Der Aufwind aus aller Welt ist unterwegs …","Die Verbindung ist gerade etwas langsam. Einen kleinen Moment noch."],
   };
   const s=states[kind]||states.server;
   feed.innerHTML=`<section class="error-state-slide ${kind==='slow'?'simulated-slow':''}"><img src="${esc(errorBackdrop())}" alt="" aria-hidden="true"><div class="error-state-copy"><div class="error-icon">${s[0]}</div><h1>${s[1]}</h1><p>${s[2]}</p>${kind==='empty'?'<button class="secondary" id="errorBackBtn">Zum letzten Tag mit Nachrichten</button>':'<button class="secondary" id="errorRetryBtn">Erneut versuchen</button>'}</div></section>`;
