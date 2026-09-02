@@ -594,20 +594,18 @@ function renderFeed({startId=null,preservePosition=false}={}) {
   const data = source.map((item,originalIndex)=>({item,originalIndex}))
     .sort((a,b)=>String(b.item?.published_date||"").localeCompare(String(a.item?.published_date||"")) || a.originalIndex-b.originalIndex)
     .map(x=>x.item);
-  const today=currentFeedDate();
   feed.innerHTML = "";
 
-  // Der aktuelle Kalendertag steht IMMER ganz oben – auch dann, wenn für heute
-  // noch keine Meldung veröffentlicht wurde.
-  feed.appendChild(buildDateSlide(today));
-
+  // Eine Datumskarte wird nur gezeigt, wenn darunter mindestens ein sichtbarer
+  // Beitrag dieses Tages folgt. So gibt es keine leeren Deckblätter für heute
+  // oder andere Tage. Die vorhandenen Tage bleiben streng rückwärts chronologisch.
   if (!data.length) {
     feed.insertAdjacentHTML("beforeend", `<section class="empty-state"><div><h1>Keine Beiträge</h1><p>Für diese Auswahl gibt es noch keine veröffentlichten Nachrichten.</p></div></section>`);
     scheduleSlideFit();
     return;
   }
 
-  let prevDate = today;
+  let prevDate = null;
   data.forEach((item, index) => {
     if (item.published_date !== prevDate) feed.appendChild(buildDateSlide(item.published_date));
     feed.appendChild(buildSlide(item, index, data.length));
@@ -2433,7 +2431,7 @@ queueMicrotask(()=>{
 // selbst alle offenen Good-News-Fenster auf den neuen Build führen. So hängt die
 // installierte PWA nicht mehr an einer alten Cache-/Worker-Version fest.
 // Build 35 – adaptive Überschriften (max. 4 Zeilen) und stärkerer Lesbarkeitsverlauf.
-const AUFWIND_BUILD=76;
+const AUFWIND_BUILD=77;
 let aufwindSwRegistration=null;
 let aufwindReloading=false;
 
