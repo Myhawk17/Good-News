@@ -17,6 +17,7 @@ const passwordRecoveryDialog = $("passwordRecoveryDialog");
 const adminDialog = $("adminDialog");
 const previewDialog = $("previewDialog");
 const aboutDialog = $("aboutDialog");
+const analyticsConsentDialog = $("analyticsConsentDialog");
 
 let allNews = [];
 let adminNews = [];
@@ -24,6 +25,7 @@ let activeCategory = "Alle";
 let currentAdminSession = null;
 
 const USER_PREFS_KEY="goodNewsUserPreferencesV1";
+const ANALYTICS_CONSENT_KEY="aufwindAnalyticsConsentV1";
 const AUFWIND_CATEGORIES=[
   "Was war....",
   "Tiere",
@@ -197,8 +199,8 @@ function setShortMessage(element,text="Gespeichert."){
 
 userPrefs=readUserPreferences();
 applyUserPreferences();
-// Frühere Test-Builds legten eine Analyse-ID ohne eigene Opt-in-Einstellung an.
-// Ab Build 40 wird sie entfernt, solange die Nutzungsstatistik nicht freiwillig aktiviert ist.
+// Eine Analyse-ID wird nur nach freiwilliger Zustimmung erzeugt.
+// Ohne Einwilligung werden eventuell vorhandene alte Kennungen entfernt.
 if(!userPrefs.analytics){
   try{
     localStorage.removeItem("goodNewsDeviceId");
@@ -267,10 +269,23 @@ const getDeviceId = () => {
 
 // ---------------- PRIVATE ADMIN ANALYTICS ----------------
 // Pseudonymous local device ID only; no name/e-mail is attached to public usage events.
+function clearLocalAnalyticsIdentifiers(){
+  try{
+    localStorage.removeItem("goodNewsDeviceId");
+    localStorage.removeItem("goodNewsAnalyticsActiveDay");
+  }catch{}
+}
+
 async function trackAnalyticsEvent(eventType, newsId=null){
-  // Nutzungsstatistik ist freiwillig und standardmäßig ausgeschaltet.
+  // Nutzungsstatistik läuft nur nach freiwilliger Zustimmung.
+  // Redaktions-/Admin-Konten werden bewusst nicht in der Nutzerstatistik erfasst.
   if(!userPrefs.analytics || !configured || !db) return false;
   try{
+    const {data:{session}}=await db.auth.getSession();
+    if(session && await sessionIsAdmin(session)){
+      clearLocalAnalyticsIdentifiers();
+      return false;
+    }
     const row={event_type:eventType,visitor_id:getDeviceId()};
     if(newsId!==null && newsId!==undefined) row.news_id=newsId;
     const {error}=await db.from("analytics_events").insert(row);
@@ -1011,6 +1026,57 @@ $("searchBtn").onclick = runMenuAction(openSearch);
 $("archiveBtn").onclick = runMenuAction(openArchive);
 $("favoritesBtn").onclick = runMenuAction(openFavorites);
 
+// ---------------- EINWILLIGUNG NUTZUNGSSTATISTIK ----------------
+function analyticsConsentDecision(){
+  try{return localStorage.getItem(ANALYTICS_CONSENT_KEY)||""}catch{return ""}
+}
+function rememberAnalyticsConsent(value){
+  try{localStorage.setItem(ANALYTICS_CONSENT_KEY,value)}catch{}
+}
+async function maybeOpenAnalyticsConsent(){
+  if(!analyticsConsentDialog || analyticsConsentDialog.open) return;
+  if(passwordRecoveryActive || passwordRecoveryDialog?.open) return;
+  let displayPreview=false;
+  try{displayPreview=new URL(location.href).searchParams.get("displayPreview")==="1"}catch{}
+  if(displayPreview) return;
+
+  // Wer die Statistik in einer früheren Version bereits aktiv eingeschaltet hat,
+  // hat schon freiwillig zugestimmt und wird nicht erneut gefragt.
+  if(userPrefs.analytics && !analyticsConsentDecision()) rememberAnalyticsConsent("allowed");
+  if(analyticsConsentDecision()) return;
+
+  // Redaktionskonten werden ohnehin nicht erfasst und benötigen daher keinen Dialog.
+  if(configured && db){
+    try{
+      const {data:{session}}=await db.auth.getSession();
+      if(session && await sessionIsAdmin(session)) return;
+    }catch{}
+  }
+
+  document.documentElement.classList.add("analytics-consent-active");
+  analyticsConsentDialog.showModal();
+}
+function closeAnalyticsConsent(){
+  document.documentElement.classList.remove("analytics-consent-active");
+  if(analyticsConsentDialog?.open) analyticsConsentDialog.close();
+}
+$("analyticsConsentAllowBtn")?.addEventListener("click",async()=>{
+  rememberAnalyticsConsent("allowed");
+  saveUserPreferences({...userPrefs,analytics:true});
+  if($("prefAnalytics")) $("prefAnalytics").checked=true;
+  closeAnalyticsConsent();
+  await trackDailyActive();
+  showAppNotice("Nutzungsstatistik erlaubt.");
+});
+$("analyticsConsentDeclineBtn")?.addEventListener("click",()=>{
+  rememberAnalyticsConsent("declined");
+  saveUserPreferences({...userPrefs,analytics:false});
+  if($("prefAnalytics")) $("prefAnalytics").checked=false;
+  clearLocalAnalyticsIdentifiers();
+  closeAnalyticsConsent();
+});
+analyticsConsentDialog?.addEventListener("cancel",e=>e.preventDefault());
+
 // ---------------- ÜBER UNS / ERSTSTART ----------------
 function aboutSeenKey(){
   // Browser und installierte PWA bekommen jeweils genau einen eigenen Erststart.
@@ -1037,7 +1103,11 @@ function closeAboutUs({markSeen=false}={}){
   if(aboutDialog?.open)aboutDialog.close();
 }
 $("aboutBtn")?.addEventListener("click",runMenuAction(()=>openAboutUs({onboarding:false})));
-$("aboutContinueBtn")?.addEventListener("click",()=>closeAboutUs({markSeen:true}));
+$("aboutContinueBtn")?.addEventListener("click",()=>{
+  const wasOnboarding=aboutIsOnboarding;
+  closeAboutUs({markSeen:true});
+  if(wasOnboarding)setTimeout(()=>void maybeOpenAnalyticsConsent(),120);
+});
 $("aboutCloseBtn")?.addEventListener("click",()=>closeAboutUs({markSeen:false}));
 aboutDialog?.addEventListener("cancel",e=>{
   if(aboutIsOnboarding){e.preventDefault();return;}
@@ -1380,6 +1450,7 @@ userPreferencesForm?.addEventListener("submit",async e=>{
     }
 
     saveUserPreferences(next);
+    rememberAnalyticsConsent(next.analytics?"allowed":"declined");
     if(!next.analytics){
       try{
         localStorage.removeItem("goodNewsDeviceId");
@@ -2513,7 +2584,11 @@ queueMicrotask(()=>{
     seen=localStorage.getItem(aboutSeenKey())==="1";
     displayPreview=new URL(location.href).searchParams.get("displayPreview")==="1";
   }catch{}
-  if(!seen && !displayPreview)openAboutUs({onboarding:true});
+  if(!seen && !displayPreview){
+    openAboutUs({onboarding:true});
+  }else if(!displayPreview){
+    setTimeout(()=>void maybeOpenAnalyticsConsent(),180);
+  }
 });
 
 // Build 37 – PWA-Update-Reparatur für installierte Android-Apps.
@@ -2523,7 +2598,7 @@ queueMicrotask(()=>{
 // selbst alle offenen Good-News-Fenster auf den neuen Build führen. So hängt die
 // installierte PWA nicht mehr an einer alten Cache-/Worker-Version fest.
 // Build 35 – adaptive Überschriften (max. 4 Zeilen) und stärkerer Lesbarkeitsverlauf.
-const AUFWIND_BUILD=80;
+const AUFWIND_BUILD=82;
 let aufwindSwRegistration=null;
 let aufwindReloading=false;
 

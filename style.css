@@ -1641,3 +1641,28 @@ html.user-theme-light .user-password-card{background:#f6f6f4;border-color:#d8d8d
 .schedule-controls{margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
 .schedule-note{margin:9px 0 0;font-size:.76rem;line-height:1.4}
 .status.scheduled{background:#183653;color:#d8edff}
+
+
+/* Build 82 – freiwillige Nutzungsstatistik beim ersten Start */
+.analytics-consent-dialog{
+  width:min(520px,calc(100% - 24px));
+  padding:0;
+  overflow:hidden;
+  border-radius:24px;
+}
+.analytics-consent-dialog::backdrop{background:#000c;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.analytics-consent-inner{padding:24px;display:flex;flex-direction:column;align-items:stretch;text-align:left}
+.analytics-consent-logo{width:58px;height:58px;object-fit:contain;margin:0 auto 14px}
+.analytics-consent-dialog .eyebrow{text-align:center}
+.analytics-consent-dialog h2{text-align:center;margin:.35rem 0 14px;font-size:1.55rem;line-height:1.15}
+.analytics-consent-dialog p{margin:0 0 12px;line-height:1.55}
+.analytics-consent-note{font-size:.9rem;color:var(--muted)}
+.analytics-consent-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+.analytics-consent-actions .consent-choice{min-height:48px;width:100%;margin:0}
+html.analytics-consent-active .appbar,
+html.analytics-consent-active #feed,
+html.analytics-consent-active #swipeHint{pointer-events:none;user-select:none}
+@media(max-width:420px){
+  .analytics-consent-inner{padding:20px}
+  .analytics-consent-actions{grid-template-columns:1fr}
+}

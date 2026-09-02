@@ -11,12 +11,12 @@
   <meta name="apple-mobile-web-app-title" content="Aufwind">
   <meta name="description" content="Aufwind – Good News aus aller Welt. Positive Nachrichten kompakt, transparent und nachvollziehbar.">
   <title>Aufwind – Good News aus aller Welt</title>
-  <link rel="manifest" href="manifest.json?v=79">
+  <link rel="manifest" href="manifest.json?v=82">
   <link rel="icon" type="image/png" sizes="32x32" href="aufwind-favicon-32.png">
   <link rel="icon" type="image/png" sizes="192x192" href="aufwind-icon-192.png">
   <link rel="icon" type="image/png" sizes="512x512" href="aufwind-icon-512.png">
   <link rel="apple-touch-icon" sizes="180x180" href="aufwind-apple-touch-icon.png">
-  <link rel="stylesheet" href="style.css?v=91">
+  <link rel="stylesheet" href="style.css?v=92">
 </head>
 <body>
 <header class="appbar">
@@ -40,7 +40,7 @@
         <span class="menu-chevron" aria-hidden="true">›</span>
       </button>
         <button id="accountBtn" type="button"><span>↪</span><span id="accountBtnLabel">Anmelden</span></button>
-        <div class="app-build-label" aria-label="App-Version">Aufwind · Build 80</div>
+        <div class="app-build-label" aria-label="App-Version">Aufwind · Build 82</div>
       </div>
       <button class="icon-btn slide-focus-btn" id="slideFocusBtn" type="button" aria-label="Slide-Text ausblenden" aria-pressed="false" title="Text ausblenden">
           <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -176,7 +176,7 @@
       <section class="user-setting-card user-setting-toggle-row">
         <div class="user-setting-copy">
           <strong>Anonyme Nutzungsstatistik</strong>
-          <span>Freiwillig. Hilft uns zu sehen, wie oft Good News genutzt, gemerkt oder geteilt werden. Standardmäßig ausgeschaltet.</span>
+          <span>Freiwillig. Hilft uns zu sehen, wie oft Aufwind genutzt, gemerkt oder geteilt wird. Beim ersten Start fragen wir nach Deiner Zustimmung. Du kannst sie hier jederzeit ändern. Redaktionskonten werden nicht erfasst.</span>
         </div>
         <label class="switch-control" aria-label="Anonyme Nutzungsstatistik erlauben">
           <input id="prefAnalytics" type="checkbox">
@@ -252,6 +252,20 @@
     </div>
   </dialog>
 
+  <dialog id="analyticsConsentDialog" class="analytics-consent-dialog" aria-labelledby="analyticsConsentTitle" aria-describedby="analyticsConsentText">
+    <div class="analytics-consent-inner">
+      <img class="analytics-consent-logo" src="aufwind-logo.png" alt="" aria-hidden="true">
+      <div class="eyebrow">Aufwind verbessern</div>
+      <h2 id="analyticsConsentTitle">Anonyme Nutzungsstatistik erlauben?</h2>
+      <p id="analyticsConsentText">Hilf uns zu verstehen, wie Aufwind genutzt wird. Wenn Du zustimmst, erfassen wir pseudonym, ob die App genutzt und ob Meldungen gemerkt oder geteilt werden. Name und E-Mail-Adresse werden nicht mit diesen Statistikdaten verknüpft.</p>
+      <p class="analytics-consent-note">Die Teilnahme ist freiwillig. Du kannst Deine Entscheidung jederzeit unter <strong>Einstellungen → Nutzungsstatistik</strong> ändern. Redaktionskonten werden nicht erfasst.</p>
+      <div class="analytics-consent-actions">
+        <button class="secondary consent-choice" id="analyticsConsentDeclineBtn" type="button">Nein, danke</button>
+        <button class="primary consent-choice" id="analyticsConsentAllowBtn" type="button">Erlauben</button>
+      </div>
+    </div>
+  </dialog>
+
   <dialog id="legalDialog" class="legal-dialog">
     <div class="dialog-head">
       <div><div class="eyebrow">Aufwind</div><h2>Impressum & Datenschutz</h2></div>
@@ -300,7 +314,7 @@
         <p>Aufwind speichert auf dem Gerät Einstellungen, gemerkte Meldungen, einen zwischengespeicherten Nachrichtenfeed sowie für die PWA technisch notwendige Cache-Daten. Diese Speicherung ist erforderlich, um ausdrücklich gewünschte App-Funktionen, Einstellungen und die Offline-/Update-Funktion bereitzustellen. Soweit die Speicherung hierfür unbedingt erforderlich ist, erfolgt sie nach § 25 Abs. 2 Nr. 2 TDDDG.</p>
 
         <h4>6. Freiwillige Nutzungsstatistik</h4>
-        <p>Die anonyme bzw. pseudonyme Nutzungsstatistik ist <strong>standardmäßig ausgeschaltet</strong>. Sie kann in den Einstellungen freiwillig aktiviert werden. Erst danach wird lokal eine zufällige Gerätekennung erzeugt und zusammen mit Ereignissen wie täglicher aktiver Nutzung, Merken oder Teilen sowie gegebenenfalls der Kennung der betreffenden Meldung an Supabase übertragen. Name und E-Mail-Adresse werden diesen Statistikereignissen nicht beigefügt.</p>
+        <p>Beim ersten Start fragen wir ausdrücklich, ob die anonyme bzw. pseudonyme Nutzungsstatistik erlaubt werden darf. <strong>Bis zu einer Zustimmung bleibt sie ausgeschaltet.</strong> Bei Zustimmung wird lokal eine zufällige Gerätekennung erzeugt und zusammen mit Ereignissen wie täglicher aktiver Nutzung, Merken oder Teilen sowie gegebenenfalls der Kennung der betreffenden Meldung an Supabase übertragen. Name und E-Mail-Adresse werden diesen Statistikereignissen nicht beigefügt. Die Entscheidung kann jederzeit in den Einstellungen geändert werden; Redaktionskonten werden nicht erfasst.</p>
         <p>Rechtsgrundlage ist deine Einwilligung nach Art. 6 Abs. 1 lit. a DSGVO und – soweit Informationen auf deinem Gerät gespeichert oder ausgelesen werden – § 25 Abs. 1 TDDDG. Du kannst die Einwilligung jederzeit in den Einstellungen widerrufen. Danach werden keine neuen Statistikereignisse mehr übertragen und die lokale Statistikkennung wird vom Gerät gelöscht. Die Rechtmäßigkeit der bis zum Widerruf erfolgten Verarbeitung bleibt unberührt.</p>
 
         <h4>7. Push-Benachrichtigungen</h4>
@@ -969,6 +983,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="app.js?v=91"></script>
+  <script src="app.js?v=93"></script>
 </body>
 </html>
