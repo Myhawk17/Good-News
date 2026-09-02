@@ -11,12 +11,12 @@
   <meta name="apple-mobile-web-app-title" content="Aufwind">
   <meta name="description" content="Aufwind – Good News aus aller Welt. Positive Nachrichten kompakt, transparent und nachvollziehbar.">
   <title>Aufwind – Good News aus aller Welt</title>
-  <link rel="manifest" href="manifest.json?v=77">
+  <link rel="manifest" href="manifest.json?v=78">
   <link rel="icon" type="image/png" sizes="32x32" href="aufwind-favicon-32.png">
   <link rel="icon" type="image/png" sizes="192x192" href="aufwind-icon-192.png">
   <link rel="icon" type="image/png" sizes="512x512" href="aufwind-icon-512.png">
   <link rel="apple-touch-icon" sizes="180x180" href="aufwind-apple-touch-icon.png">
-  <link rel="stylesheet" href="style.css?v=90">
+  <link rel="stylesheet" href="style.css?v=91">
 </head>
 <body>
 <header class="appbar">
@@ -40,7 +40,7 @@
         <span class="menu-chevron" aria-hidden="true">›</span>
       </button>
         <button id="accountBtn" type="button"><span>↪</span><span id="accountBtnLabel">Anmelden</span></button>
-        <div class="app-build-label" aria-label="App-Version">Aufwind · Build 77</div>
+        <div class="app-build-label" aria-label="App-Version">Aufwind · Build 78</div>
       </div>
       <button class="icon-btn slide-focus-btn" id="slideFocusBtn" type="button" aria-label="Slide-Text ausblenden" aria-pressed="false" title="Text ausblenden">
           <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -599,11 +599,6 @@
           <input id="bylineVisible" type="hidden" value="false">
 
           <div class="form-grid two">
-            <label>Datum<input id="publishedDate" type="date" required></label>
-            <label>Uhrzeit<input id="publishedTime" type="time" required></label>
-          </div>
-
-          <div class="form-grid two">
             <label>Kategorie
               <select id="category" required>
                 <option value="" selected disabled>Kategorie wählen</option>
@@ -641,6 +636,23 @@
                 <option value="top">Topmeldung</option>
               </select>
             </label>
+          </div>
+
+          <div class="schedule-publish-card">
+            <label class="toggle-row schedule-publish-toggle">
+              <input id="scheduledPublish" type="checkbox">
+              <span>
+                <strong>Geplante Veröffentlichung</strong>
+                <small>Beitrag automatisch zu einem späteren Zeitpunkt veröffentlichen</small>
+              </span>
+            </label>
+            <div id="scheduleControls" class="schedule-controls" hidden>
+              <div class="form-grid two">
+                <label>Veröffentlichungsdatum<input id="publishedDate" type="date" required></label>
+                <label>Uhrzeit<input id="publishedTime" type="time" required></label>
+              </div>
+              <p class="muted schedule-note">Bis zu diesem Zeitpunkt bleibt der Beitrag unsichtbar. Beim Planen wird der Status automatisch auf „Veröffentlicht“ gesetzt.</p>
+            </div>
           </div>
 
           <fieldset class="image-fieldset-slim">
@@ -753,6 +765,7 @@
           <select id="adminStatus">
             <option value="all">Alle</option>
             <option value="published">Veröffentlicht</option>
+            <option value="scheduled">Geplant</option>
             <option value="draft">Entwürfe</option>
           </select>
         </div>
@@ -956,6 +969,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="app.js?v=89"></script>
+  <script src="app.js?v=90"></script>
 </body>
 </html>

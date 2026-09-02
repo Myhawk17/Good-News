@@ -1631,3 +1631,13 @@ html.user-theme-light .user-password-card{background:#f6f6f4;border-color:#d8d8d
 .appbar .brand-copy{display:none!important}
 .appbar .brand-btn{gap:0}
 .appbar .brand-logo{width:38px;height:38px;border-radius:11px}
+
+/* Aufwind 3.8 – geplante Veröffentlichung */
+.schedule-publish-card{border:1px solid var(--line);border-radius:14px;background:#1d1d21;padding:12px 14px;margin:2px 0 4px}
+.schedule-publish-toggle{margin:0;align-items:flex-start;gap:10px;cursor:pointer}
+.schedule-publish-toggle>span{display:flex;flex-direction:column;gap:3px}
+.schedule-publish-toggle strong{font-size:.96rem;color:#fff}
+.schedule-publish-toggle small{font-size:.76rem;line-height:1.35;color:#aaa;font-weight:400}
+.schedule-controls{margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
+.schedule-note{margin:9px 0 0;font-size:.76rem;line-height:1.4}
+.status.scheduled{background:#183653;color:#d8edff}

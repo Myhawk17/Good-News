@@ -1772,7 +1772,8 @@ function renderDashboard() {
   if(!cards) return;
   const today=new Date().toISOString().slice(0,10);
   const todayItems=adminNews.filter(n=>n.published_date===today);
-  const published=adminNews.filter(n=>n.status==="published").length;
+  const nowMs=Date.now();
+  const published=adminNews.filter(n=>n.status==="published" && (!n.publish_at || new Date(n.publish_at).getTime()<=nowMs)).length;
   const drafts=adminNews.filter(n=>n.status==="draft").length;
   cards.innerHTML=`
     <div class="metric"><strong>${todayItems.length}</strong><span>heute</span></div>
@@ -1780,11 +1781,18 @@ function renderDashboard() {
     <div class="metric"><strong>${drafts}</strong><span>Entwürfe</span></div>`;
 }
 
+function isScheduledNews(n){
+  return n?.status==="published" && Boolean(n?.publish_at) && new Date(n.publish_at).getTime()>Date.now()+1000;
+}
+
 function adminItemHtml(n){
+  const scheduled=isScheduledNews(n);
+  const statusClass=scheduled?"scheduled":n.status;
+  const statusLabel=scheduled?"Geplant":(n.status==="published"?"Veröffentlicht":"Entwurf");
   return `<article class="admin-item" data-admin-id="${n.id}">
     <div class="admin-item-head">
-      <div><h4>${esc(displayTitle(n))}</h4><div class="admin-meta">${esc(fmtDateShort(n.published_date))} · ${esc(n.published_time?.slice(0,5)||"")} · ${esc(displayCategory(n))}</div></div>
-      <span class="status ${esc(n.status)}">${n.status==="published"?"Veröffentlicht":"Entwurf"}</span>
+      <div><h4>${esc(displayTitle(n))}</h4><div class="admin-meta">${scheduled?"Geplant: ":""}${esc(fmtDateShort(n.published_date))} · ${esc(n.published_time?.slice(0,5)||"")} · ${esc(displayCategory(n))}</div></div>
+      <span class="status ${esc(statusClass)}">${statusLabel}</span>
     </div>
     <div class="admin-item-actions">
       <button class="secondary edit-admin" data-id="${n.id}">Bearbeiten</button>
@@ -1799,7 +1807,8 @@ function renderAdminList(){
   const q=($("adminSearch")?.value||"").trim().toLowerCase();
   const status=$("adminStatus")?.value||"all";
   const rows=adminNews.filter(n=>{
-    const statusOk=status==="all"||n.status===status;
+    const scheduled=isScheduledNews(n);
+    const statusOk=status==="all" || (status==="scheduled"?scheduled:(status==="published"?n.status==="published"&&!scheduled:n.status===status));
     const text=`${n.title} ${n.summary} ${n.category} ${n.story_key||""}`.toLowerCase();
     return statusOk&&(!q||text.includes(q));
   });
@@ -1900,6 +1909,7 @@ function saveEditorDraft(){
     newsId:$("newsId")?.value||"",
     publishedDate:$("publishedDate")?.value||"",
     publishedTime:$("publishedTime")?.value||"",
+    scheduledPublish:Boolean($("scheduledPublish")?.checked),
     category:$("category")?.value||"",
     storyKey:$("storyKey")?.value||"",
     title:$("title")?.value||"",
@@ -1944,7 +1954,10 @@ function restoreEditorDraft(){
     $("storyKey").value=d.storyKey||"";
     $("title").value=d.title||"";
     $("summary").value=d.summary||"";
+    $("status").disabled=false;
     $("status").value=d.status||"draft";
+    if($("scheduledPublish")) $("scheduledPublish").checked=Boolean(d.scheduledPublish);
+    updateScheduledPublishUi({fromLoad:true});
     $("priority").value=d.priority||"normal";
     $("imageUrl").value=d.imageUrl||"";
     $("imageCredit").value=d.imageCredit||"";
@@ -1975,6 +1988,44 @@ function restoreEditorDraft(){
   }
 }
 
+function localTimeValue(date=new Date()){
+  return `${String(date.getHours()).padStart(2,"0")}:${String(date.getMinutes()).padStart(2,"0")}`;
+}
+
+function setPublishDateTime(date=new Date()){
+  if($("publishedDate")) $("publishedDate").value=isoLocal(date);
+  if($("publishedTime")) $("publishedTime").value=localTimeValue(date);
+}
+
+function updateScheduledPublishUi({fromLoad=false}={}){
+  const toggle=$("scheduledPublish"), controls=$("scheduleControls"), status=$("status");
+  if(!toggle||!controls||!status)return;
+  const enabled=Boolean(toggle.checked);
+  controls.hidden=!enabled;
+  status.disabled=enabled;
+  if(enabled){
+    status.value="published";
+    if(!fromLoad){
+      const raw=`${$("publishedDate")?.value||""}T${$("publishedTime")?.value||""}:00`;
+      const current=Date.parse(raw);
+      if(!Number.isFinite(current) || current<=Date.now()+60000){
+        const next=new Date(Date.now()+60*60*1000);
+        next.setSeconds(0,0);
+        setPublishDateTime(next);
+      }
+    }
+  }else if(!fromLoad && isScheduledNews(adminNews.find(n=>String(n.id)===String($("newsId")?.value||"")))){
+    // Wird eine bestehende Planung bewusst aufgehoben, setzt „Veröffentlicht“ den Beitrag beim Speichern auf jetzt.
+    setPublishDateTime(new Date());
+  }
+}
+
+$("scheduledPublish")?.addEventListener("change",()=>{
+  updateScheduledPublishUi();
+  markFormDirty($("newsForm"));
+  saveEditorDraft();
+});
+
 function setupEditorAutosave(){
   const form=$("newsForm");
   if(!form) return;
@@ -1993,9 +2044,10 @@ function resetEditor(){
   if($("contextText")) $("contextText").value="";
   if($("imageKind")) $("imageKind").value="photo";
   if($("imageIsSymbol")) $("imageIsSymbol").checked=false;
-  const now=new Date();$("publishedDate").value=now.toISOString().slice(0,10);
-  $("publishedTime").value=now.toTimeString().slice(0,5);
-  $("status").value="draft";$("priority").value="normal";
+  const now=new Date();setPublishDateTime(now);
+  if($("scheduledPublish")) $("scheduledPublish").checked=false;
+  $("status").disabled=false;$("status").value="draft";$("priority").value="normal";
+  updateScheduledPublishUi({fromLoad:true});
   $("saveBtn").textContent="Speichern";$("cancelEditBtn").hidden=true;
   $("imagePreviewBox").hidden=true;$("imagePreview").removeAttribute("src");$("imagePreviewBlur")?.removeAttribute("src"); editorCroppedFile=null; editorOriginalPreviewSrc=null;
   if($("imageFit")) $("imageFit").value="cover"; if($("imageZoom")) $("imageZoom").value="1"; if($("imagePosX")) $("imagePosX").value="50"; if($("imagePosY")) $("imagePosY").value="50";
@@ -2250,12 +2302,14 @@ async function uploadImage(file){
 }
 
 function formToDraft(){
+  const scheduled=Boolean($("scheduledPublish")?.checked);
+  if(!scheduled && !$("newsId").value) setPublishDateTime(new Date());
   const d=$("publishedDate").value,t=$("publishedTime").value||"00:00";
   return {
-    id:$("newsId").value||null,published_date:d,published_time:t,
+    id:$("newsId").value||null,published_date:d,published_time:t,scheduled_publish:scheduled,
     category:$("category").value.trim(),story_key:$("storyKey").value.trim()||null,
     title:$("title").value.trim(),summary:$("summary").value.trim(),
-    status:$("status").value,priority:$("priority").value,
+    status:scheduled?"published":$("status").value,priority:$("priority").value,
     byline_name:$("bylineName")?.value.trim()||null,
     byline_visible:$("bylineVisible")?.value==="true",
     context_text:$("contextText").value.trim()||null,
@@ -2296,7 +2350,9 @@ async function editArticle(id){
   $("storyKey").value=n.story_key||"";$("title").value=n.title;$("summary").value=n.summary;
   if($("bylineName")) $("bylineName").value=n.byline_name||"";
   if($("bylineVisible")) $("bylineVisible").value=n.byline_visible?"true":"false";
-  $("status").value=n.status;$("priority").value=n.priority||"normal";$("contextText").value=n.context_text||"";
+  $("status").disabled=false;$("status").value=n.status;$("priority").value=n.priority||"normal";$("contextText").value=n.context_text||"";
+  if($("scheduledPublish")) $("scheduledPublish").checked=isScheduledNews(n);
+  updateScheduledPublishUi({fromLoad:true});
   if($("dailySlot")) $("dailySlot").value=n.daily_slot||"none";
   if($("yearsAgo")) $("yearsAgo").value=n.years_ago||"";
   if($("feelGoodText")) $("feelGoodText").value=n.feel_good_text||"";
@@ -2329,7 +2385,11 @@ $("newsForm").onsubmit=async(e)=>{
       imageUrl=await resolveDisplayImageUrl(imageUrl);
     }
     const localDateTime=`${d.published_date}T${d.published_time}:00`;
-    const publishAt=new Date(localDateTime).toISOString();
+    const plannedTime=new Date(localDateTime);
+    if(d.scheduled_publish && (!Number.isFinite(plannedTime.getTime()) || plannedTime.getTime()<=Date.now()+30000)){
+      throw new Error("Bitte für die geplante Veröffentlichung einen Zeitpunkt in der Zukunft wählen.");
+    }
+    const publishAt=plannedTime.toISOString();
     const row={
       published_date:d.published_date,published_time:d.published_time,category:d.category,story_key:d.story_key,
       title:d.title,summary:d.summary,status:d.status,priority:d.priority,priority_rank:d.priority==="top"?1:0,
@@ -2431,7 +2491,7 @@ queueMicrotask(()=>{
 // selbst alle offenen Good-News-Fenster auf den neuen Build führen. So hängt die
 // installierte PWA nicht mehr an einer alten Cache-/Worker-Version fest.
 // Build 35 – adaptive Überschriften (max. 4 Zeilen) und stärkerer Lesbarkeitsverlauf.
-const AUFWIND_BUILD=77;
+const AUFWIND_BUILD=78;
 let aufwindSwRegistration=null;
 let aufwindReloading=false;
 
