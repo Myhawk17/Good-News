@@ -428,6 +428,15 @@ function isSymbolImage(item){
 }
 
 const PUBLIC_FEED_CACHE_KEY="goodNewsPublicFeedCacheV2";
+let publicFeedHasServerSnapshot=false;
+
+function publicFeedChanged(nextItems){
+  // Supabase liefert die Feed-Zeilen in stabiler Reihenfolge. Ein vollständiger
+  // Vergleich verhindert, dass der DOM alle 30 Sekunden ohne echte Änderung
+  // neu aufgebaut wird – genau das verursachte das sichtbare Flimmern.
+  try{return JSON.stringify(allNews)!==JSON.stringify(Array.isArray(nextItems)?nextItems:[])}
+  catch{return true}
+}
 
 function readCachedPublicNews(){
   try{
@@ -483,11 +492,24 @@ async function fetchPublicNews({preservePosition=true}={}) {
     });
     if(!response.ok)throw new Error(`Feed HTTP ${response.status}`);
     const data=await response.json();
-    allNews=Array.isArray(data)?data:[];
+    const nextNews=Array.isArray(data)?data:[];
+    const changed=publicFeedChanged(nextNews);
+    const firstServerSnapshot=!publicFeedHasServerSnapshot;
+    publicFeedHasServerSnapshot=true;
+    allNews=nextNews;
     writeCachedPublicNews(allNews);
 
-    const deepId=new URL(location.href).searchParams.get("news");
-    renderFeed({startId:deepId,preservePosition:!deepId && preservePosition});
+    // Deep-Links werden nur beim ersten Serverabgleich angesprungen. Bei den
+    // späteren 30-Sekunden-Prüfungen darf der Nutzer nicht zurückgesprungen werden.
+    const deepId=firstServerSnapshot?new URL(location.href).searchParams.get("news"):null;
+
+    // Wichtig: Nur neu rendern, wenn sich wirklich etwas geändert hat. Wenn der
+    // Cache bereits denselben Stand zeigt, bleibt die bestehende Oberfläche stehen.
+    if(changed || (!cachedWasShown && firstServerSnapshot)){
+      renderFeed({startId:deepId,preservePosition:!deepId && preservePosition});
+    }else if(deepId){
+      setTimeout(()=>scrollToNews(deepId),30);
+    }
 
     // Reaktionen sind derzeit nicht Bestandteil der sichtbaren App und werden deshalb nicht geladen.
   }catch(err){
@@ -2785,7 +2807,7 @@ queueMicrotask(()=>{
 // selbst alle offenen Good-News-Fenster auf den neuen Build führen. So hängt die
 // installierte PWA nicht mehr an einer alten Cache-/Worker-Version fest.
 // Build 35 – adaptive Überschriften (max. 4 Zeilen) und stärkerer Lesbarkeitsverlauf.
-const AUFWIND_BUILD=86;
+const AUFWIND_BUILD=87;
 let aufwindSwRegistration=null;
 let aufwindReloading=false;
 
