@@ -1096,37 +1096,20 @@ $("searchBtn").onclick = runMenuAction(openSearch);
 $("archiveBtn").onclick = runMenuAction(openArchive);
 $("favoritesBtn").onclick = runMenuAction(openFavorites);
 
-// ---------------- WILLKOMMEN / NUTZUNGSSTATISTIK ----------------
-function analyticsConsentDecision(){
-  try{return localStorage.getItem(ANALYTICS_CONSENT_KEY)||""}catch{return ""}
+// ---------------- WILLKOMMEN BEI INSTALLIERTER APP ----------------
+const INSTALL_WELCOME_SEEN_KEY="aufwindInstallWelcomeSeenV1";
+function installWelcomeSeen(){
+  try{return localStorage.getItem(INSTALL_WELCOME_SEEN_KEY)==="1"}catch{return false}
 }
-function rememberAnalyticsConsent(value){
-  try{localStorage.setItem(ANALYTICS_CONSENT_KEY,value)}catch{}
+function rememberInstallWelcomeSeen(){
+  try{localStorage.setItem(INSTALL_WELCOME_SEEN_KEY,"1")}catch{}
 }
-function updateWelcomeAnalyticsStatus(){
-  const status=$("welcomeAnalyticsStatus");
-  const toggle=$("welcomeAnalyticsToggle");
-  const allowed=analyticsConsentDecision()==="allowed" || Boolean(userPrefs.analytics);
-  if(status)status.textContent=allowed?"An":"Aus";
-  if(toggle)toggle.checked=allowed;
+function isInstalledAppExperience(){
+  // PWA/Play-Store-TWA laufen im Standalone-/Fullscreen-Modus. Ein späterer
+  // nativer Wrapper kann AUFWIND_NATIVE_APP setzen, ohne die Logik umzubauen.
+  return isStandaloneApp() || window.AUFWIND_NATIVE_APP===true;
 }
-function accountNeedsWelcome(session){
-  return Boolean(session?.user?.user_metadata?.aufwind_welcome_pending===true);
-}
-async function markAccountWelcomeSeen(){
-  if(!configured || !db)return;
-  try{
-    const {data:{session}}=await db.auth.getSession();
-    if(!session || !accountNeedsWelcome(session))return;
-    await db.auth.updateUser({data:{
-      aufwind_welcome_pending:false,
-      aufwind_welcome_seen_at:new Date().toISOString()
-    }});
-  }catch(err){
-    console.warn("Willkommensstatus konnte nicht gespeichert werden:",err);
-  }
-}
-async function maybeOpenAnalyticsConsent(sessionOverride=null){
+async function maybeOpenInstallWelcome(){
   if(!analyticsConsentDialog || analyticsConsentDialog.open) return;
   if(passwordRecoveryActive || passwordRecoveryDialog?.open) return;
   let displayPreview=false;
@@ -1137,23 +1120,19 @@ async function maybeOpenAnalyticsConsent(sessionOverride=null){
     welcomePreview=params.get("welcomePreview")==="1";
   }catch{}
   if(displayPreview) return;
-
-  let session=sessionOverride;
-  if(!session && configured && db){
-    try{({data:{session}}=await db.auth.getSession())}catch{}
-  }
-  if(!welcomePreview && !accountNeedsWelcome(session)) return;
+  if(!welcomePreview && !isInstalledAppExperience()) return;
+  if(!welcomePreview && installWelcomeSeen()) return;
 
   document.documentElement.classList.add("analytics-consent-active");
   analyticsConsentDialog.showModal();
 }
-function closeAnalyticsConsent(){
+function closeInstallWelcome(){
   document.documentElement.classList.remove("analytics-consent-active");
   if(analyticsConsentDialog?.open) analyticsConsentDialog.close();
 }
-$("welcomeContinueBtn")?.addEventListener("click",async()=>{
-  await markAccountWelcomeSeen();
-  closeAnalyticsConsent();
+$("welcomeContinueBtn")?.addEventListener("click",()=>{
+  rememberInstallWelcomeSeen();
+  closeInstallWelcome();
   showAppNotice("Willkommen bei Aufwind.");
 });
 analyticsConsentDialog?.addEventListener("cancel",e=>e.preventDefault());
@@ -1187,7 +1166,7 @@ $("aboutBtn")?.addEventListener("click",runMenuAction(()=>openAboutUs({onboardin
 $("aboutContinueBtn")?.addEventListener("click",()=>{
   const wasOnboarding=aboutIsOnboarding;
   closeAboutUs({markSeen:true});
-  if(wasOnboarding)setTimeout(()=>void maybeOpenAnalyticsConsent(),120);
+  // Der Installations-Willkommensbildschirm wird ausschließlich beim App-Start geprüft.
 });
 $("aboutCloseBtn")?.addEventListener("click",()=>closeAboutUs({markSeen:false}));
 aboutDialog?.addEventListener("cancel",e=>{
@@ -1894,8 +1873,7 @@ $("settingsRegisterForm")?.addEventListener("submit",async(e)=>{
       email,
       password,
       options:{
-        emailRedirectTo:redirectUrl,
-        data:{aufwind_welcome_pending:true,aufwind_welcome_version:1}
+        emailRedirectTo:redirectUrl
       }
     });
     if(error)throw error;
@@ -1909,7 +1887,7 @@ $("settingsRegisterForm")?.addEventListener("submit",async(e)=>{
       await syncPushPreferencesForCurrentAccount().catch(()=>{});
       if(settingsDialog?.open) settingsDialog.close();
       closeMainMenu();
-      setTimeout(()=>void maybeOpenAnalyticsConsent(data.session),120);
+
     }else{
       if(msg)msg.textContent="Konto erstellt. Bitte bestätige jetzt deine E-Mail-Adresse über den Link in deinem Postfach. Danach kannst du dich anmelden.";
       showAppNotice("Konto erstellt.");
@@ -2760,7 +2738,6 @@ if(db){
     $("adminBtn").hidden=!currentUserIsAdmin;
     if($("accountBtnLabel")) $("accountBtnLabel").textContent=session?"Konto":"Anmelden";
     if(passwordRecoveryActive && session)setTimeout(openPasswordRecovery,0);
-    if(session)setTimeout(()=>void maybeOpenAnalyticsConsent(session),140);
   }).catch(()=>{
     currentAdminSession=null;
     currentUserIsAdmin=false;
@@ -2781,7 +2758,7 @@ if(db){
       if(userPreferencesDialog?.open)await refreshPasswordSettings();
       await syncPushPreferencesForCurrentAccount(session).catch(()=>{});
       if(!passwordRecoveryCompleted && (event==="PASSWORD_RECOVERY"||passwordRecoveryActive))openPasswordRecovery();
-      else if(session && (event==="SIGNED_IN" || event==="USER_UPDATED" || event==="INITIAL_SESSION")) setTimeout(()=>void maybeOpenAnalyticsConsent(session),120);
+
     },0);
   });
 }else{
@@ -2812,10 +2789,10 @@ document.addEventListener("visibilitychange",()=>{
   if(!document.hidden) void fetchPublicNews();
 });
 
-// Der Willkommensbildschirm erscheint nur nach der ersten Anmeldung eines neu
-// registrierten Kontos. Ohne Konto bleibt die freiwillige Nutzungsstatistik aus,
-// bis sie in den Einstellungen ausdrücklich aktiviert wird.
-queueMicrotask(()=>setTimeout(()=>void maybeOpenAnalyticsConsent(),180));
+// Der Willkommensbildschirm gehört zur Installation, nicht zum Benutzerkonto:
+// Browser-Besucher sehen sofort den Feed; eine installierte PWA/App sieht ihn
+// genau einmal beim ersten Start dieser Installation.
+queueMicrotask(()=>setTimeout(()=>void maybeOpenInstallWelcome(),180));
 
 // Build 37 – PWA-Update-Reparatur für installierte Android-Apps.
 // Der Service Worker hat ab jetzt eine STABILE URL (sw.js). Beim manuellen Update
@@ -2824,7 +2801,7 @@ queueMicrotask(()=>setTimeout(()=>void maybeOpenAnalyticsConsent(),180));
 // selbst alle offenen Good-News-Fenster auf den neuen Build führen. So hängt die
 // installierte PWA nicht mehr an einer alten Cache-/Worker-Version fest.
 // Build 35 – adaptive Überschriften (max. 4 Zeilen) und stärkerer Lesbarkeitsverlauf.
-const AUFWIND_BUILD=94;
+const AUFWIND_BUILD=95;
 let aufwindSwRegistration=null;
 let aufwindReloading=false;
 
