@@ -1694,3 +1694,52 @@ html.user-theme-light .pexels-result-card{background:#fff}
   .pexels-search-row input{grid-column:1/-1}
   .pexels-results{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
+
+
+/* Build 85 – UX-/Redaktions-Feinschliff */
+/* Menüs bewusst sehr dunkel, Bedienelemente klar als hellere Flächen abgesetzt. */
+html:not(.user-theme-light) dialog:not(.preview-dialog){background:#09090c;border-color:#2b2b31}
+html:not(.user-theme-light) .main-menu{background:#08080bf7;border-color:#2d2d33;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+html:not(.user-theme-light) .main-menu button{background:#1a1a1f;margin:3px 0}
+html:not(.user-theme-light) .main-menu button:hover,html:not(.user-theme-light) .main-menu button:focus-visible{background:#27272d}
+html:not(.user-theme-light) .user-setting-card,
+html:not(.user-theme-light) .submission-card,
+html:not(.user-theme-light) .admin-item,
+html:not(.user-theme-light) .image-editor,
+html:not(.user-theme-light) .pexels-picker{background:#1a1a1f;border-color:#34343b}
+html:not(.user-theme-light) .secondary{background:#303038;color:#fff}
+html:not(.user-theme-light) input,html:not(.user-theme-light) textarea,html:not(.user-theme-light) select{background:#151519;border-color:#3b3b43}
+html:not(.user-theme-light) .admin-nav-group{background:#0c0c0f;border-color:#303037}
+html:not(.user-theme-light) .admin-nav-items{background:#09090c}
+html:not(.user-theme-light) .admin-nav-items .admin-menu-item{background:#202026;border-color:#393940}
+html:not(.user-theme-light) .admin-nav-items .admin-menu-item:hover,html:not(.user-theme-light) .admin-nav-items .admin-menu-item:focus-visible{background:#2a2a31}
+html:not(.user-theme-light) .admin-nav-summary-icon{background:#202026}
+
+/* Auge ist jetzt die erste Aktion direkt unter dem Plus. */
+.slide-quick-actions .slide-focus-btn{display:grid!important;place-items:center}
+.slide-quick-actions .slide-focus-btn svg{width:21px;height:21px}
+
+/* Deutlichere Mengenangaben in der Redaktion. */
+.badge{min-width:28px;height:25px;padding:0 8px;font-size:.8rem;font-weight:900;box-shadow:0 0 0 1px #0005;font-variant-numeric:tabular-nums}
+.badge.zero{background:#34343a;color:#a9a9b0;box-shadow:none}
+.admin-menu-copy{flex:1}
+.admin-menu-count{margin-left:auto;flex:0 0 auto}
+.admin-nav-group>summary{grid-template-columns:42px minmax(0,1fr) auto 28px}
+.admin-nav-count{justify-self:end;margin:0}
+
+/* Fehlermeldungen geben nach einer Aktion sichtbares Feedback. */
+.report-card{transition:opacity .16s ease,transform .16s ease}
+.report-card.is-saving{opacity:.55;transform:scale(.995)}
+.report-state{display:inline-flex;align-items:center;padding:3px 7px;border-radius:999px;font-size:.7rem;font-weight:900}
+.report-state.new{background:#563f19;color:#ffeab3}
+.report-state.resolved{background:#183d2b;color:#d4ffe5}
+.report-state.dismissed{background:#3b3b42;color:#d1d1d6}
+.report-filters{grid-template-columns:minmax(160px,240px);justify-content:start}
+
+/* Bearbeitungsreihenfolge im Editor visuell zusammenhalten. */
+.editor-state-grid{margin-top:2px}
+
+@media(max-width:420px){
+  .admin-nav-group>summary{grid-template-columns:38px minmax(0,1fr) auto 24px;gap:8px;padding-left:10px;padding-right:10px}
+  .admin-nav-count{min-width:25px;height:24px;padding:0 7px}
+}

@@ -1,7 +1,21 @@
 AUFWIND – GOOD NEWS AUS ALLER WELT
 =================================
 
-Stand dieses Pakets: Build 84
+
+BUILD 85 – UX-/REDAKTIONSRUNDE
+-----------------------------
+- App-Update steht in den Nutzereinstellungen ganz oben.
+- Nutzungsstatistik-Text wurde gekürzt.
+- Lesereinsendungen enthalten kein Ortsfeld mehr.
+- Das Auge ist die erste Aktion unter dem Plus-Menü.
+- Such-Kategorien filtern nur noch die Suchergebnisse und nicht mehr den Hauptfeed.
+- Fehlermeldungen besitzen einen sichtbaren Status und zuverlässiges Feedback für „Erledigt“/„Verwerfen“.
+- Offene ChatGPT-Vorschläge, Einsendungen und Fehlermeldungen werden mit deutlichen Zähler-Badges angezeigt; die Oberpunkte Beiträge/Einstellungen zeigen Summen.
+- Neue ChatGPT-Entwürfe, Lesereinsendungen und Fehlermeldungen lösen serverseitig einen Admin-Push aus.
+- Beitragseditor: Priorität → Status → geplante Veröffentlichung → Kategorie; Quellen stehen direkt unter dem Kurztext.
+- Dunkle Menüs haben jetzt deutlich getrennte Hintergrund- und Buttonflächen.
+
+Stand dieses Pakets: Build 85
 
 Aufwind ist eine installierbare Web-App/PWA für positive, redaktionell geprüfte Nachrichten. Die Leseransicht ist mobil und slide-basiert; Redaktion, Nutzerkonten, Push-Funktionen und App-Einstellungen sind über Supabase angebunden.
 
@@ -37,7 +51,6 @@ sw.js                  Service Worker, Offline-/Updateverhalten
 version.json           veröffentlichte Buildnummer
 package.json           lokale Hilfsbefehle für die Buildnummer
 tools/bump-build.mjs   synchronisiert alle Buildstellen automatisch
-supabase/functions/    versionierte Quellen zusätzlicher Edge Functions
 
 SUPABASE
 --------
@@ -48,7 +61,7 @@ Für eine komplett neue Installation:
 2. SUPABASE_SETUP.sql im SQL Editor prüfen und ausführen.
 3. Project URL und Publishable Key bzw. kompatiblen anon key in config.js eintragen.
 4. Niemals service_role-, Secret- oder sonstige private Schlüssel in config.js oder andere öffentliche Dateien schreiben.
-5. Edge Functions aus supabase/functions/ bereitstellen, soweit sie für die Installation benötigt werden.
+5. Benötigte Edge Functions im produktiven Supabase-Projekt bereitstellen (u. a. Pexels-Suche, Push, Datenschutzfunktionen).
 
 Bei einem bestehenden produktiven Projekt SUPABASE_SETUP.sql nicht blind erneut ausführen. Schemaänderungen gezielt prüfen bzw. über Migrationen einspielen.
 
@@ -117,7 +130,7 @@ Vor jedem neuen veröffentlichten Paket einmal „npm run build:next“ ausführ
 
 DEPLOYMENT AUF GITHUB PAGES
 ---------------------------
-Alle Dateien aus dem Projektstamm einschließlich der neuen tools-, package.json- und supabase/-Dateien im Repository behalten. Für die eigentliche statische GitHub-Pages-Auslieferung werden index.html, CSS, JavaScript, Manifest und Assets verwendet; die Supabase-Function-Quellen dienen der Versionskontrolle und werden nicht vom Browser ausgeführt.
+Alle Dateien aus dem Projektstamm einschließlich tools/ und package.json im Repository behalten. Für die eigentliche statische GitHub-Pages-Auslieferung werden index.html, CSS, JavaScript, Manifest und Assets verwendet. Serverseitige Edge Functions bleiben im Supabase-Projekt und enthalten keine Geheimnisse im öffentlichen GitHub-Repository.
 
 Nach einem Deployment kann in Aufwind unter Einstellungen → „Nach Update suchen“ geprüft werden, ob der neue Build erreichbar ist.
 

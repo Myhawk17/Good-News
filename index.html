@@ -11,12 +11,12 @@
   <meta name="apple-mobile-web-app-title" content="Aufwind">
   <meta name="description" content="Aufwind – Good News aus aller Welt. Positive Nachrichten kompakt, transparent und nachvollziehbar.">
   <title>Aufwind – Good News aus aller Welt</title>
-  <link rel="manifest" href="manifest.json?v=84">
+  <link rel="manifest" href="manifest.json?v=85">
   <link rel="icon" type="image/png" sizes="32x32" href="aufwind-favicon-32.png">
   <link rel="icon" type="image/png" sizes="192x192" href="aufwind-icon-192.png">
   <link rel="icon" type="image/png" sizes="512x512" href="aufwind-icon-512.png">
   <link rel="apple-touch-icon" sizes="180x180" href="aufwind-apple-touch-icon.png">
-  <link rel="stylesheet" href="style.css?v=84">
+  <link rel="stylesheet" href="style.css?v=85">
 </head>
 <body>
 <header class="appbar">
@@ -40,17 +40,16 @@
         <span class="menu-chevron" aria-hidden="true">›</span>
       </button>
         <button id="accountBtn" type="button"><span>↪</span><span id="accountBtnLabel">Anmelden</span></button>
-        <div class="app-build-label" aria-label="App-Version">Aufwind · Build 84</div>
+        <div class="app-build-label" aria-label="App-Version">Aufwind · Build 85</div>
       </div>
-      <button class="icon-btn slide-focus-btn" id="slideFocusBtn" type="button" aria-label="Slide-Text ausblenden" aria-pressed="false" title="Text ausblenden">
+      <button class="icon-btn slide-actions-toggle-btn" id="slideActionsToggleBtn" type="button" aria-label="Meldungsaktionen öffnen" aria-expanded="false" aria-controls="slideQuickActions">＋</button>
+      <div class="slide-quick-actions" id="slideQuickActions" hidden>
+        <button class="icon-btn slide-focus-btn" id="slideFocusBtn" type="button" aria-label="Slide-Text ausblenden" aria-pressed="false" title="Nur Bild anzeigen">
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"></path>
             <circle cx="12" cy="12" r="2.6"></circle>
           </svg>
         </button>
-
-      <button class="icon-btn slide-actions-toggle-btn" id="slideActionsToggleBtn" type="button" aria-label="Meldungsaktionen öffnen" aria-expanded="false" aria-controls="slideQuickActions">＋</button>
-      <div class="slide-quick-actions" id="slideQuickActions" hidden>
         <button class="icon-btn slide-fav-quick-btn" id="slideFavQuickBtn" type="button" aria-label="Aktuelle Meldung zu Favoriten hinzufügen" title="Favorit">♡</button>
         <button class="icon-btn slide-share-quick-btn" id="slideShareQuickBtn" type="button" aria-label="Aktuelle Meldung teilen" title="Teilen">↗</button>
         <button class="icon-btn slide-report-quick-btn" id="slideReportQuickBtn" type="button" aria-label="Fehler in aktueller Meldung melden" title="Fehler melden">⚑</button>
@@ -104,7 +103,7 @@
       <label>Überschrift / worum geht es?<input id="submissionTitle" maxlength="180" required placeholder="z. B. Nachbarschaft rettet altes Freibad"></label>
       <label>Erzähl uns die Geschichte<textarea id="submissionText" rows="6" maxlength="2000" required placeholder="Was ist passiert und warum ist das eine gute Nachricht?"></textarea></label>
       <label>Quelle / Link<input id="submissionUrl" type="url" required placeholder="https://…"></label>
-      <div class="form-grid two"><label>Kategorie<select id="submissionCategory" required>
+      <label>Kategorie<select id="submissionCategory" required>
                 <option value="" selected disabled>Kategorie wählen</option>
                 <option>Was war....</option>
                 <option>Tiere</option>
@@ -112,7 +111,7 @@
                 <option>Wirtschaft &amp; Politik</option>
                 <option>Fortschritt, Medizin &amp; Technologie</option>
                 <option>Kultur/Natur</option>
-              </select></label><label>Ort (optional)<input id="submissionLocation" maxlength="120" placeholder="z. B. Bremen"></label></div>
+              </select></label>
       <label>Dein Name oder Pseudonym (optional)<input id="submissionName" maxlength="80" placeholder="z. B. Anna oder Sonnenkind"></label>
       <div class="submission-name-choice">
         <div class="submission-name-choice-copy">
@@ -139,6 +138,14 @@
 
     <form id="userPreferencesForm" class="user-preferences-form">
     <div class="user-settings-list">
+      <section class="user-setting-card update-check-card">
+        <div class="user-setting-copy">
+          <strong>App-Update</strong>
+          <span>Prüft, ob eine neuere Aufwind-Version verfügbar ist.</span>
+        </div>
+        <button class="secondary" id="checkUpdateBtn" type="button"><span>↻</span> Nach Update suchen</button>
+      </section>
+
       <section class="user-setting-card">
         <div class="user-setting-copy">
           <strong>Darstellung</strong>
@@ -176,20 +183,12 @@
       <section class="user-setting-card user-setting-toggle-row">
         <div class="user-setting-copy">
           <strong>Anonyme Nutzungsstatistik</strong>
-          <span>Freiwillig. Hilft uns zu sehen, wie oft Aufwind genutzt, gemerkt oder geteilt wird. Beim ersten Start fragen wir nach Deiner Zustimmung. Du kannst sie hier jederzeit ändern. Redaktionskonten werden nicht erfasst.</span>
+          <span>Freiwillig. Hilft uns zu sehen, wie oft Aufwind genutzt, gemerkt oder geteilt wird. Du kannst sie hier jederzeit ändern.</span>
         </div>
         <label class="switch-control" aria-label="Anonyme Nutzungsstatistik erlauben">
           <input id="prefAnalytics" type="checkbox">
           <span class="switch-slider" aria-hidden="true"></span>
         </label>
-      </section>
-
-      <section class="user-setting-card update-check-card">
-        <div class="user-setting-copy">
-          <strong>App-Update</strong>
-          <span>Prüft, ob eine neuere Aufwind-Version verfügbar ist.</span>
-        </div>
-        <button class="secondary" id="checkUpdateBtn" type="button"><span>↻</span> Nach Update suchen</button>
       </section>
 
       <section class="user-setting-card user-notification-card">
@@ -243,7 +242,7 @@
           <p>Aufwind ist aus dem Wunsch entstanden, neben Krisen und Problemen auch die positiven Entwicklungen sichtbar zu machen, die in klassischen Nachrichten oft untergehen.</p>
           <p>Wir sammeln gute Nachrichten aus aller Welt, fassen sie kurz zusammen und machen sie für Euch leicht zugänglich. Dabei wollen wir nichts schönreden, sondern Euch auf positive Geschehnisse aufmerksam machen.</p>
           <p>Das Fundament unserer Arbeit sind <strong>nachvollziehbare Quellen</strong>. Jede Meldung verweist auf ihre Originalquelle und bleibt so transparent und überprüfbar.</p>
-          <p>Auch Ihr könnt eigene Nachrichten einsenden – und damit dazu beitragen, dass gute Nachrichten sichtbar werden!</p>
+          <p><strong>Das Besondere an Aufwind:</strong> Ihr könnt Nachrichten einsenden – und damit dazu beitragen, dass gute Nachrichten sichtbar werden!</p>
         </div>
       </section>
     </div>
@@ -323,7 +322,7 @@
         <p>Push-Benachrichtigungen sind freiwillig. Sie werden nur aktiviert, wenn du sie in den Einstellungen einschaltest und die Berechtigung deines Browsers bzw. Betriebssystems erteilst. Für den Versand werden ein Push-Endpunkt, die dafür technisch erforderlichen Verschlüsselungsschlüssel, eine zufällig erzeugte technische Gerätekennung zur Vermeidung doppelter Abonnements sowie deine gewählten Benachrichtigungszeiten und Kategorien bei Supabase gespeichert. Die Verarbeitung beruht auf deiner Einwilligung nach Art. 6 Abs. 1 lit. a DSGVO. Du kannst Push-Benachrichtigungen jederzeit in Aufwind oder in den Geräteeinstellungen deaktivieren.</p>
 
         <h4>8. Gute Nachricht einreichen und Fehler melden</h4>
-        <p>Wenn du eine gute Nachricht einreichst, werden Überschrift, Text, Quellenlink, Kategorie sowie freiwillige Angaben wie Ort und Name/Pseudonym gespeichert und redaktionell geprüft. Ein Name oder Pseudonym wird nur veröffentlicht, wenn du die dafür vorgesehene Zustimmung ausdrücklich aktivierst. Bei einer Fehlermeldung zu einem Beitrag werden die Art des Hinweises, die Beschreibung des Fehlers und die betroffene Meldung gespeichert; bei angemeldeten Nutzern kann zusätzlich die Nutzerkennung zugeordnet werden.</p>
+        <p>Wenn du eine gute Nachricht einreichst, werden Überschrift, Text, Quellenlink, Kategorie sowie freiwillige Angaben wie Name/Pseudonym gespeichert und redaktionell geprüft. Ein Name oder Pseudonym wird nur veröffentlicht, wenn du die dafür vorgesehene Zustimmung ausdrücklich aktivierst. Bei einer Fehlermeldung zu einem Beitrag werden die Art des Hinweises, die Beschreibung des Fehlers und die betroffene Meldung gespeichert; bei angemeldeten Nutzern kann zusätzlich die Nutzerkennung zugeordnet werden.</p>
         <p>Die redaktionelle Bearbeitung freiwillig übermittelter Hinweise erfolgt auf Grundlage von Art. 6 Abs. 1 lit. f DSGVO. Eine Veröffentlichung eines freiwillig angegebenen Namens/Pseudonyms erfolgt nur auf Grundlage deiner Einwilligung nach Art. 6 Abs. 1 lit. a DSGVO.</p>
 
         <h4>9. Externe Quellen, Bilddienste und Links</h4>
@@ -544,23 +543,23 @@
 
       <nav class="admin-hub" aria-label="Redaktion">
         <details class="admin-nav-group">
-          <summary><span class="admin-nav-summary-icon">📰</span><span><strong>Beiträge</strong><small>Entwürfe, neue Beiträge und Einsendungen</small></span><span class="admin-nav-chevron">⌄</span></summary>
+          <summary><span class="admin-nav-summary-icon">📰</span><span><strong>Beiträge</strong><small>Entwürfe, neue Beiträge und Einsendungen</small></span><span id="adminContentBadge" class="badge admin-nav-count">0</span><span class="admin-nav-chevron">⌄</span></summary>
           <div class="admin-nav-items">
-            <button class="tab admin-menu-item" data-tab="triple-drafts"><span class="admin-menu-icon">📝</span><span class="admin-menu-copy"><strong>ChatGPT Entwürfe <span id="tripleDraftBadge" class="badge" hidden></span></strong><small>Vorschläge von ChatGPT prüfen</small></span></button>
+            <button class="tab admin-menu-item" data-tab="triple-drafts"><span class="admin-menu-icon">📝</span><span class="admin-menu-copy"><strong>ChatGPT Entwürfe</strong><small>Vorschläge von ChatGPT prüfen</small></span><span id="tripleDraftBadge" class="badge admin-menu-count">0</span></button>
+            <button class="tab admin-menu-item" data-tab="submissions"><span class="admin-menu-icon">📬</span><span class="admin-menu-copy"><strong>Einsendungen</strong><small>Vorschläge der Leser prüfen</small></span><span id="submissionBadge" class="badge admin-menu-count">0</span></button>
             <button class="tab admin-menu-item" data-tab="editor"><span class="admin-menu-icon">✏️</span><span class="admin-menu-copy"><strong>Neuer Beitrag</strong><small>Eine neue Aufwind-Meldung erstellen</small></span></button>
             <button class="tab admin-menu-item" data-tab="manage"><span class="admin-menu-icon">📰</span><span class="admin-menu-copy"><strong>Beiträge</strong><small>Beiträge bearbeiten und verwalten</small></span></button>
-            <button class="tab admin-menu-item" data-tab="submissions"><span class="admin-menu-icon">📬</span><span class="admin-menu-copy"><strong>Einsendungen <span id="submissionBadge" class="badge" hidden></span></strong><small>Vorschläge der Leser prüfen</small></span></button>
           </div>
         </details>
 
         <details class="admin-nav-group">
-          <summary><span class="admin-nav-summary-icon">⚙</span><span><strong>Einstellungen</strong><small>Design, Datenschutz, Tests und Rechtliches</small></span><span class="admin-nav-chevron">⌄</span></summary>
+          <summary><span class="admin-nav-summary-icon">⚙</span><span><strong>Einstellungen</strong><small>Design, Datenschutz, Tests und Rechtliches</small></span><span id="adminSettingsBadge" class="badge admin-nav-count">0</span><span class="admin-nav-chevron">⌄</span></summary>
           <div class="admin-nav-items">
             <button class="tab admin-menu-item" data-tab="settings"><span class="admin-menu-icon">🎨</span><span class="admin-menu-copy"><strong>Design der App</strong><small>Farben, Logo und Darstellung</small></span></button>
             <button class="tab admin-menu-item" data-tab="about-admin"><span class="admin-menu-icon">ⓘ</span><span class="admin-menu-copy"><strong>Über Aufwind</strong><small>Infotext der App bearbeiten</small></span></button>
             <button class="tab admin-menu-item" data-tab="privacy-admin"><span class="admin-menu-icon">🔐</span><span class="admin-menu-copy"><strong>DSGVO-Auskunft</strong><small>Nutzerdaten gezielt per E-Mail abrufen</small></span></button>
             <button class="tab admin-menu-item" data-tab="admins"><span class="admin-menu-icon">👥</span><span class="admin-menu-copy"><strong>Admin-Rechte</strong><small>Weitere Redaktionskonten verwalten</small></span></button>
-            <button class="tab admin-menu-item" data-tab="reports"><span class="admin-menu-icon">⚑</span><span class="admin-menu-copy"><strong>Fehlermeldungen <span id="reportBadge" class="badge" hidden></span></strong><small>Hinweise der Nutzer prüfen</small></span></button>
+            <button class="tab admin-menu-item" data-tab="reports"><span class="admin-menu-icon">⚑</span><span class="admin-menu-copy"><strong>Fehlermeldungen</strong><small>Hinweise der Nutzer prüfen</small></span><span id="reportBadge" class="badge admin-menu-count">0</span></button>
             <button class="tab admin-menu-item" data-tab="error-tests"><span class="admin-menu-icon">🧪</span><span class="admin-menu-copy"><strong>Fehlerzustände testen</strong><small>Offline, Server, Bild und weitere Zustände simulieren</small></span></button>
             <button class="tab admin-menu-item" data-tab="display-tests"><span class="admin-menu-icon">📱</span><span class="admin-menu-copy"><strong>Displaygrößen testen</strong><small>Typische Handy-Displays simulieren</small></span></button>
             <button class="tab admin-menu-item" data-tab="push-test"><span class="admin-menu-icon">🔔</span><span class="admin-menu-copy"><strong>Test-Push</strong><small>Push-Versand auf diesem Gerät prüfen</small></span></button>
@@ -575,7 +574,7 @@
         <div id="tripleDraftList"></div>
       </section>
 
-      <section id="tab-reports" class="tab-panel" hidden><div class="section-head"><div><h3>⚑ Fehlermeldungen</h3><p class="muted">Von Nutzern gemeldete Hinweise zu veröffentlichten Beiträgen.</p></div></div><div id="reportList"></div></section>
+      <section id="tab-reports" class="tab-panel" hidden><div class="section-head"><div><h3>⚑ Fehlermeldungen</h3><p class="muted">Von Nutzern gemeldete Hinweise zu veröffentlichten Beiträgen.</p></div></div><div class="filters report-filters"><select id="reportStatus"><option value="new">Offen</option><option value="resolved">Erledigt</option><option value="dismissed">Verworfen</option><option value="all">Alle</option></select></div><div id="reportList"></div></section>
 
       <section id="tab-error-tests" class="tab-panel" hidden>
         <div class="section-head"><div><h3>🧪 Fehlerzustände testen</h3><p class="muted">Nur auf diesem Gerät sichtbar. Es werden keine echten Daten verändert.</p></div></div>
@@ -615,6 +614,38 @@
           <input id="bylineName" type="hidden">
           <input id="bylineVisible" type="hidden" value="false">
 
+          <div class="form-grid two editor-state-grid">
+            <label>Priorität
+              <select id="priority">
+                <option value="normal">Normal</option>
+                <option value="top">Topmeldung</option>
+              </select>
+            </label>
+            <label>Status
+              <select id="status">
+                <option value="draft">Entwurf</option>
+                <option value="published">Veröffentlicht</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="schedule-publish-card">
+            <label class="toggle-row schedule-publish-toggle">
+              <input id="scheduledPublish" type="checkbox">
+              <span>
+                <strong>Geplante Veröffentlichung</strong>
+                <small>Beitrag automatisch zu einem späteren Zeitpunkt veröffentlichen</small>
+              </span>
+            </label>
+            <div id="scheduleControls" class="schedule-controls" hidden>
+              <div class="form-grid two">
+                <label>Veröffentlichungsdatum<input id="publishedDate" type="date" required></label>
+                <label>Uhrzeit<input id="publishedTime" type="time" required></label>
+              </div>
+              <p class="muted schedule-note">Bis zu diesem Zeitpunkt bleibt der Beitrag unsichtbar. Beim Planen wird der Status automatisch auf „Veröffentlicht“ gesetzt.</p>
+            </div>
+          </div>
+
           <div class="form-grid two">
             <label>Kategorie
               <select id="category" required>
@@ -640,37 +671,11 @@
             <textarea id="summary" rows="7" maxlength="1800" required></textarea>
           </label>
 
-          <div class="form-grid two">
-            <label>Status
-              <select id="status">
-                <option value="draft">Entwurf</option>
-                <option value="published">Veröffentlicht</option>
-              </select>
-            </label>
-            <label>Priorität
-              <select id="priority">
-                <option value="normal">Normal</option>
-                <option value="top">Topmeldung</option>
-              </select>
-            </label>
-          </div>
-
-          <div class="schedule-publish-card">
-            <label class="toggle-row schedule-publish-toggle">
-              <input id="scheduledPublish" type="checkbox">
-              <span>
-                <strong>Geplante Veröffentlichung</strong>
-                <small>Beitrag automatisch zu einem späteren Zeitpunkt veröffentlichen</small>
-              </span>
-            </label>
-            <div id="scheduleControls" class="schedule-controls" hidden>
-              <div class="form-grid two">
-                <label>Veröffentlichungsdatum<input id="publishedDate" type="date" required></label>
-                <label>Uhrzeit<input id="publishedTime" type="time" required></label>
-              </div>
-              <p class="muted schedule-note">Bis zu diesem Zeitpunkt bleibt der Beitrag unsichtbar. Beim Planen wird der Status automatisch auf „Veröffentlicht“ gesetzt.</p>
-            </div>
-          </div>
+          <fieldset>
+            <legend>Quellen</legend>
+            <div id="sourcesEditor"></div>
+            <button class="secondary compact" type="button" id="addSourceBtn">+ Quelle hinzufügen</button>
+          </fieldset>
 
           <fieldset class="image-fieldset-slim">
             <legend>Bild</legend>
@@ -764,12 +769,6 @@
               <button type="button" id="imageWholeBtn" hidden></button>
               <button type="button" id="imageResetBtn" hidden></button>
             </div>
-          </fieldset>
-
-          <fieldset>
-            <legend>Quellen</legend>
-            <div id="sourcesEditor"></div>
-            <button class="secondary compact" type="button" id="addSourceBtn">+ Quelle hinzufügen</button>
           </fieldset>
 
           <!-- Dreier- und Zusatzdaten bleiben intern erhalten, werden aber nicht mehr manuell bearbeitet. -->
@@ -1003,6 +1002,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="app.js?v=84"></script>
+  <script src="app.js?v=85"></script>
 </body>
 </html>

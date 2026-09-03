@@ -583,3 +583,55 @@ create policy news_reactions_delete_own on public.news_reactions for delete to a
 using (device_id=coalesce((current_setting('request.headers',true)::jsonb->>'x-device-id'),''));
 revoke all on table public.news_reactions from anon, authenticated;
 grant select,insert,update,delete on table public.news_reactions to anon, authenticated;
+
+
+-- ============================================================
+-- BUILD 85: Admin-Push bei neuen Redaktions-Eingängen
+-- ============================================================
+-- Voraussetzung im produktiven Projekt:
+--   Edge Function: admin-inbox-push
+--   Vault-Secrets: aufwind_project_url, aufwind_publishable_key,
+--                  aufwind_scheduled_push_token_v1
+-- Die Edge Function versendet ausschließlich an aktive Push-Abos von
+-- Konten mit user_roles.role = 'admin'. Geheimnisse gehören nicht in Git.
+
+create schema if not exists private;
+create or replace function private.notify_admin_inbox_event()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  alert_kind text := TG_ARGV[0];
+begin
+  perform net.http_post(
+    url := (select decrypted_secret from vault.decrypted_secrets where name='aufwind_project_url') || '/functions/v1/admin-inbox-push',
+    headers := jsonb_build_object(
+      'Content-Type','application/json',
+      'apikey',(select decrypted_secret from vault.decrypted_secrets where name='aufwind_publishable_key'),
+      'Authorization','Bearer ' || (select decrypted_secret from vault.decrypted_secrets where name='aufwind_publishable_key'),
+      'x-cron-token',(select decrypted_secret from vault.decrypted_secrets where name='aufwind_scheduled_push_token_v1')
+    ),
+    body := jsonb_build_object('kind',alert_kind,'record_id',new.id),
+    timeout_milliseconds := 10000
+  );
+  return new;
+end;
+$$;
+revoke all on function private.notify_admin_inbox_event() from public, anon, authenticated;
+
+drop trigger if exists notify_admin_on_triple_draft on public.triple_drafts;
+create trigger notify_admin_on_triple_draft
+after insert on public.triple_drafts
+for each row execute function private.notify_admin_inbox_event('triple_draft');
+
+drop trigger if exists notify_admin_on_submission on public.submissions;
+create trigger notify_admin_on_submission
+after insert on public.submissions
+for each row execute function private.notify_admin_inbox_event('submission');
+
+drop trigger if exists notify_admin_on_report on public.news_reports;
+create trigger notify_admin_on_report
+after insert on public.news_reports
+for each row execute function private.notify_admin_inbox_event('report');

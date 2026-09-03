@@ -21,7 +21,6 @@ const analyticsConsentDialog = $("analyticsConsentDialog");
 
 let allNews = [];
 let adminNews = [];
-let activeCategory = "Alle";
 let currentAdminSession = null;
 
 const USER_PREFS_KEY="goodNewsUserPreferencesV1";
@@ -623,7 +622,7 @@ function restoreFeedPosition(anchor){
 }
 function renderFeed({startId=null,preservePosition=false}={}) {
   const anchor=preservePosition?captureFeedPosition():null;
-  const source = activeCategory === "Alle" ? allNews : allNews.filter(n => categoryBucket(n) === activeCategory);
+  const source = allNews;
   // Die Datumskarten müssen immer streng absteigend laufen. Die Reihenfolge der
   // Meldungen innerhalb desselben Tages bleibt so, wie sie vom Backend geliefert wurde.
   const data = source.map((item,originalIndex)=>({item,originalIndex}))
@@ -871,14 +870,57 @@ $("reportForm")?.addEventListener("submit",async e=>{
 });
 
 const reportTypeLabels={content:"Inhaltlicher Fehler",source:"Quelle / Link",image:"Bild / Bildquelle",spelling:"Rechtschreibung",other:"Sonstiges"};
+const adminInboxCounts={triple:0,submissions:0,reports:0};
+function paintCountBadge(id,count){
+  const badge=$(id);if(!badge)return;
+  const n=Math.max(0,Number(count)||0);
+  badge.textContent=String(n);
+  badge.hidden=false;
+  badge.classList.toggle("zero",n===0);
+}
+function refreshAdminInboxBadges(){
+  paintCountBadge("tripleDraftBadge",adminInboxCounts.triple);
+  paintCountBadge("submissionBadge",adminInboxCounts.submissions);
+  paintCountBadge("reportBadge",adminInboxCounts.reports);
+  paintCountBadge("adminContentBadge",adminInboxCounts.triple+adminInboxCounts.submissions);
+  paintCountBadge("adminSettingsBadge",adminInboxCounts.reports);
+}
+const reportStatusLabels={new:"Offen",resolved:"Erledigt",dismissed:"Verworfen"};
+let adminNewsReports=[];
 async function loadNewsReports(){
   if(!currentAdminSession)return;
   const {data,error}=await db.from("news_reports").select("id,news_id,report_type,comment,status,created_at,news(title)").order("created_at",{ascending:false});
-  if(error){$("reportList").innerHTML=`<p class="message">${esc(error.message)}</p>`;return;}
-  const rows=data||[], fresh=rows.filter(r=>r.status==="new").length,badge=$("reportBadge");if(badge){badge.textContent=fresh;badge.hidden=!fresh;}
-  $("reportList").innerHTML=rows.length?rows.map(r=>`<article class="submission-card"><div class="submission-meta">${esc(reportTypeLabels[r.report_type]||r.report_type)} · ${esc(new Date(r.created_at).toLocaleString("de-DE"))}</div><h4>${esc(r.news?.title||`Beitrag #${r.news_id}`)}</h4>${r.comment?`<p>${esc(r.comment)}</p>`:""}<div class="row"><button class="secondary report-status-btn" data-report-id="${r.id}" data-status="resolved">✓ Erledigt</button><button class="secondary report-status-btn" data-report-id="${r.id}" data-status="dismissed">Verwerfen</button></div></article>`).join(""):`<p class="muted">Keine Fehlermeldungen vorhanden.</p>`;
-  document.querySelectorAll(".report-status-btn").forEach(b=>b.onclick=async()=>{const {error}=await db.from("news_reports").update({status:b.dataset.status,updated_at:new Date().toISOString()}).eq("id",b.dataset.reportId);if(!error)loadNewsReports();});
+  if(error){if($("reportList"))$("reportList").innerHTML=`<p class="message">${esc(error.message)}</p>`;return;}
+  adminNewsReports=data||[];
+  adminInboxCounts.reports=adminNewsReports.filter(r=>r.status==="new").length;
+  refreshAdminInboxBadges();
+  renderNewsReports();
 }
+function renderNewsReports(){
+  const root=$("reportList");if(!root)return;
+  const filter=$("reportStatus")?.value||"new";
+  const rows=adminNewsReports.filter(r=>filter==="all"||r.status===filter);
+  root.innerHTML=rows.length?rows.map(r=>`<article class="submission-card report-card" data-report-card="${r.id}"><div class="submission-meta"><span class="report-state ${esc(r.status)}">${esc(reportStatusLabels[r.status]||r.status)}</span> · ${esc(reportTypeLabels[r.report_type]||r.report_type)} · ${esc(new Date(r.created_at).toLocaleString("de-DE"))}</div><h4>${esc(r.news?.title||`Beitrag #${r.news_id}`)}</h4>${r.comment?`<p>${esc(r.comment)}</p>`:""}${r.status==="new"?`<div class="row report-actions"><button class="secondary report-status-btn" data-report-id="${r.id}" data-status="resolved">✓ Erledigt</button><button class="secondary report-status-btn" data-report-id="${r.id}" data-status="dismissed">Verwerfen</button></div>`:""}</article>`).join(""):`<p class="muted">Keine ${filter==="new"?"offenen ":""}Fehlermeldungen vorhanden.</p>`;
+  root.querySelectorAll(".report-status-btn").forEach(b=>b.onclick=()=>setNewsReportStatus(b));
+}
+async function setNewsReportStatus(button){
+  const id=button.dataset.reportId,status=button.dataset.status;
+  const card=button.closest("[data-report-card]");
+  card?.classList.add("is-saving");
+  card?.querySelectorAll("button").forEach(btn=>btn.disabled=true);
+  try{
+    const {data,error}=await db.from("news_reports").update({status,updated_at:new Date().toISOString()}).eq("id",id).select("id,status").single();
+    if(error)throw error;
+    if(!data||String(data.id)!==String(id))throw new Error("Die Fehlermeldung konnte nicht aktualisiert werden.");
+    showAppNotice(status==="resolved"?"Fehlermeldung als erledigt markiert.":"Fehlermeldung verworfen.");
+    await loadNewsReports();
+  }catch(err){
+    card?.classList.remove("is-saving");
+    card?.querySelectorAll("button").forEach(btn=>btn.disabled=false);
+    showAppNotice("Änderung fehlgeschlagen: "+(err?.message||String(err)));
+  }
+}
+$("reportStatus")?.addEventListener("change",renderNewsReports);
 
 
 function openReader(title, eyebrow, html) {
@@ -910,9 +952,10 @@ function openStory(storyKey) {
 
 function openSearch() {
   const categories = ["Alle",...AUFWIND_CATEGORIES];
+  let searchCategory="Alle";
   openReader("Suche","Nachrichten finden",`
     <input id="readerSearchInput" class="search-input" type="search" placeholder="Suchbegriff eingeben">
-    <div class="category-chips">${categories.map(c=>`<button class="chip ${c===activeCategory?"active":""}" data-cat="${esc(c)}">${esc(c)}</button>`).join("")}</div>
+    <div class="category-chips">${categories.map(c=>`<button class="chip ${c===searchCategory?"active":""}" data-cat="${esc(c)}">${esc(c)}</button>`).join("")}</div>
     <div id="readerResults"></div>
   `);
   const input = $("readerSearchInput");
@@ -920,7 +963,7 @@ function openSearch() {
   const run = () => {
     const q = input.value.trim().toLowerCase();
     const filtered = allNews.filter(n => {
-      const catOk = activeCategory === "Alle" || categoryBucket(n) === activeCategory;
+      const catOk = searchCategory === "Alle" || categoryBucket(n) === searchCategory;
       const text = `${n.title} ${n.summary} ${n.context_text||""} ${n.story_key||""}`.toLowerCase();
       return catOk && (!q || text.includes(q));
     });
@@ -933,9 +976,8 @@ function openSearch() {
   };
   input.oninput = run;
   $("readerContent").querySelectorAll("[data-cat]").forEach(btn=>btn.onclick=()=>{
-    activeCategory = btn.dataset.cat;
-    $("readerContent").querySelectorAll(".chip").forEach(x=>x.classList.toggle("active",x.dataset.cat===activeCategory));
-    renderFeed();
+    searchCategory = btn.dataset.cat;
+    $("readerContent").querySelectorAll(".chip").forEach(x=>x.classList.toggle("active",x.dataset.cat===searchCategory));
     run();
   });
   run();
@@ -1157,6 +1199,7 @@ function applySlideFocusMode(){
 $("slideFocusBtn")?.addEventListener("click",()=>{
   slideTextHidden=!slideTextHidden;
   applySlideFocusMode();
+  setSlideQuickActionsOpen(false);
 });
 applySlideFocusMode();
 
@@ -1874,6 +1917,7 @@ async function refreshAuth() {
   await loadAdminNews();
   await loadSubmissions();
   await loadTripleDrafts();
+  await loadNewsReports();
   await loadAppSettings();
   await loadAnalyticsSummary();
   // Redaktion startet immer auf der kompakten Hauptmaske mit Statistik sowie Beiträge/Einstellungen.
@@ -2744,7 +2788,7 @@ queueMicrotask(()=>{
 // selbst alle offenen Good-News-Fenster auf den neuen Build führen. So hängt die
 // installierte PWA nicht mehr an einer alten Cache-/Worker-Version fest.
 // Build 35 – adaptive Überschriften (max. 4 Zeilen) und stärkerer Lesbarkeitsverlauf.
-const AUFWIND_BUILD=84;
+const AUFWIND_BUILD=85;
 let aufwindSwRegistration=null;
 let aufwindReloading=false;
 
@@ -2951,7 +2995,7 @@ async function loadAppSettings() {
 const DEFAULT_ABOUT_SETTINGS={
   title:"Über Aufwind",
   tagline:"Good News aus aller Welt",
-  body:"Aufwind ist aus dem Wunsch entstanden, neben Krisen und Problemen auch die positiven Entwicklungen sichtbar zu machen, die in klassischen Nachrichten oft untergehen.\n\nWir sammeln gute Nachrichten aus aller Welt, fassen sie kurz zusammen und machen sie für Euch leicht zugänglich. Dabei wollen wir nichts schönreden, sondern Euch auf positive Geschehnisse aufmerksam machen.\n\nDas Fundament unserer Arbeit sind nachvollziehbare Quellen. Jede Meldung verweist auf ihre Originalquelle und bleibt so transparent und überprüfbar.\n\nAuch Ihr könnt eigene Nachrichten einsenden – und damit dazu beitragen, dass gute Nachrichten sichtbar werden!"
+  body:"Aufwind ist aus dem Wunsch entstanden, neben Krisen und Problemen auch die positiven Entwicklungen sichtbar zu machen, die in klassischen Nachrichten oft untergehen.\n\nWir sammeln gute Nachrichten aus aller Welt, fassen sie kurz zusammen und machen sie für Euch leicht zugänglich. Dabei wollen wir nichts schönreden, sondern Euch auf positive Geschehnisse aufmerksam machen.\n\nDas Fundament unserer Arbeit sind nachvollziehbare Quellen. Jede Meldung verweist auf ihre Originalquelle und bleibt so transparent und überprüfbar.\n\nDas Besondere an Aufwind: Ihr könnt Nachrichten einsenden – und damit dazu beitragen, dass gute Nachrichten sichtbar werden!"
 };
 
 function normalizedAboutSettings(settings={}){
@@ -2972,7 +3016,11 @@ function applyAboutSettings(settings={}){
   }
   if($("aboutCopy")){
     const paragraphs=a.body.split(/\n\s*\n/).map(v=>v.trim()).filter(Boolean);
-    $("aboutCopy").innerHTML=paragraphs.map(text=>`<p>${esc(text).replace(/\n/g,"<br>")}</p>`).join("");
+    $("aboutCopy").innerHTML=paragraphs.map(text=>{
+      const safe=esc(text).replace(/\n/g,"<br>");
+      const match=safe.match(/^(Das Besondere an (?:Aufwind|uns):)([\s\S]*)$/i);
+      return `<p>${match?`<strong>${match[1]}</strong>${match[2]}`:safe}</p>`;
+    }).join("");
   }
 }
 
@@ -3328,7 +3376,6 @@ $("submissionForm").onsubmit=async(e)=>{
     story_text:$("submissionText").value.trim(),
     source_url:$("submissionUrl").value.trim(),
     category:$("submissionCategory").value,
-    location:$("submissionLocation").value.trim()||null,
     submitter_name:submitterName||null,
     publish_submitter_name:publishSubmitterName,
     status:"new"
@@ -3347,7 +3394,8 @@ async function loadSubmissions(){
   if(error){console.warn("Submissions:",error.message);return}
   readerSubmissions=data||[];
   const count=readerSubmissions.filter(x=>x.status==="new").length;
-  const badge=$("submissionBadge");badge.textContent=count;badge.hidden=!count;
+  adminInboxCounts.submissions=count;
+  refreshAdminInboxBadges();
   renderSubmissions();
 }
 function submissionStatusLabel(s){return ({new:"Neu",reviewing:"In Prüfung",accepted:"Übernommen",rejected:"Abgelehnt"})[s]||s}
@@ -3356,7 +3404,7 @@ function renderSubmissions(){
   const filter=$("submissionStatus")?.value||"new";
   const rows=readerSubmissions.filter(x=>filter==="all"||x.status===filter);
   root.innerHTML=rows.map(x=>`<article class="submission-card">
-    <div class="submission-meta">${esc(submissionStatusLabel(x.status))} · ${esc(new Date(x.created_at).toLocaleString("de-DE"))}${x.location?` · ${esc(x.location)}`:""}${x.submitter_name?` · Name/Pseudonym: ${esc(x.submitter_name)}`:""} · Namensnennung: ${x.publish_submitter_name&&x.submitter_name?"Ja":"Nein"}</div>
+    <div class="submission-meta">${esc(submissionStatusLabel(x.status))} · ${esc(new Date(x.created_at).toLocaleString("de-DE"))}${x.submitter_name?` · Name/Pseudonym: ${esc(x.submitter_name)}`:""} · Namensnennung: ${x.publish_submitter_name&&x.submitter_name?"Ja":"Nein"}</div>
     <h4>${esc(x.title)}</h4><p>${esc(x.story_text)}</p>
     <div class="submission-source">Quelle: <a href="${esc(x.source_url)}" target="_blank" rel="noopener noreferrer">${esc(x.source_url)}</a></div>
     <div class="submission-actions">
@@ -3408,9 +3456,14 @@ async function loadTripleDrafts(){
   const {data,error}=await db.from("triple_drafts").select("*").order("created_at",{ascending:false});
   if(error){console.warn("Entwürfe – Auswahl:",error.message);return}
   tripleDrafts=data||[];
-  const count=tripleDrafts.filter(x=>x.status==="new").length;
-  const badge=$("tripleDraftBadge");
-  if(badge){badge.textContent=count;badge.hidden=!count}
+  const count=tripleDrafts.filter(x=>x.status==="new").reduce((sum,x)=>{
+    if(isCandidateBatch(x.payload)){
+      return sum+(x.payload.groups||[]).reduce((n,g)=>n+(Array.isArray(g?.candidates)?g.candidates.length:0),0);
+    }
+    return sum+3;
+  },0);
+  adminInboxCounts.triple=count;
+  refreshAdminInboxBadges();
   renderTripleDrafts();
 }
 function tripleDraftStatusLabel(s){return ({new:"Neu",imported:"Übernommen",rejected:"Abgelehnt"})[s]||s}
