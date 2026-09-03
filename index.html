@@ -11,12 +11,12 @@
   <meta name="apple-mobile-web-app-title" content="Aufwind">
   <meta name="description" content="Aufwind – Good News aus aller Welt. Positive Nachrichten kompakt, transparent und nachvollziehbar.">
   <title>Aufwind – Good News aus aller Welt</title>
-  <link rel="manifest" href="manifest.json?v=88">
+  <link rel="manifest" href="manifest.json?v=89">
   <link rel="icon" type="image/png" sizes="32x32" href="aufwind-favicon-32.png">
   <link rel="icon" type="image/png" sizes="192x192" href="aufwind-icon-192.png">
   <link rel="icon" type="image/png" sizes="512x512" href="aufwind-icon-512.png">
   <link rel="apple-touch-icon" sizes="180x180" href="aufwind-apple-touch-icon.png">
-  <link rel="stylesheet" href="style.css?v=88">
+  <link rel="stylesheet" href="style.css?v=89">
 </head>
 <body>
 <header class="appbar">
@@ -40,7 +40,7 @@
         <span class="menu-chevron" aria-hidden="true">›</span>
       </button>
         <button id="accountBtn" type="button"><span>↪</span><span id="accountBtnLabel">Anmelden</span></button>
-        <div class="app-build-label" aria-label="App-Version">Aufwind · Build 88</div>
+        <div class="app-build-label" aria-label="App-Version">Aufwind · Build 89</div>
       </div>
       <button class="icon-btn slide-actions-toggle-btn" id="slideActionsToggleBtn" type="button" aria-label="Meldungsaktionen öffnen" aria-expanded="false" aria-controls="slideQuickActions">＋</button>
       <div class="slide-quick-actions" id="slideQuickActions" hidden>
@@ -423,52 +423,61 @@
         </div>
         <p class="muted account-admin-hint">Redaktionsfunktionen öffnest du über das ⚙ unter dem Menü.</p>
 
-        <section class="user-password-card account-password-card" id="userPasswordCard" aria-labelledby="passwordSettingsTitle">
-          <div class="section-head compact">
-            <div>
-              <h3 id="passwordSettingsTitle">Passwort ändern</h3>
+        <div class="account-accordion-list">
+          <details class="account-accordion" id="userPasswordCard">
+            <summary id="passwordSettingsTitle">
+              <span>Passwort ändern</span>
+              <span class="account-accordion-chevron" aria-hidden="true">⌄</span>
+            </summary>
+            <div class="account-accordion-content">
               <p class="muted">Ändere hier das Passwort deines Aufwind-Kontos.</p>
+              <div class="account-card password-account-card">
+                <div><span class="muted">Konto</span><strong id="passwordSettingsEmail"></strong></div>
+              </div>
+              <form id="passwordChangeForm" class="stack password-change-form">
+                <label>Aktuelles Passwort
+                  <input id="currentPassword" type="password" autocomplete="current-password" required>
+                </label>
+                <label>Neues Passwort
+                  <input id="newPassword" type="password" autocomplete="new-password" minlength="8" required>
+                  <span class="field-hint">Mindestens 8 Zeichen sowie mindestens ein Großbuchstabe, ein Kleinbuchstabe, eine Zahl und ein Sonderzeichen. Bekannte kompromittierte Passwörter werden zusätzlich abgewiesen.</span>
+                </label>
+                <label>Neues Passwort bestätigen
+                  <input id="newPasswordConfirm" type="password" autocomplete="new-password" minlength="8" required>
+                </label>
+                <button class="primary" type="submit">Passwort ändern</button>
+                <div id="passwordChangeMessage" class="message" aria-live="polite"></div>
+              </form>
             </div>
-          </div>
-          <div class="account-card password-account-card">
-            <div><span class="muted">Konto</span><strong id="passwordSettingsEmail"></strong></div>
-          </div>
-          <form id="passwordChangeForm" class="stack password-change-form">
-            <label>Aktuelles Passwort
-              <input id="currentPassword" type="password" autocomplete="current-password" required>
-            </label>
-            <label>Neues Passwort
-              <input id="newPassword" type="password" autocomplete="new-password" minlength="8" required>
-              <span class="field-hint">Mindestens 8 Zeichen sowie mindestens ein Großbuchstabe, ein Kleinbuchstabe, eine Zahl und ein Sonderzeichen. Bekannte kompromittierte Passwörter werden zusätzlich abgewiesen.</span>
-            </label>
-            <label>Neues Passwort bestätigen
-              <input id="newPasswordConfirm" type="password" autocomplete="new-password" minlength="8" required>
-            </label>
-            <button class="primary" type="submit">Passwort ändern</button>
-            <div id="passwordChangeMessage" class="message" aria-live="polite"></div>
-          </form>
-        </section>
-
-        <section class="privacy-self-card" aria-labelledby="myDataTitle">
-          <div class="section-head compact">
-            <div>
-              <h3 id="myDataTitle">Meine Daten</h3>
-              <p class="muted">Hier kannst du die deinem Konto zugeordneten Aufwind-Daten selbst einsehen und als JSON-Datei herunterladen.</p>
-            </div>
-          </div>
-          <div class="privacy-actions">
-            <button class="secondary" id="loadMyDataBtn" type="button">Meine Daten anzeigen</button>
-            <button class="secondary" id="downloadMyDataBtn" type="button" hidden>Datenexport herunterladen</button>
-          </div>
-          <div id="myDataMessage" class="message" aria-live="polite"></div>
-          <div id="myDataResult" class="privacy-result" hidden></div>
-
-          <details class="privacy-delete-box">
-            <summary>Konto und Serverdaten löschen</summary>
-            <p class="muted">Löscht dein Aufwind-Konto sowie die direkt damit verknüpften Serverdaten. Lokale App-Daten auf diesem Gerät werden anschließend ebenfalls entfernt. Diese Aktion kann nicht rückgängig gemacht werden.</p>
-            <button class="danger" id="deleteMyAccountBtn" type="button">Konto endgültig löschen</button>
           </details>
-        </section>
+
+          <details class="account-accordion" aria-labelledby="myDataTitle">
+            <summary id="myDataTitle">
+              <span>Meine Daten</span>
+              <span class="account-accordion-chevron" aria-hidden="true">⌄</span>
+            </summary>
+            <div class="account-accordion-content">
+              <p class="muted">Hier kannst du die deinem Konto zugeordneten Aufwind-Daten selbst einsehen und als JSON-Datei herunterladen.</p>
+              <div class="privacy-actions">
+                <button class="secondary" id="loadMyDataBtn" type="button">Meine Daten anzeigen</button>
+                <button class="secondary" id="downloadMyDataBtn" type="button" hidden>Datenexport herunterladen</button>
+              </div>
+              <div id="myDataMessage" class="message" aria-live="polite"></div>
+              <div id="myDataResult" class="privacy-result" hidden></div>
+            </div>
+          </details>
+
+          <details class="account-accordion account-accordion-danger">
+            <summary>
+              <span>Konto und Serverdaten löschen</span>
+              <span class="account-accordion-chevron" aria-hidden="true">⌄</span>
+            </summary>
+            <div class="account-accordion-content">
+              <p class="muted">Löscht dein Aufwind-Konto sowie die direkt damit verknüpften Serverdaten. Lokale App-Daten auf diesem Gerät werden anschließend ebenfalls entfernt. Diese Aktion kann nicht rückgängig gemacht werden.</p>
+              <button class="danger" id="deleteMyAccountBtn" type="button">Konto endgültig löschen</button>
+            </div>
+          </details>
+        </div>
       </div>
     </section>
   </dialog>
@@ -1002,6 +1011,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="app.js?v=88"></script>
+  <script src="app.js?v=89"></script>
 </body>
 </html>

@@ -1743,3 +1743,51 @@ html:not(.user-theme-light) .admin-nav-summary-icon{background:#202026}
   .admin-nav-group>summary{grid-template-columns:38px minmax(0,1fr) auto 24px;gap:8px;padding-left:10px;padding-right:10px}
   .admin-nav-count{min-width:25px;height:24px;padding:0 7px}
 }
+
+/* Build 89 – Konto kompakt als aufklappbare Bereiche */
+.account-accordion-list{
+  display:grid;
+  gap:10px;
+  margin-top:18px;
+}
+.account-accordion{
+  border:1px solid #303036;
+  border-radius:15px;
+  background:#19191c;
+  overflow:hidden;
+}
+.account-accordion summary{
+  list-style:none;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:14px 15px;
+  font-weight:700;
+  user-select:none;
+}
+.account-accordion summary::-webkit-details-marker{display:none}
+.account-accordion-chevron{
+  flex:0 0 auto;
+  font-size:1rem;
+  opacity:.72;
+  transition:transform .18s ease;
+}
+.account-accordion[open] .account-accordion-chevron{transform:rotate(180deg)}
+.account-accordion-content{
+  padding:0 15px 15px;
+  border-top:1px solid #2a2a30;
+}
+.account-accordion-content>.muted:first-child{margin-top:13px}
+.account-accordion-danger{border-color:rgba(220,70,70,.42)}
+.account-accordion-danger summary{color:#ffd9d9}
+.account-accordion .password-account-card{margin:12px 0 14px}
+.account-accordion .privacy-result{margin-bottom:0}
+html.user-theme-light .account-accordion{
+  background:#f6f6f4;
+  border-color:#d8d8dc;
+}
+html.user-theme-light .account-accordion-content{border-top-color:#dedee2}
+html.user-theme-light .account-accordion-danger{border-color:rgba(185,55,55,.4)}
+html.user-theme-light .account-accordion-danger summary{color:#8e2020}
