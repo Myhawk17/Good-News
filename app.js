@@ -849,7 +849,10 @@ function setSlideQuickActionsOpen(open){
   const panel=$("slideQuickActions"), toggle=$("slideActionsToggleBtn");
   if(!panel||!toggle)return;
   if(open){
-    closeMainMenu();
+    // Das Plus-Menü darf die aktuelle Slide-Position niemals verändern.
+    // Das Hauptmenü wird deshalb nur geschlossen, wenn es wirklich offen ist;
+    // andernfalls könnte eine alte gespeicherte Menü-Scrollposition restauriert werden.
+    if(mainMenu && !mainMenu.hidden) closeMainMenu();
     syncSlideQuickActions();
   }
   panel.hidden=!open;
@@ -1061,6 +1064,7 @@ function restoreFeedAfterMenu(){
 }
 function setMainMenuOpen(open){
   if(!mainMenu||!menuBtn)return;
+  const wasOpen=!mainMenu.hidden;
   if(open){
     syncSlideQuickActions();
     if(feed) mainMenuFeedScrollTop=feed.scrollTop;
@@ -1070,8 +1074,12 @@ function setMainMenuOpen(open){
   document.documentElement.classList.toggle("main-menu-open",open);
   if(open){
     mainMenu.scrollTop=0;
-  }else{
+  }else if(wasOpen){
+    // Nur beim echten Schließen des Hauptmenüs die zuvor gespeicherte
+    // Feed-Position wiederherstellen. Andere Aktionen (z. B. Plus) dürfen
+    // niemals eine veraltete Scrollposition anwenden.
     restoreFeedAfterMenu();
+    mainMenuFeedScrollTop=null;
   }
 }
 function closeMainMenu(){setMainMenuOpen(false)}
@@ -2807,7 +2815,7 @@ queueMicrotask(()=>{
 // selbst alle offenen Good-News-Fenster auf den neuen Build führen. So hängt die
 // installierte PWA nicht mehr an einer alten Cache-/Worker-Version fest.
 // Build 35 – adaptive Überschriften (max. 4 Zeilen) und stärkerer Lesbarkeitsverlauf.
-const AUFWIND_BUILD=87;
+const AUFWIND_BUILD=88;
 let aufwindSwRegistration=null;
 let aufwindReloading=false;
 
