@@ -11,12 +11,12 @@
   <meta name="apple-mobile-web-app-title" content="Aufwind">
   <meta name="description" content="Aufwind – Good News aus aller Welt. Positive Nachrichten kompakt, transparent und nachvollziehbar.">
   <title>Aufwind – Good News aus aller Welt</title>
-  <link rel="manifest" href="manifest.json?v=92">
+  <link rel="manifest" href="manifest.json?v=93">
   <link rel="icon" type="image/png" sizes="32x32" href="aufwind-favicon-32.png">
   <link rel="icon" type="image/png" sizes="192x192" href="aufwind-icon-192.png">
   <link rel="icon" type="image/png" sizes="512x512" href="aufwind-icon-512.png">
   <link rel="apple-touch-icon" sizes="180x180" href="aufwind-apple-touch-icon.png">
-  <link rel="stylesheet" href="style.css?v=92">
+  <link rel="stylesheet" href="style.css?v=93">
 </head>
 <body>
 <header class="appbar">
@@ -40,7 +40,7 @@
         <span class="menu-chevron" aria-hidden="true">›</span>
       </button>
         <button id="accountBtn" type="button"><span>↪</span><span id="accountBtnLabel">Anmelden</span></button>
-        <div class="app-build-label" aria-label="App-Version">Aufwind · Build 92</div>
+        <div class="app-build-label" aria-label="App-Version">Aufwind · Build 93</div>
       </div>
       <button class="icon-btn slide-actions-toggle-btn" id="slideActionsToggleBtn" type="button" aria-label="Meldungsaktionen öffnen" aria-expanded="false" aria-controls="slideQuickActions">＋</button>
       <div class="slide-quick-actions" id="slideQuickActions" hidden>
@@ -257,30 +257,13 @@
       <h2 id="analyticsConsentTitle">Herzlich willkommen bei Aufwind.</h2>
       <p class="welcome-lead">Schön, dass Du da bist.</p>
 
-      <section class="welcome-about-compact" aria-labelledby="welcomeAboutTitle">
-        <h3 id="welcomeAboutTitle">Über Aufwind</h3>
-        <div class="welcome-about-tagline" id="welcomeAboutTagline">Good News aus aller Welt</div>
+      <section class="welcome-about-compact" aria-label="Willkommen bei Aufwind">
         <div class="welcome-about-copy" id="welcomeAboutCopy">
           <p>Aufwind ist aus dem Wunsch entstanden, neben Krisen und Problemen auch die positiven Entwicklungen sichtbar zu machen, die in klassischen Nachrichten oft untergehen.</p>
           <p>Wir sammeln gute Nachrichten aus aller Welt, fassen sie kurz zusammen und machen sie für Euch leicht zugänglich. Dabei wollen wir nichts schönreden, sondern Euch auf positive Geschehnisse aufmerksam machen.</p>
           <p>Das Fundament unserer Arbeit sind nachvollziehbare Quellen. Jede Meldung verweist auf ihre Originalquelle und bleibt so transparent und überprüfbar.</p>
           <p><strong>Das Besondere an Aufwind:</strong> Ihr könnt Nachrichten einsenden – und damit dazu beitragen, dass gute Nachrichten sichtbar werden!</p>
         </div>
-      </section>
-
-      <section class="welcome-analytics-compact" aria-labelledby="welcomeAnalyticsTitle">
-        <div class="welcome-analytics-row">
-          <div class="welcome-analytics-copy">
-            <strong id="welcomeAnalyticsTitle">Nutzungsstatistik</strong>
-            <span id="welcomeAnalyticsStatus">Aus</span>
-          </div>
-          <label class="switch-control welcome-analytics-switch" aria-label="Anonyme Nutzungsstatistik erlauben">
-            <input id="welcomeAnalyticsToggle" type="checkbox">
-            <span class="switch-slider" aria-hidden="true"></span>
-          </label>
-        </div>
-        <p id="analyticsConsentText">Wenn Du sie aktivierst, erfassen wir pseudonym, ob Aufwind genutzt und ob Meldungen gemerkt oder geteilt werden. Name und E-Mail-Adresse werden nicht damit verknüpft.</p>
-        <p class="analytics-consent-note">Damit hilfst Du uns, Aufwind weiter zu verbessern. Freiwillig und jederzeit in den Einstellungen änderbar.</p>
       </section>
 
       <button class="primary welcome-continue" id="welcomeContinueBtn" type="button">Los geht's</button>
@@ -337,7 +320,7 @@
         <p>Aufwind speichert auf dem Gerät Einstellungen, gemerkte Meldungen, einen zwischengespeicherten Nachrichtenfeed sowie für die PWA technisch notwendige Cache-Daten. Diese Speicherung ist erforderlich, um ausdrücklich gewünschte App-Funktionen, Einstellungen und die Offline-/Update-Funktion bereitzustellen. Soweit die Speicherung hierfür unbedingt erforderlich ist, erfolgt sie nach § 25 Abs. 2 Nr. 2 TDDDG.</p>
 
         <h4>6. Freiwillige Nutzungsstatistik</h4>
-        <p>Die freiwillige Nutzungsstatistik ist standardmäßig ausgeschaltet. Nach der ersten Anmeldung eines neu erstellten Kontos wird sie im Willkommensbildschirm erklärt. Bei Zustimmung wird lokal eine zufällige Gerätekennung erzeugt und zusammen mit Ereignissen wie täglicher aktiver Nutzung, Merken oder Teilen sowie gegebenenfalls der Kennung der betreffenden Meldung an Supabase übertragen. Name und E-Mail-Adresse werden diesen Statistikereignissen nicht beigefügt. Die Entscheidung kann jederzeit in den Einstellungen geändert werden.</p>
+        <p>Die freiwillige Nutzungsstatistik ist standardmäßig ausgeschaltet und kann jederzeit in den Einstellungen aktiviert oder wieder deaktiviert werden. Bei Zustimmung wird lokal eine zufällige Gerätekennung erzeugt und zusammen mit Ereignissen wie täglicher aktiver Nutzung, Merken oder Teilen sowie gegebenenfalls der Kennung der betreffenden Meldung an Supabase übertragen. Name und E-Mail-Adresse werden diesen Statistikereignissen nicht beigefügt.</p>
         <p>Rechtsgrundlage ist deine Einwilligung nach Art. 6 Abs. 1 lit. a DSGVO und – soweit Informationen auf deinem Gerät gespeichert oder ausgelesen werden – § 25 Abs. 1 TDDDG. Du kannst die Einwilligung jederzeit in den Einstellungen widerrufen. Danach werden keine neuen Statistikereignisse mehr übertragen und die lokale Statistikkennung wird vom Gerät gelöscht. Die Rechtmäßigkeit der bis zum Widerruf erfolgten Verarbeitung bleibt unberührt.</p>
 
         <h4>7. Push-Benachrichtigungen</h4>
@@ -1033,6 +1016,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="app.js?v=92"></script>
+  <script src="app.js?v=93"></script>
 </body>
 </html>

@@ -1144,9 +1144,6 @@ async function maybeOpenAnalyticsConsent(sessionOverride=null){
   }
   if(!welcomePreview && !accountNeedsWelcome(session)) return;
 
-  // Eine frühere freiwillige Entscheidung auf diesem Gerät bleibt erhalten.
-  if(userPrefs.analytics && !analyticsConsentDecision()) rememberAnalyticsConsent("allowed");
-  updateWelcomeAnalyticsStatus();
   document.documentElement.classList.add("analytics-consent-active");
   analyticsConsentDialog.showModal();
 }
@@ -1154,22 +1151,7 @@ function closeAnalyticsConsent(){
   document.documentElement.classList.remove("analytics-consent-active");
   if(analyticsConsentDialog?.open) analyticsConsentDialog.close();
 }
-$("welcomeAnalyticsToggle")?.addEventListener("change",async(e)=>{
-  const allowed=Boolean(e.currentTarget.checked);
-  rememberAnalyticsConsent(allowed?"allowed":"declined");
-  saveUserPreferences({...userPrefs,analytics:allowed});
-  if($("prefAnalytics")) $("prefAnalytics").checked=allowed;
-  if(!allowed)clearLocalAnalyticsIdentifiers();
-  updateWelcomeAnalyticsStatus();
-  if(allowed)await trackDailyActive();
-});
 $("welcomeContinueBtn")?.addEventListener("click",async()=>{
-  // Ohne ausdrückliche Zustimmung bleibt die Statistik ausgeschaltet.
-  if(!analyticsConsentDecision() && !userPrefs.analytics){
-    saveUserPreferences({...userPrefs,analytics:false});
-    if($("prefAnalytics")) $("prefAnalytics").checked=false;
-    clearLocalAnalyticsIdentifiers();
-  }
   await markAccountWelcomeSeen();
   closeAnalyticsConsent();
   showAppNotice("Willkommen bei Aufwind.");
@@ -2842,7 +2824,7 @@ queueMicrotask(()=>setTimeout(()=>void maybeOpenAnalyticsConsent(),180));
 // selbst alle offenen Good-News-Fenster auf den neuen Build führen. So hängt die
 // installierte PWA nicht mehr an einer alten Cache-/Worker-Version fest.
 // Build 35 – adaptive Überschriften (max. 4 Zeilen) und stärkerer Lesbarkeitsverlauf.
-const AUFWIND_BUILD=92;
+const AUFWIND_BUILD=93;
 let aufwindSwRegistration=null;
 let aufwindReloading=false;
 
@@ -3076,13 +3058,8 @@ function applyAboutSettings(settings={}){
   }).join("");
   if($("aboutCopy")) $("aboutCopy").innerHTML=renderedBody;
 
-  // Der Willkommensbildschirm nutzt exakt denselben Über-Aufwind-Inhalt
-  // wie der Menüpunkt. So gibt es keine zweite, verkürzte Textfassung.
-  if($("welcomeAboutTitle")) $("welcomeAboutTitle").textContent=a.title;
-  if($("welcomeAboutTagline")){
-    $("welcomeAboutTagline").textContent=a.tagline;
-    $("welcomeAboutTagline").hidden=!a.tagline;
-  }
+  // Der Willkommensbildschirm zeigt direkt denselben vollständigen Text wie der Menüpunkt,
+  // ohne zusätzliche Überschrift, Unterzeile oder Statistik-Abfrage.
   if($("welcomeAboutCopy")) $("welcomeAboutCopy").innerHTML=renderedBody;
 }
 

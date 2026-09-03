@@ -2,6 +2,12 @@ AUFWIND – GOOD NEWS AUS ALLER WELT
 =================================
 
 
+BUILD 93 – REDUZIERTER WILLKOMMENSBILDSCHIRM
+---------------------------------------------
+- Nach der ersten Anmeldung eines neu registrierten Kontos erscheint nur noch die Begrüßung mit dem vollständigen Aufwind-Text.
+- Die zusätzliche Überschrift „Über Aufwind“, der Untertitel und die Nutzungsstatistik wurden aus dem Willkommensbildschirm entfernt.
+- Die freiwillige Nutzungsstatistik bleibt standardmäßig aus und kann später ausschließlich in den Einstellungen geändert werden.
+
 BUILD 90 – WILLKOMMEN NACH REGISTRIERUNG
 ---------------------------------------
 - Der bisherige Erststart-Dialog für „Über Aufwind“/Nutzungsstatistik wurde durch einen kompakten Willkommensbildschirm ersetzt.
@@ -24,7 +30,7 @@ BUILD 85 – UX-/REDAKTIONSRUNDE
 - Beitragseditor: Priorität → Status → geplante Veröffentlichung → Kategorie; Quellen stehen direkt unter dem Kurztext.
 - Dunkle Menüs haben jetzt deutlich getrennte Hintergrund- und Buttonflächen.
 
-Stand dieses Pakets: Build 92
+Stand dieses Pakets: Build 93
 
 Aufwind ist eine installierbare Web-App/PWA für positive, redaktionell geprüfte Nachrichten. Die Leseransicht ist mobil und slide-basiert; Redaktion, Nutzerkonten, Push-Funktionen und App-Einstellungen sind über Supabase angebunden.
 
