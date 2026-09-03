@@ -852,7 +852,6 @@ $("slideShareQuickBtn")?.addEventListener("click",()=>{
 let reportNewsId=null;
 function openReportForCurrentSlide(){
   const item=currentSlideItem();if(!item)return;
-  setSlideQuickActionsOpen(false);
   reportNewsId=item.id;
   $("reportNewsTitle").textContent=item.title||"Aktuelle Meldung";$("reportForm").reset();$("reportMessage").textContent="";markFormClean($("reportForm"));$("reportDialog").showModal();
 }
@@ -1041,7 +1040,6 @@ function restoreFeedAfterMenu(){
 function setMainMenuOpen(open){
   if(!mainMenu||!menuBtn)return;
   if(open){
-    setSlideQuickActionsOpen(false);
     syncSlideQuickActions();
     if(feed) mainMenuFeedScrollTop=feed.scrollTop;
   }
@@ -1199,7 +1197,6 @@ function applySlideFocusMode(){
 $("slideFocusBtn")?.addEventListener("click",()=>{
   slideTextHidden=!slideTextHidden;
   applySlideFocusMode();
-  setSlideQuickActionsOpen(false);
 });
 applySlideFocusMode();
 
@@ -1212,8 +1209,8 @@ $("userPreferencesBtn").onclick = runMenuAction(async()=>{
 });
 document.addEventListener("click",(e)=>{
   if(!mainMenu.hidden && !mainMenu.contains(e.target) && e.target!==menuBtn) closeMainMenu();
-  const quick=$("slideQuickActions"), quickToggle=$("slideActionsToggleBtn");
-  if(quick && !quick.hidden && !quick.contains(e.target) && e.target!==quickToggle) setSlideQuickActionsOpen(false);
+  // Das Plus-Menü bleibt bewusst geöffnet. Es wird ausschließlich
+  // über einen erneuten Tipp auf den Plus-Button geschlossen.
 });
 document.addEventListener("keydown",(e)=>{if(e.key==="Escape")closeMainMenu()});
 $("homeBtn").onclick = () => {closeMainMenu();feed.scrollTo({top:0,behavior:"smooth"});}
@@ -2788,7 +2785,7 @@ queueMicrotask(()=>{
 // selbst alle offenen Good-News-Fenster auf den neuen Build führen. So hängt die
 // installierte PWA nicht mehr an einer alten Cache-/Worker-Version fest.
 // Build 35 – adaptive Überschriften (max. 4 Zeilen) und stärkerer Lesbarkeitsverlauf.
-const AUFWIND_BUILD=85;
+const AUFWIND_BUILD=86;
 let aufwindSwRegistration=null;
 let aufwindReloading=false;
 
