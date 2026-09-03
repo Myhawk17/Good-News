@@ -1105,32 +1105,10 @@ function rememberAnalyticsConsent(value){
 }
 function updateWelcomeAnalyticsStatus(){
   const status=$("welcomeAnalyticsStatus");
-  if(!status)return;
-  const decision=analyticsConsentDecision();
-  if(decision==="allowed" || userPrefs.analytics){status.textContent="Erlaubt";return;}
-  if(decision==="declined"){status.textContent="Ausgeschaltet";return;}
-  status.textContent="Standardmäßig ausgeschaltet";
-}
-function setupWelcomeAccordion(){
-  document.querySelectorAll("#welcomeAccordion .welcome-toggle").forEach(btn=>{
-    if(btn.dataset.bound==="1")return;
-    btn.dataset.bound="1";
-    btn.addEventListener("click",()=>{
-      const targetId=btn.getAttribute("aria-controls");
-      const target=targetId?$(targetId):null;
-      const willOpen=btn.getAttribute("aria-expanded")!=="true";
-      document.querySelectorAll("#welcomeAccordion .welcome-toggle").forEach(other=>{
-        other.setAttribute("aria-expanded","false");
-        const panelId=other.getAttribute("aria-controls");
-        const panel=panelId?$(panelId):null;
-        if(panel)panel.hidden=true;
-      });
-      if(willOpen){
-        btn.setAttribute("aria-expanded","true");
-        if(target)target.hidden=false;
-      }
-    });
-  });
+  const toggle=$("welcomeAnalyticsToggle");
+  const allowed=analyticsConsentDecision()==="allowed" || Boolean(userPrefs.analytics);
+  if(status)status.textContent=allowed?"An":"Aus";
+  if(toggle)toggle.checked=allowed;
 }
 function accountNeedsWelcome(session){
   return Boolean(session?.user?.user_metadata?.aufwind_welcome_pending===true);
@@ -1169,9 +1147,6 @@ async function maybeOpenAnalyticsConsent(sessionOverride=null){
   // Eine frühere freiwillige Entscheidung auf diesem Gerät bleibt erhalten.
   if(userPrefs.analytics && !analyticsConsentDecision()) rememberAnalyticsConsent("allowed");
   updateWelcomeAnalyticsStatus();
-  setupWelcomeAccordion();
-  document.querySelectorAll("#welcomeAccordion .welcome-toggle").forEach(btn=>btn.setAttribute("aria-expanded","false"));
-  document.querySelectorAll("#welcomeAccordion .welcome-panel").forEach(panel=>panel.hidden=true);
   document.documentElement.classList.add("analytics-consent-active");
   analyticsConsentDialog.showModal();
 }
@@ -1179,21 +1154,14 @@ function closeAnalyticsConsent(){
   document.documentElement.classList.remove("analytics-consent-active");
   if(analyticsConsentDialog?.open) analyticsConsentDialog.close();
 }
-$("analyticsConsentAllowBtn")?.addEventListener("click",async()=>{
-  rememberAnalyticsConsent("allowed");
-  saveUserPreferences({...userPrefs,analytics:true});
-  if($("prefAnalytics")) $("prefAnalytics").checked=true;
+$("welcomeAnalyticsToggle")?.addEventListener("change",async(e)=>{
+  const allowed=Boolean(e.currentTarget.checked);
+  rememberAnalyticsConsent(allowed?"allowed":"declined");
+  saveUserPreferences({...userPrefs,analytics:allowed});
+  if($("prefAnalytics")) $("prefAnalytics").checked=allowed;
+  if(!allowed)clearLocalAnalyticsIdentifiers();
   updateWelcomeAnalyticsStatus();
-  await trackDailyActive();
-  showAppNotice("Nutzungsstatistik erlaubt.");
-});
-$("analyticsConsentDeclineBtn")?.addEventListener("click",()=>{
-  rememberAnalyticsConsent("declined");
-  saveUserPreferences({...userPrefs,analytics:false});
-  if($("prefAnalytics")) $("prefAnalytics").checked=false;
-  clearLocalAnalyticsIdentifiers();
-  updateWelcomeAnalyticsStatus();
-  showAppNotice("Nutzungsstatistik bleibt ausgeschaltet.");
+  if(allowed)await trackDailyActive();
 });
 $("welcomeContinueBtn")?.addEventListener("click",async()=>{
   // Ohne ausdrückliche Zustimmung bleibt die Statistik ausgeschaltet.
@@ -2874,7 +2842,7 @@ queueMicrotask(()=>setTimeout(()=>void maybeOpenAnalyticsConsent(),180));
 // selbst alle offenen Good-News-Fenster auf den neuen Build führen. So hängt die
 // installierte PWA nicht mehr an einer alten Cache-/Worker-Version fest.
 // Build 35 – adaptive Überschriften (max. 4 Zeilen) und stärkerer Lesbarkeitsverlauf.
-const AUFWIND_BUILD=90;
+const AUFWIND_BUILD=92;
 let aufwindSwRegistration=null;
 let aufwindReloading=false;
 
@@ -3100,14 +3068,22 @@ function applyAboutSettings(settings={}){
     $("aboutTagline").textContent=a.tagline;
     $("aboutTagline").hidden=!a.tagline;
   }
-  if($("aboutCopy")){
-    const paragraphs=a.body.split(/\n\s*\n/).map(v=>v.trim()).filter(Boolean);
-    $("aboutCopy").innerHTML=paragraphs.map(text=>{
-      const safe=esc(text).replace(/\n/g,"<br>");
-      const match=safe.match(/^(Das Besondere an (?:Aufwind|uns):)([\s\S]*)$/i);
-      return `<p>${match?`<strong>${match[1]}</strong>${match[2]}`:safe}</p>`;
-    }).join("");
+  const paragraphs=a.body.split(/\n\s*\n/).map(v=>v.trim()).filter(Boolean);
+  const renderedBody=paragraphs.map(text=>{
+    const safe=esc(text).replace(/\n/g,"<br>");
+    const match=safe.match(/^(Das Besondere an (?:Aufwind|uns):)([\s\S]*)$/i);
+    return `<p>${match?`<strong>${match[1]}</strong>${match[2]}`:safe}</p>`;
+  }).join("");
+  if($("aboutCopy")) $("aboutCopy").innerHTML=renderedBody;
+
+  // Der Willkommensbildschirm nutzt exakt denselben Über-Aufwind-Inhalt
+  // wie der Menüpunkt. So gibt es keine zweite, verkürzte Textfassung.
+  if($("welcomeAboutTitle")) $("welcomeAboutTitle").textContent=a.title;
+  if($("welcomeAboutTagline")){
+    $("welcomeAboutTagline").textContent=a.tagline;
+    $("welcomeAboutTagline").hidden=!a.tagline;
   }
+  if($("welcomeAboutCopy")) $("welcomeAboutCopy").innerHTML=renderedBody;
 }
 
 function populateAboutSettingsForm(settings={}){
