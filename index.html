@@ -11,12 +11,12 @@
   <meta name="apple-mobile-web-app-title" content="Aufwind">
   <meta name="description" content="Aufwind – Good News aus aller Welt. Positive Nachrichten kompakt, transparent und nachvollziehbar.">
   <title>Aufwind – Good News aus aller Welt</title>
-  <link rel="manifest" href="manifest.json?v=89">
+  <link rel="manifest" href="manifest.json?v=90">
   <link rel="icon" type="image/png" sizes="32x32" href="aufwind-favicon-32.png">
   <link rel="icon" type="image/png" sizes="192x192" href="aufwind-icon-192.png">
   <link rel="icon" type="image/png" sizes="512x512" href="aufwind-icon-512.png">
   <link rel="apple-touch-icon" sizes="180x180" href="aufwind-apple-touch-icon.png">
-  <link rel="stylesheet" href="style.css?v=89">
+  <link rel="stylesheet" href="style.css?v=90">
 </head>
 <body>
 <header class="appbar">
@@ -40,7 +40,7 @@
         <span class="menu-chevron" aria-hidden="true">›</span>
       </button>
         <button id="accountBtn" type="button"><span>↪</span><span id="accountBtnLabel">Anmelden</span></button>
-        <div class="app-build-label" aria-label="App-Version">Aufwind · Build 89</div>
+        <div class="app-build-label" aria-label="App-Version">Aufwind · Build 90</div>
       </div>
       <button class="icon-btn slide-actions-toggle-btn" id="slideActionsToggleBtn" type="button" aria-label="Meldungsaktionen öffnen" aria-expanded="false" aria-controls="slideQuickActions">＋</button>
       <div class="slide-quick-actions" id="slideQuickActions" hidden>
@@ -251,17 +251,49 @@
     </div>
   </dialog>
 
-  <dialog id="analyticsConsentDialog" class="analytics-consent-dialog" aria-labelledby="analyticsConsentTitle" aria-describedby="analyticsConsentText">
-    <div class="analytics-consent-inner">
-      <img class="analytics-consent-logo" src="aufwind-logo.png" alt="" aria-hidden="true">
-      <div class="eyebrow">Aufwind verbessern</div>
-      <h2 id="analyticsConsentTitle">Anonyme Nutzungsstatistik erlauben?</h2>
-      <p id="analyticsConsentText">Hilf uns zu verstehen, wie Aufwind genutzt wird. Wenn Du zustimmst, erfassen wir pseudonym, ob die App genutzt und ob Meldungen gemerkt oder geteilt werden. Name und E-Mail-Adresse werden nicht mit diesen Statistikdaten verknüpft.</p>
-      <p class="analytics-consent-note">Die Teilnahme ist freiwillig. Du kannst Deine Entscheidung jederzeit unter <strong>Einstellungen → Nutzungsstatistik</strong> ändern. Redaktionskonten werden nicht erfasst.</p>
-      <div class="analytics-consent-actions">
-        <button class="secondary consent-choice" id="analyticsConsentDeclineBtn" type="button">Nein, danke</button>
-        <button class="primary consent-choice" id="analyticsConsentAllowBtn" type="button">Erlauben</button>
+  <dialog id="analyticsConsentDialog" class="analytics-consent-dialog welcome-dialog" aria-labelledby="analyticsConsentTitle">
+    <div class="analytics-consent-inner welcome-inner">
+      <img class="analytics-consent-logo welcome-logo" src="aufwind-logo.png" alt="" aria-hidden="true">
+      <h2 id="analyticsConsentTitle">Herzlich willkommen bei Aufwind.</h2>
+      <p class="welcome-lead">Schön, dass Du da bist.</p>
+
+      <div class="welcome-accordion" id="welcomeAccordion">
+        <section class="welcome-item">
+          <button class="welcome-toggle" type="button" aria-expanded="false" aria-controls="welcomeAboutPanel">
+            <span><strong>Über Aufwind</strong><small>Wofür wir stehen</small></span><span class="welcome-chevron" aria-hidden="true">⌄</span>
+          </button>
+          <div class="welcome-panel" id="welcomeAboutPanel" hidden>
+            <p>Aufwind macht positive Entwicklungen sichtbar, ohne Probleme schönzureden. Jede Meldung verweist auf nachvollziehbare Quellen. Und wenn Du selbst eine gute Nachricht findest, kannst Du sie direkt einreichen.</p>
+          </div>
+        </section>
+
+        <section class="welcome-item">
+          <button class="welcome-toggle" type="button" aria-expanded="false" aria-controls="welcomeHowPanel">
+            <span><strong>So funktioniert Aufwind</strong><small>Drei Dinge für den Start</small></span><span class="welcome-chevron" aria-hidden="true">⌄</span>
+          </button>
+          <div class="welcome-panel welcome-how" id="welcomeHowPanel" hidden>
+            <p><span aria-hidden="true">↕</span><span>Wische durch die Meldungen.</span></p>
+            <p><span aria-hidden="true">＋</span><span>Das Plus öffnet Aktionen zur aktuellen Meldung.</span></p>
+            <p><span aria-hidden="true">🕊</span><span>Das Symbol oben links bringt Dich zum heutigen Tag.</span></p>
+          </div>
+        </section>
+
+        <section class="welcome-item">
+          <button class="welcome-toggle" type="button" aria-expanded="false" aria-controls="welcomeAnalyticsPanel">
+            <span><strong>Nutzungsstatistik</strong><small id="welcomeAnalyticsStatus">Standardmäßig ausgeschaltet</small></span><span class="welcome-chevron" aria-hidden="true">⌄</span>
+          </button>
+          <div class="welcome-panel" id="welcomeAnalyticsPanel" hidden>
+            <p id="analyticsConsentText">Wenn Du zustimmst, erfassen wir pseudonym, ob Aufwind genutzt und ob Meldungen gemerkt oder geteilt werden. Name und E-Mail-Adresse werden nicht mit diesen Statistikdaten verknüpft.</p>
+            <p class="analytics-consent-note">Die Teilnahme ist freiwillig und kann jederzeit unter <strong>Einstellungen → Nutzungsstatistik</strong> geändert werden.</p>
+            <div class="analytics-consent-actions">
+              <button class="secondary consent-choice" id="analyticsConsentDeclineBtn" type="button">Nein, danke</button>
+              <button class="primary consent-choice" id="analyticsConsentAllowBtn" type="button">Erlauben</button>
+            </div>
+          </div>
+        </section>
       </div>
+
+      <button class="primary welcome-continue" id="welcomeContinueBtn" type="button">Los geht's</button>
     </div>
   </dialog>
 
@@ -315,7 +347,7 @@
         <p>Aufwind speichert auf dem Gerät Einstellungen, gemerkte Meldungen, einen zwischengespeicherten Nachrichtenfeed sowie für die PWA technisch notwendige Cache-Daten. Diese Speicherung ist erforderlich, um ausdrücklich gewünschte App-Funktionen, Einstellungen und die Offline-/Update-Funktion bereitzustellen. Soweit die Speicherung hierfür unbedingt erforderlich ist, erfolgt sie nach § 25 Abs. 2 Nr. 2 TDDDG.</p>
 
         <h4>6. Freiwillige Nutzungsstatistik</h4>
-        <p>Beim ersten Start fragen wir ausdrücklich, ob die anonyme bzw. pseudonyme Nutzungsstatistik erlaubt werden darf. <strong>Bis zu einer Zustimmung bleibt sie ausgeschaltet.</strong> Bei Zustimmung wird lokal eine zufällige Gerätekennung erzeugt und zusammen mit Ereignissen wie täglicher aktiver Nutzung, Merken oder Teilen sowie gegebenenfalls der Kennung der betreffenden Meldung an Supabase übertragen. Name und E-Mail-Adresse werden diesen Statistikereignissen nicht beigefügt. Die Entscheidung kann jederzeit in den Einstellungen geändert werden; Redaktionskonten werden nicht erfasst.</p>
+        <p>Die freiwillige Nutzungsstatistik ist standardmäßig ausgeschaltet. Nach der ersten Anmeldung eines neu erstellten Kontos wird sie im Willkommensbildschirm erklärt. Bei Zustimmung wird lokal eine zufällige Gerätekennung erzeugt und zusammen mit Ereignissen wie täglicher aktiver Nutzung, Merken oder Teilen sowie gegebenenfalls der Kennung der betreffenden Meldung an Supabase übertragen. Name und E-Mail-Adresse werden diesen Statistikereignissen nicht beigefügt. Die Entscheidung kann jederzeit in den Einstellungen geändert werden.</p>
         <p>Rechtsgrundlage ist deine Einwilligung nach Art. 6 Abs. 1 lit. a DSGVO und – soweit Informationen auf deinem Gerät gespeichert oder ausgelesen werden – § 25 Abs. 1 TDDDG. Du kannst die Einwilligung jederzeit in den Einstellungen widerrufen. Danach werden keine neuen Statistikereignisse mehr übertragen und die lokale Statistikkennung wird vom Gerät gelöscht. Die Rechtmäßigkeit der bis zum Widerruf erfolgten Verarbeitung bleibt unberührt.</p>
 
         <h4>7. Push-Benachrichtigungen</h4>
@@ -1011,6 +1043,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="app.js?v=89"></script>
+  <script src="app.js?v=90"></script>
 </body>
 </html>

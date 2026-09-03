@@ -2,6 +2,15 @@ AUFWIND – GOOD NEWS AUS ALLER WELT
 =================================
 
 
+BUILD 90 – WILLKOMMEN NACH REGISTRIERUNG
+---------------------------------------
+- Der bisherige Erststart-Dialog für „Über Aufwind“/Nutzungsstatistik wurde durch einen kompakten Willkommensbildschirm ersetzt.
+- Er erscheint nur nach der ersten Anmeldung eines neu registrierten Kontos.
+- Drei aufklappbare Bereiche: „Über Aufwind“, „So funktioniert Aufwind“ und „Nutzungsstatistik“; immer nur ein Bereich ist gleichzeitig geöffnet.
+- Die Seite ist auf eine Bildschirmhöhe ausgelegt und benötigt im normalen mobilen Layout kein Scrollen.
+- Die Nutzungsstatistik bleibt ohne ausdrückliche Zustimmung ausgeschaltet und kann später in den Einstellungen geändert werden.
+- Interne Hinweise zu Redaktionskonten wurden aus den nutzerseitigen Datenschutz-/Einwilligungstexten entfernt.
+
 BUILD 85 – UX-/REDAKTIONSRUNDE
 -----------------------------
 - App-Update steht in den Nutzereinstellungen ganz oben.
@@ -15,7 +24,7 @@ BUILD 85 – UX-/REDAKTIONSRUNDE
 - Beitragseditor: Priorität → Status → geplante Veröffentlichung → Kategorie; Quellen stehen direkt unter dem Kurztext.
 - Dunkle Menüs haben jetzt deutlich getrennte Hintergrund- und Buttonflächen.
 
-Stand dieses Pakets: Build 89
+Stand dieses Pakets: Build 90
 
 Aufwind ist eine installierbare Web-App/PWA für positive, redaktionell geprüfte Nachrichten. Die Leseransicht ist mobil und slide-basiert; Redaktion, Nutzerkonten, Push-Funktionen und App-Einstellungen sind über Supabase angebunden.
 

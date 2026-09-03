@@ -1096,33 +1096,82 @@ $("searchBtn").onclick = runMenuAction(openSearch);
 $("archiveBtn").onclick = runMenuAction(openArchive);
 $("favoritesBtn").onclick = runMenuAction(openFavorites);
 
-// ---------------- EINWILLIGUNG NUTZUNGSSTATISTIK ----------------
+// ---------------- WILLKOMMEN / NUTZUNGSSTATISTIK ----------------
 function analyticsConsentDecision(){
   try{return localStorage.getItem(ANALYTICS_CONSENT_KEY)||""}catch{return ""}
 }
 function rememberAnalyticsConsent(value){
   try{localStorage.setItem(ANALYTICS_CONSENT_KEY,value)}catch{}
 }
-async function maybeOpenAnalyticsConsent(){
+function updateWelcomeAnalyticsStatus(){
+  const status=$("welcomeAnalyticsStatus");
+  if(!status)return;
+  const decision=analyticsConsentDecision();
+  if(decision==="allowed" || userPrefs.analytics){status.textContent="Erlaubt";return;}
+  if(decision==="declined"){status.textContent="Ausgeschaltet";return;}
+  status.textContent="Standardmäßig ausgeschaltet";
+}
+function setupWelcomeAccordion(){
+  document.querySelectorAll("#welcomeAccordion .welcome-toggle").forEach(btn=>{
+    if(btn.dataset.bound==="1")return;
+    btn.dataset.bound="1";
+    btn.addEventListener("click",()=>{
+      const targetId=btn.getAttribute("aria-controls");
+      const target=targetId?$(targetId):null;
+      const willOpen=btn.getAttribute("aria-expanded")!=="true";
+      document.querySelectorAll("#welcomeAccordion .welcome-toggle").forEach(other=>{
+        other.setAttribute("aria-expanded","false");
+        const panelId=other.getAttribute("aria-controls");
+        const panel=panelId?$(panelId):null;
+        if(panel)panel.hidden=true;
+      });
+      if(willOpen){
+        btn.setAttribute("aria-expanded","true");
+        if(target)target.hidden=false;
+      }
+    });
+  });
+}
+function accountNeedsWelcome(session){
+  return Boolean(session?.user?.user_metadata?.aufwind_welcome_pending===true);
+}
+async function markAccountWelcomeSeen(){
+  if(!configured || !db)return;
+  try{
+    const {data:{session}}=await db.auth.getSession();
+    if(!session || !accountNeedsWelcome(session))return;
+    await db.auth.updateUser({data:{
+      aufwind_welcome_pending:false,
+      aufwind_welcome_seen_at:new Date().toISOString()
+    }});
+  }catch(err){
+    console.warn("Willkommensstatus konnte nicht gespeichert werden:",err);
+  }
+}
+async function maybeOpenAnalyticsConsent(sessionOverride=null){
   if(!analyticsConsentDialog || analyticsConsentDialog.open) return;
   if(passwordRecoveryActive || passwordRecoveryDialog?.open) return;
   let displayPreview=false;
-  try{displayPreview=new URL(location.href).searchParams.get("displayPreview")==="1"}catch{}
+  let welcomePreview=false;
+  try{
+    const params=new URL(location.href).searchParams;
+    displayPreview=params.get("displayPreview")==="1";
+    welcomePreview=params.get("welcomePreview")==="1";
+  }catch{}
   if(displayPreview) return;
 
-  // Wer die Statistik in einer früheren Version bereits aktiv eingeschaltet hat,
-  // hat schon freiwillig zugestimmt und wird nicht erneut gefragt.
-  if(userPrefs.analytics && !analyticsConsentDecision()) rememberAnalyticsConsent("allowed");
-  if(analyticsConsentDecision()) return;
-
-  // Redaktionskonten werden ohnehin nicht erfasst und benötigen daher keinen Dialog.
-  if(configured && db){
-    try{
-      const {data:{session}}=await db.auth.getSession();
-      if(session && await sessionIsAdmin(session)) return;
-    }catch{}
+  let session=sessionOverride;
+  if(!session && configured && db){
+    try{({data:{session}}=await db.auth.getSession())}catch{}
   }
+  if(!welcomePreview && !accountNeedsWelcome(session)) return;
 
+  // Eine frühere freiwillige Entscheidung auf diesem Gerät bleibt erhalten.
+  if(userPrefs.analytics && !analyticsConsentDecision()) rememberAnalyticsConsent("allowed");
+  updateWelcomeAnalyticsStatus();
+  setupWelcomeAccordion();
+  document.querySelectorAll("#welcomeAccordion .welcome-toggle").forEach(btn=>btn.setAttribute("aria-expanded","false"));
+  document.querySelectorAll("#welcomeAccordion .welcome-panel").forEach(panel=>panel.hidden=true);
   document.documentElement.classList.add("analytics-consent-active");
   analyticsConsentDialog.showModal();
 }
@@ -1134,7 +1183,7 @@ $("analyticsConsentAllowBtn")?.addEventListener("click",async()=>{
   rememberAnalyticsConsent("allowed");
   saveUserPreferences({...userPrefs,analytics:true});
   if($("prefAnalytics")) $("prefAnalytics").checked=true;
-  closeAnalyticsConsent();
+  updateWelcomeAnalyticsStatus();
   await trackDailyActive();
   showAppNotice("Nutzungsstatistik erlaubt.");
 });
@@ -1143,7 +1192,19 @@ $("analyticsConsentDeclineBtn")?.addEventListener("click",()=>{
   saveUserPreferences({...userPrefs,analytics:false});
   if($("prefAnalytics")) $("prefAnalytics").checked=false;
   clearLocalAnalyticsIdentifiers();
+  updateWelcomeAnalyticsStatus();
+  showAppNotice("Nutzungsstatistik bleibt ausgeschaltet.");
+});
+$("welcomeContinueBtn")?.addEventListener("click",async()=>{
+  // Ohne ausdrückliche Zustimmung bleibt die Statistik ausgeschaltet.
+  if(!analyticsConsentDecision() && !userPrefs.analytics){
+    saveUserPreferences({...userPrefs,analytics:false});
+    if($("prefAnalytics")) $("prefAnalytics").checked=false;
+    clearLocalAnalyticsIdentifiers();
+  }
+  await markAccountWelcomeSeen();
   closeAnalyticsConsent();
+  showAppNotice("Willkommen bei Aufwind.");
 });
 analyticsConsentDialog?.addEventListener("cancel",e=>e.preventDefault());
 
@@ -1882,7 +1943,10 @@ $("settingsRegisterForm")?.addEventListener("submit",async(e)=>{
     const {data,error}=await db.auth.signUp({
       email,
       password,
-      options:{emailRedirectTo:redirectUrl}
+      options:{
+        emailRedirectTo:redirectUrl,
+        data:{aufwind_welcome_pending:true,aufwind_welcome_version:1}
+      }
     });
     if(error)throw error;
     $("settingsRegisterPassword").value="";
@@ -1893,6 +1957,9 @@ $("settingsRegisterForm")?.addEventListener("submit",async(e)=>{
       showAppNotice("Konto erstellt.");
       await refreshSettingsAccount();
       await syncPushPreferencesForCurrentAccount().catch(()=>{});
+      if(settingsDialog?.open) settingsDialog.close();
+      closeMainMenu();
+      setTimeout(()=>void maybeOpenAnalyticsConsent(data.session),120);
     }else{
       if(msg)msg.textContent="Konto erstellt. Bitte bestätige jetzt deine E-Mail-Adresse über den Link in deinem Postfach. Danach kannst du dich anmelden.";
       showAppNotice("Konto erstellt.");
@@ -2743,6 +2810,7 @@ if(db){
     $("adminBtn").hidden=!currentUserIsAdmin;
     if($("accountBtnLabel")) $("accountBtnLabel").textContent=session?"Konto":"Anmelden";
     if(passwordRecoveryActive && session)setTimeout(openPasswordRecovery,0);
+    if(session)setTimeout(()=>void maybeOpenAnalyticsConsent(session),140);
   }).catch(()=>{
     currentAdminSession=null;
     currentUserIsAdmin=false;
@@ -2763,6 +2831,7 @@ if(db){
       if(userPreferencesDialog?.open)await refreshPasswordSettings();
       await syncPushPreferencesForCurrentAccount(session).catch(()=>{});
       if(!passwordRecoveryCompleted && (event==="PASSWORD_RECOVERY"||passwordRecoveryActive))openPasswordRecovery();
+      else if(session && (event==="SIGNED_IN" || event==="USER_UPDATED" || event==="INITIAL_SESSION")) setTimeout(()=>void maybeOpenAnalyticsConsent(session),120);
     },0);
   });
 }else{
@@ -2793,20 +2862,10 @@ document.addEventListener("visibilitychange",()=>{
   if(!document.hidden) void fetchPublicNews();
 });
 
-// Beim ersten Start dieser Installation erscheint „Über uns“ einmal vor dem Lesen.
-queueMicrotask(()=>{
-  let seen=false;
-  let displayPreview=false;
-  try{
-    seen=localStorage.getItem(aboutSeenKey())==="1";
-    displayPreview=new URL(location.href).searchParams.get("displayPreview")==="1";
-  }catch{}
-  if(!seen && !displayPreview){
-    openAboutUs({onboarding:true});
-  }else if(!displayPreview){
-    setTimeout(()=>void maybeOpenAnalyticsConsent(),180);
-  }
-});
+// Der Willkommensbildschirm erscheint nur nach der ersten Anmeldung eines neu
+// registrierten Kontos. Ohne Konto bleibt die freiwillige Nutzungsstatistik aus,
+// bis sie in den Einstellungen ausdrücklich aktiviert wird.
+queueMicrotask(()=>setTimeout(()=>void maybeOpenAnalyticsConsent(),180));
 
 // Build 37 – PWA-Update-Reparatur für installierte Android-Apps.
 // Der Service Worker hat ab jetzt eine STABILE URL (sw.js). Beim manuellen Update
@@ -2815,7 +2874,7 @@ queueMicrotask(()=>{
 // selbst alle offenen Good-News-Fenster auf den neuen Build führen. So hängt die
 // installierte PWA nicht mehr an einer alten Cache-/Worker-Version fest.
 // Build 35 – adaptive Überschriften (max. 4 Zeilen) und stärkerer Lesbarkeitsverlauf.
-const AUFWIND_BUILD=89;
+const AUFWIND_BUILD=90;
 let aufwindSwRegistration=null;
 let aufwindReloading=false;
 
