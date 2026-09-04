@@ -2,6 +2,17 @@ AUFWIND – GOOD NEWS AUS ALLER WELT
 =================================
 
 
+BUILD 96 – KOMPAKTER ERSTSTART MIT EINSTELLUNGEN
+------------------------------------------------
+- Das Erststart-Onboarding besteht jetzt aus zwei einfachen Seiten ohne Scrollzwang: zuerst der vollständige „Über Aufwind“-Text, danach eine kompakte Grundeinstellung.
+- Darstellung wird als Zweipunkt-Regler „Hell ↔ Dunkel“ gewählt.
+- Textgröße wird als Dreipunkt-Regler „Klein – Mittel – Groß“ gewählt.
+- Datensparmodus, anonyme Nutzungsstatistik und Push-Benachrichtigungen werden jeweils nur als „Aus/An“-Schalter gezeigt.
+- Push-Zeiten und Kategorien bleiben bewusst aus dem Erststart heraus und werden später in den normalen Einstellungen gewählt.
+- Die Auswahl wird beim Tippen auf „Los geht's“ in die bestehenden Aufwind-Einstellungen übernommen; Push fragt nur bei aktivierter Auswahl nach der Systemberechtigung.
+- Anonyme Browser-Besucher bekommen kein Onboarding. Es erscheint einmal beim ersten Start der installierten App/PWA oder nach einer neuen Registrierung auf diesem Gerät.
+
+
 BUILD 95 – WILLKOMMEN PRO APP-INSTALLATION
 ------------------------------------------
 - Der Willkommensbildschirm ist nicht mehr an Registrierung oder Benutzerkonto gekoppelt.
@@ -39,14 +50,15 @@ BUILD 85 – UX-/REDAKTIONSRUNDE
 - Beitragseditor: Priorität → Status → geplante Veröffentlichung → Kategorie; Quellen stehen direkt unter dem Kurztext.
 - Dunkle Menüs haben jetzt deutlich getrennte Hintergrund- und Buttonflächen.
 
-Stand dieses Pakets: Build 95
+Stand dieses Pakets: Build 98
 
 Aufwind ist eine installierbare Web-App/PWA für positive, redaktionell geprüfte Nachrichten. Die Leseransicht ist mobil und slide-basiert; Redaktion, Nutzerkonten, Push-Funktionen und App-Einstellungen sind über Supabase angebunden.
 
 WICHTIGSTE FUNKTIONEN
 ---------------------
 - Vollbild-News-Feed mit Swipe-Navigation
-- Kategorien, Topmeldungen und historische Meldungen „Was war....“
+- Kategorien, Topmeldungen und historische Meldungen „Was war...“
+- Rubriken: Kultur & Unterhaltung, Natur & Tiere, rund um die Welt, Wirtschaft & Politik, Was war..., Sport, Medizin & Technologie und Wissenschaft.
 - mehrere Textquellen und getrennte Bildquellen
 - Symbolbild-Kennzeichnung
 - Suche mit Treffer-Hervorhebung

@@ -26,12 +26,14 @@ let currentAdminSession = null;
 const USER_PREFS_KEY="goodNewsUserPreferencesV1";
 const ANALYTICS_CONSENT_KEY="aufwindAnalyticsConsentV1";
 const AUFWIND_CATEGORIES=[
-  "Was war....",
-  "Tiere",
-  "Sport",
+  "Kultur & Unterhaltung",
+  "Natur & Tiere",
+  "rund um die Welt",
   "Wirtschaft & Politik",
-  "Fortschritt, Medizin & Technologie",
-  "Kultur/Natur"
+  "Was war...",
+  "Sport",
+  "Medizin & Technologie",
+  "Wissenschaft"
 ];
 const USER_PREF_DEFAULTS={
   appearance:"dark",
@@ -42,24 +44,28 @@ const USER_PREF_DEFAULTS={
   notifyMorning:true,
   notifyEvening:true,
   notifyCategories:[
-    "Was war....",
-    "Tiere",
-    "Sport",
+    "Kultur & Unterhaltung",
+    "Natur & Tiere",
+    "rund um die Welt",
     "Wirtschaft & Politik",
-    "Fortschritt, Medizin & Technologie",
-    "Kultur/Natur"
+    "Was war...",
+    "Sport",
+    "Medizin & Technologie",
+    "Wissenschaft"
   ]
 };
 let userPrefs={...USER_PREF_DEFAULTS};
 
 function migrateNotifyCategoryLabel(value){
   const c=String(value||"").trim();
-  if(["Was war....","Was war...","Damals"].includes(c))return "Was war....";
-  if(["Tiere","Tiere & Natur"].includes(c))return "Tiere";
+  if(["Was war...","Was war....","Damals"].includes(c))return "Was war...";
   if(c==="Sport")return "Sport";
-  if(["Wirtschaft & Politik","Wirtschaft","Politik"].includes(c))return "Wirtschaft & Politik";
-  if(["Fortschritt, Medizin & Technologie","Fortschritt","Medizin","Technologie","Wissenschaft","Wirtschaft & Technologie","Politik, Fortschritt & Medizin"].includes(c))return "Fortschritt, Medizin & Technologie";
-  if(["Kultur/Natur","Kultur","Natur","Menschen","Kultur & Menschen"].includes(c))return "Kultur/Natur";
+  if(["Wirtschaft & Politik","Wirtschaft und Politik","Wirtschaft","Politik"].includes(c))return "Wirtschaft & Politik";
+  if(["Medizin & Technologie","Medizin und Technologie","Fortschritt, Medizin & Technologie","Fortschritt","Medizin","Technologie","Wirtschaft & Technologie","Politik, Fortschritt & Medizin"].includes(c))return "Medizin & Technologie";
+  if(["Wissenschaft","Science","Forschung"].includes(c))return "Wissenschaft";
+  if(["Kultur & Unterhaltung","Kultur und Unterhaltung","Unterhaltung","Entertainment","Film & Fernsehen","Film/Fernsehen","Kultur","Kultur & Menschen"].includes(c))return "Kultur & Unterhaltung";
+  if(["Natur & Tiere","Natur und Tiere","Tiere","Tiere & Natur","Natur"].includes(c))return "Natur & Tiere";
+  if(["rund um die Welt","Rund um die Welt","Welt","Menschen","International","Gesellschaft","Kultur/Natur"].includes(c))return "rund um die Welt";
   return c;
 }
 function readUserPreferences(){
@@ -227,7 +233,7 @@ function historicalTitle(title, yearsAgo){
   return years ? `Vor ${years} Jahren: ${event}` : event;
 }
 function displayCategory(item){
-  return item?.daily_slot==="damals" ? "Was war...." : categoryBucket(item);
+  return item?.daily_slot==="damals" ? "Was war..." : categoryBucket(item);
 }
 function displayTitle(item){
   return item?.daily_slot==="damals" ? historicalTitle(item?.title,item?.years_ago) : (item?.title||"");
@@ -235,12 +241,14 @@ function displayTitle(item){
 
 function categoryBucket(item={}){
   const c=String(item.category||"").trim();
-  if(item.daily_slot==="damals"||["Was war....","Was war...","Damals"].includes(c))return "Was war....";
-  if(["Tiere","Tiere & Natur"].includes(c))return "Tiere";
+  if(item.daily_slot==="damals"||["Was war...","Was war....","Damals"].includes(c))return "Was war...";
   if(c==="Sport")return "Sport";
-  if(["Wirtschaft & Politik","Wirtschaft","Politik"].includes(c))return "Wirtschaft & Politik";
-  if(["Fortschritt, Medizin & Technologie","Fortschritt","Medizin","Technologie","Wissenschaft","Wirtschaft & Technologie","Politik, Fortschritt & Medizin"].includes(c))return "Fortschritt, Medizin & Technologie";
-  if(["Kultur/Natur","Kultur","Natur","Menschen","Kultur & Menschen"].includes(c))return "Kultur/Natur";
+  if(["Wirtschaft & Politik","Wirtschaft und Politik","Wirtschaft","Politik"].includes(c))return "Wirtschaft & Politik";
+  if(["Medizin & Technologie","Medizin und Technologie","Fortschritt, Medizin & Technologie","Fortschritt","Medizin","Technologie","Wirtschaft & Technologie","Politik, Fortschritt & Medizin"].includes(c))return "Medizin & Technologie";
+  if(["Wissenschaft","Science","Forschung"].includes(c))return "Wissenschaft";
+  if(["Kultur & Unterhaltung","Kultur und Unterhaltung","Unterhaltung","Entertainment","Film & Fernsehen","Film/Fernsehen","Kultur","Kultur & Menschen"].includes(c))return "Kultur & Unterhaltung";
+  if(["Natur & Tiere","Natur und Tiere","Tiere","Tiere & Natur","Natur"].includes(c))return "Natur & Tiere";
+  if(["rund um die Welt","Rund um die Welt","Welt","Menschen","International","Gesellschaft","Kultur/Natur"].includes(c))return "rund um die Welt";
   return c;
 }
 
@@ -1097,17 +1105,58 @@ $("archiveBtn").onclick = runMenuAction(openArchive);
 $("favoritesBtn").onclick = runMenuAction(openFavorites);
 
 // ---------------- WILLKOMMEN BEI INSTALLIERTER APP ----------------
-const INSTALL_WELCOME_SEEN_KEY="aufwindInstallWelcomeSeenV1";
+const INSTALL_WELCOME_SEEN_KEY="aufwindInstallWelcomeSeenV2";
+const NEW_ACCOUNT_ONBOARDING_PENDING_KEY="aufwindNewAccountOnboardingPendingV1";
 function installWelcomeSeen(){
   try{return localStorage.getItem(INSTALL_WELCOME_SEEN_KEY)==="1"}catch{return false}
 }
 function rememberInstallWelcomeSeen(){
   try{localStorage.setItem(INSTALL_WELCOME_SEEN_KEY,"1")}catch{}
 }
+function newAccountOnboardingPending(){
+  try{return localStorage.getItem(NEW_ACCOUNT_ONBOARDING_PENDING_KEY)==="1"}catch{return false}
+}
+function markNewAccountOnboardingPending(){
+  try{localStorage.setItem(NEW_ACCOUNT_ONBOARDING_PENDING_KEY,"1")}catch{}
+}
+function clearNewAccountOnboardingPending(){
+  try{localStorage.removeItem(NEW_ACCOUNT_ONBOARDING_PENDING_KEY)}catch{}
+}
+function rememberAnalyticsConsent(value){
+  try{localStorage.setItem(ANALYTICS_CONSENT_KEY,String(value||"declined"))}catch{}
+}
 function isInstalledAppExperience(){
   // PWA/Play-Store-TWA laufen im Standalone-/Fullscreen-Modus. Ein späterer
   // nativer Wrapper kann AUFWIND_NATIVE_APP setzen, ohne die Logik umzubauen.
   return isStandaloneApp() || window.AUFWIND_NATIVE_APP===true;
+}
+function showWelcomeStep(step="about"){
+  const showSettings=step==="settings";
+  if($("welcomeAboutStep")) $("welcomeAboutStep").hidden=showSettings;
+  if($("welcomeSettingsStep")) $("welcomeSettingsStep").hidden=!showSettings;
+}
+function populateWelcomeSettings(prefs=userPrefs){
+  if($("welcomeAppearance")) $("welcomeAppearance").value=prefs.appearance==="light"?"0":"1";
+  if($("welcomeTextSize")) $("welcomeTextSize").value=({small:0,normal:1,large:2})[prefs.textSize]??1;
+  if($("welcomeDataSaver")) $("welcomeDataSaver").checked=Boolean(prefs.dataSaver);
+  if($("welcomeAnalytics")) $("welcomeAnalytics").checked=Boolean(prefs.analytics);
+  if($("welcomeNotifications")) $("welcomeNotifications").checked=Boolean(prefs.notifications);
+  const pushInput=$("welcomeNotifications");
+  if(pushInput && !pushSupported()){
+    pushInput.checked=false;
+    pushInput.disabled=true;
+  }
+}
+function collectWelcomeSettings(){
+  const sizeValue=Number($("welcomeTextSize")?.value??1);
+  return {
+    ...userPrefs,
+    appearance:Number($("welcomeAppearance")?.value??1)===0?"light":"dark",
+    textSize:sizeValue===0?"small":sizeValue===2?"large":"normal",
+    dataSaver:Boolean($("welcomeDataSaver")?.checked),
+    analytics:Boolean($("welcomeAnalytics")?.checked),
+    notifications:Boolean($("welcomeNotifications")?.checked)
+  };
 }
 async function maybeOpenInstallWelcome(){
   if(!analyticsConsentDialog || analyticsConsentDialog.open) return;
@@ -1120,9 +1169,18 @@ async function maybeOpenInstallWelcome(){
     welcomePreview=params.get("welcomePreview")==="1";
   }catch{}
   if(displayPreview) return;
-  if(!welcomePreview && !isInstalledAppExperience()) return;
-  if(!welcomePreview && installWelcomeSeen()) return;
+  if(!welcomePreview && installWelcomeSeen()){
+    clearNewAccountOnboardingPending();
+    return;
+  }
+  // Anonyme Browser-Besucher sehen keinen Erststart. Geöffnet wird beim ersten
+  // Start einer installierten App/PWA oder nach einer neuen Registrierung auf
+  // diesem Gerät. Danach erscheint das Onboarding auf diesem Gerät nicht erneut.
+  if(!welcomePreview && !isInstalledAppExperience() && !newAccountOnboardingPending()) return;
 
+  populateWelcomeSettings(userPrefs);
+  showWelcomeStep("about");
+  if($("welcomeSettingsMessage")) $("welcomeSettingsMessage").textContent="";
   document.documentElement.classList.add("analytics-consent-active");
   analyticsConsentDialog.showModal();
 }
@@ -1130,10 +1188,57 @@ function closeInstallWelcome(){
   document.documentElement.classList.remove("analytics-consent-active");
   if(analyticsConsentDialog?.open) analyticsConsentDialog.close();
 }
-$("welcomeContinueBtn")?.addEventListener("click",()=>{
-  rememberInstallWelcomeSeen();
-  closeInstallWelcome();
-  showAppNotice("Willkommen bei Aufwind.");
+$("welcomeNextBtn")?.addEventListener("click",()=>{
+  populateWelcomeSettings(userPrefs);
+  showWelcomeStep("settings");
+});
+$("welcomeContinueBtn")?.addEventListener("click",async()=>{
+  const button=$("welcomeContinueBtn");
+  const msg=$("welcomeSettingsMessage");
+  const previous={...userPrefs,notifyCategories:[...(userPrefs.notifyCategories||[])]};
+  const next=collectWelcomeSettings();
+  if(button) button.disabled=true;
+  if(msg) msg.textContent="Einstellungen werden übernommen …";
+  let pushWarning="";
+  try{
+    if(next.notifications){
+      try{
+        if(!configured || !pushSupported()) throw new Error("Push wird auf diesem Gerät nicht unterstützt.");
+        const existing=await getPushSubscription();
+        if(!existing || Notification.permission!=="granted") await enablePush(next);
+        else await savePushSubscription(existing,next);
+        localStorage.setItem("goodnews_push_enabled","1");
+      }catch(err){
+        next.notifications=false;
+        if($("welcomeNotifications")) $("welcomeNotifications").checked=false;
+        localStorage.setItem("goodnews_push_enabled","0");
+        pushWarning="Push konnte nicht aktiviert werden und bleibt aus.";
+      }
+    }else{
+      if(previous.notifications){
+        const existing=await getPushSubscription().catch(()=>null);
+        if(existing) await disablePush().catch(()=>{});
+      }
+      localStorage.setItem("goodnews_push_enabled","0");
+    }
+
+    saveUserPreferences(next);
+    rememberAnalyticsConsent(next.analytics?"allowed":"declined");
+    if(!next.analytics){
+      clearLocalAnalyticsIdentifiers();
+    }else if(!previous.analytics){
+      await trackDailyActive();
+    }
+    if(allNews.length) renderFeed({preservePosition:true});
+    rememberInstallWelcomeSeen();
+    clearNewAccountOnboardingPending();
+    closeInstallWelcome();
+    showAppNotice(pushWarning||"Willkommen bei Aufwind.");
+  }catch(err){
+    if(msg) msg.textContent=err?.message||String(err);
+  }finally{
+    if(button) button.disabled=false;
+  }
 });
 analyticsConsentDialog?.addEventListener("cancel",e=>e.preventDefault());
 
@@ -1877,6 +1982,7 @@ $("settingsRegisterForm")?.addEventListener("submit",async(e)=>{
       }
     });
     if(error)throw error;
+    if(!installWelcomeSeen()) markNewAccountOnboardingPending();
     $("settingsRegisterPassword").value="";
     $("settingsRegisterPasswordConfirm").value="";
     markFormClean($("settingsRegisterForm"));
@@ -1887,6 +1993,7 @@ $("settingsRegisterForm")?.addEventListener("submit",async(e)=>{
       await syncPushPreferencesForCurrentAccount().catch(()=>{});
       if(settingsDialog?.open) settingsDialog.close();
       closeMainMenu();
+      setTimeout(()=>void maybeOpenInstallWelcome(),120);
 
     }else{
       if(msg)msg.textContent="Konto erstellt. Bitte bestätige jetzt deine E-Mail-Adresse über den Link in deinem Postfach. Danach kannst du dich anmelden.";
@@ -2649,7 +2756,7 @@ async function editArticle(id){
   if($("pexelsResults")){$("pexelsResults").innerHTML="";$("pexelsResults").hidden=true;}
   if($("pexelsMessage"))$("pexelsMessage").textContent="";
   $("newsId").value=n.id;$("publishedDate").value=n.published_date;
-  $("publishedTime").value=n.published_time?.slice(0,5)||"00:00";$("category").value=categoryBucket(n)||"Kultur/Natur";
+  $("publishedTime").value=n.published_time?.slice(0,5)||"00:00";$("category").value=categoryBucket(n)||"rund um die Welt";
   $("storyKey").value=n.story_key||"";$("title").value=n.title;$("summary").value=n.summary;
   if($("bylineName")) $("bylineName").value=n.byline_name||"";
   if($("bylineVisible")) $("bylineVisible").value=n.byline_visible?"true":"false";
@@ -2758,6 +2865,9 @@ if(db){
       if(userPreferencesDialog?.open)await refreshPasswordSettings();
       await syncPushPreferencesForCurrentAccount(session).catch(()=>{});
       if(!passwordRecoveryCompleted && (event==="PASSWORD_RECOVERY"||passwordRecoveryActive))openPasswordRecovery();
+      if(session && newAccountOnboardingPending() && !passwordRecoveryActive){
+        setTimeout(()=>void maybeOpenInstallWelcome(),120);
+      }
 
     },0);
   });
@@ -2789,9 +2899,9 @@ document.addEventListener("visibilitychange",()=>{
   if(!document.hidden) void fetchPublicNews();
 });
 
-// Der Willkommensbildschirm gehört zur Installation, nicht zum Benutzerkonto:
-// Browser-Besucher sehen sofort den Feed; eine installierte PWA/App sieht ihn
-// genau einmal beim ersten Start dieser Installation.
+// Erststart-Onboarding: anonyme Browser-Besucher sehen sofort den Feed.
+// Es erscheint einmal beim ersten Start einer installierten App/PWA oder nach
+// einer neuen Registrierung auf diesem Gerät.
 queueMicrotask(()=>setTimeout(()=>void maybeOpenInstallWelcome(),180));
 
 // Build 37 – PWA-Update-Reparatur für installierte Android-Apps.
@@ -2801,7 +2911,7 @@ queueMicrotask(()=>setTimeout(()=>void maybeOpenInstallWelcome(),180));
 // selbst alle offenen Good-News-Fenster auf den neuen Build führen. So hängt die
 // installierte PWA nicht mehr an einer alten Cache-/Worker-Version fest.
 // Build 35 – adaptive Überschriften (max. 4 Zeilen) und stärkerer Lesbarkeitsverlauf.
-const AUFWIND_BUILD=95;
+const AUFWIND_BUILD=98;
 let aufwindSwRegistration=null;
 let aufwindReloading=false;
 
@@ -3440,7 +3550,7 @@ async function setSubmissionStatus(id,status){
 async function acceptSubmission(id){
   const x=readerSubmissions.find(v=>String(v.id)===String(id));if(!x)return;
   resetEditor();
-  $("category").value=categoryBucket(x)||"Kultur/Natur";
+  $("category").value=categoryBucket(x)||"rund um die Welt";
   $("title").value=x.title;
   $("summary").value=x.story_text;
   $("sourcesEditor").innerHTML="";addSourceRow("Leserhinweis / Originalquelle",x.source_url);
@@ -3521,7 +3631,7 @@ function normalizeCandidateItem(item,category){
   item=item||{};
   const src=Array.isArray(item.sources)?item.sources:(item.source_url?[{name:item.source_name||"Quelle",url:item.source_url}]:[]);
   const canonicalCategory=categoryBucket({category});
-  const isHistory=canonicalCategory==="Was war....";
+  const isHistory=canonicalCategory==="Was war...";
   return {
     category:canonicalCategory,
     title:isHistory?historicalTitle(item.title,Number(item.years_ago)||null):(item.title||""),
@@ -3540,8 +3650,8 @@ function normalizeCandidateItem(item,category){
 
 // Kompatibilität mit älteren Dreier-Entwürfen.
 function normalizeTripleItem(item,slot){
-  const defaults={damals:"Was war....",fortschritt:"Fortschritt, Medizin & Technologie",heute:"Kultur/Natur"};
-  return normalizeCandidateItem(item,slot==="damals"?"Was war....":(item?.category||defaults[slot]));
+  const defaults={damals:"Was war...",fortschritt:"Medizin & Technologie",heute:"rund um die Welt"};
+  return normalizeCandidateItem(item,slot==="damals"?"Was war...":(item?.category||defaults[slot]));
 }
 
 function isCandidateBatch(payload){
@@ -3672,7 +3782,7 @@ function rowFromCandidate(x,group,raw,index){
     image_x:50,
     image_y:50,
     sources:n.sources,
-    daily_slot:canonicalCategory==="Was war...."?"damals":"none",
+    daily_slot:canonicalCategory==="Was war..."?"damals":"none",
     years_ago:n.years_ago,
     feel_good_text:null,
     updated_at:new Date().toISOString()

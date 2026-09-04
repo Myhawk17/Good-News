@@ -458,12 +458,14 @@ alter table public.push_subscriptions
   add column if not exists notify_morning boolean not null default true,
   add column if not exists notify_evening boolean not null default true,
   add column if not exists notify_categories text[] not null default array[
-    'Was war....',
-    'Tiere',
-    'Sport',
+    'Kultur & Unterhaltung',
+    'Natur & Tiere',
+    'rund um die Welt',
     'Wirtschaft & Politik',
-    'Fortschritt, Medizin & Technologie',
-    'Kultur/Natur'
+    'Was war...',
+    'Sport',
+    'Medizin & Technologie',
+    'Wissenschaft'
   ]::text[];
 
 
