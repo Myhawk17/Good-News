@@ -460,7 +460,7 @@ alter table public.push_subscriptions
   add column if not exists notify_categories text[] not null default array[
     'Kultur & Unterhaltung',
     'Natur & Tiere',
-    'rund um die Welt',
+    'Rund um die Welt',
     'Wirtschaft & Politik',
     'Was war...',
     'Sport',

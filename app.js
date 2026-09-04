@@ -28,7 +28,7 @@ const ANALYTICS_CONSENT_KEY="aufwindAnalyticsConsentV1";
 const AUFWIND_CATEGORIES=[
   "Kultur & Unterhaltung",
   "Natur & Tiere",
-  "rund um die Welt",
+  "Rund um die Welt",
   "Wirtschaft & Politik",
   "Was war...",
   "Sport",
@@ -46,7 +46,7 @@ const USER_PREF_DEFAULTS={
   notifyCategories:[
     "Kultur & Unterhaltung",
     "Natur & Tiere",
-    "rund um die Welt",
+    "Rund um die Welt",
     "Wirtschaft & Politik",
     "Was war...",
     "Sport",
@@ -58,14 +58,14 @@ let userPrefs={...USER_PREF_DEFAULTS};
 
 function migrateNotifyCategoryLabel(value){
   const c=String(value||"").trim();
+  if(["Kultur & Unterhaltung","Unterhaltung","Entertainment","Film & Fernsehen","Film/Fernsehen","Kultur","Kultur & Menschen","Kultur/Natur"].includes(c))return "Kultur & Unterhaltung";
+  if(["Natur & Tiere","Tiere","Tiere & Natur","Natur"].includes(c))return "Natur & Tiere";
+  if(["Rund um die Welt","Rund um die Welt.","Welt","International","Menschen","Gesellschaft"].includes(c))return "Rund um die Welt";
+  if(["Wirtschaft & Politik","Wirtschaft","Politik"].includes(c))return "Wirtschaft & Politik";
   if(["Was war...","Was war....","Damals"].includes(c))return "Was war...";
   if(c==="Sport")return "Sport";
-  if(["Wirtschaft & Politik","Wirtschaft und Politik","Wirtschaft","Politik"].includes(c))return "Wirtschaft & Politik";
-  if(["Medizin & Technologie","Medizin und Technologie","Fortschritt, Medizin & Technologie","Fortschritt","Medizin","Technologie","Wirtschaft & Technologie","Politik, Fortschritt & Medizin"].includes(c))return "Medizin & Technologie";
-  if(["Wissenschaft","Science","Forschung"].includes(c))return "Wissenschaft";
-  if(["Kultur & Unterhaltung","Kultur und Unterhaltung","Unterhaltung","Entertainment","Film & Fernsehen","Film/Fernsehen","Kultur","Kultur & Menschen"].includes(c))return "Kultur & Unterhaltung";
-  if(["Natur & Tiere","Natur und Tiere","Tiere","Tiere & Natur","Natur"].includes(c))return "Natur & Tiere";
-  if(["rund um die Welt","Rund um die Welt","Welt","Menschen","International","Gesellschaft","Kultur/Natur"].includes(c))return "rund um die Welt";
+  if(["Medizin & Technologie","Fortschritt, Medizin & Technologie","Fortschritt","Medizin","Technologie","Wirtschaft & Technologie","Politik, Fortschritt & Medizin"].includes(c))return "Medizin & Technologie";
+  if(["Wissenschaft","Forschung"].includes(c))return "Wissenschaft";
   return c;
 }
 function readUserPreferences(){
@@ -242,15 +242,16 @@ function displayTitle(item){
 function categoryBucket(item={}){
   const c=String(item.category||"").trim();
   if(item.daily_slot==="damals"||["Was war...","Was war....","Damals"].includes(c))return "Was war...";
+  if(["Kultur & Unterhaltung","Unterhaltung","Entertainment","Film & Fernsehen","Film/Fernsehen","Kultur","Kultur & Menschen","Kultur/Natur"].includes(c))return "Kultur & Unterhaltung";
+  if(["Natur & Tiere","Tiere","Tiere & Natur","Natur"].includes(c))return "Natur & Tiere";
+  if(["Rund um die Welt","Rund um die Welt.","Welt","International","Menschen","Gesellschaft"].includes(c))return "Rund um die Welt";
+  if(["Wirtschaft & Politik","Wirtschaft","Politik"].includes(c))return "Wirtschaft & Politik";
   if(c==="Sport")return "Sport";
-  if(["Wirtschaft & Politik","Wirtschaft und Politik","Wirtschaft","Politik"].includes(c))return "Wirtschaft & Politik";
-  if(["Medizin & Technologie","Medizin und Technologie","Fortschritt, Medizin & Technologie","Fortschritt","Medizin","Technologie","Wirtschaft & Technologie","Politik, Fortschritt & Medizin"].includes(c))return "Medizin & Technologie";
-  if(["Wissenschaft","Science","Forschung"].includes(c))return "Wissenschaft";
-  if(["Kultur & Unterhaltung","Kultur und Unterhaltung","Unterhaltung","Entertainment","Film & Fernsehen","Film/Fernsehen","Kultur","Kultur & Menschen"].includes(c))return "Kultur & Unterhaltung";
-  if(["Natur & Tiere","Natur und Tiere","Tiere","Tiere & Natur","Natur"].includes(c))return "Natur & Tiere";
-  if(["rund um die Welt","Rund um die Welt","Welt","Menschen","International","Gesellschaft","Kultur/Natur"].includes(c))return "rund um die Welt";
+  if(["Medizin & Technologie","Fortschritt, Medizin & Technologie","Fortschritt","Medizin","Technologie","Wirtschaft & Technologie","Politik, Fortschritt & Medizin"].includes(c))return "Medizin & Technologie";
+  if(["Wissenschaft","Forschung"].includes(c))return "Wissenschaft";
   return c;
 }
+
 
 
 const getFavorites = () => {
@@ -974,7 +975,7 @@ function openStory(storyKey) {
   const items = allNews.filter(n => n.story_key === storyKey).sort((a,b)=>new Date(b.publish_at)-new Date(a.publish_at));
   const html = items.map(n=>`
     <div class="result-item"><button data-jump="${n.id}">
-      <div class="result-meta">${esc(fmtDateShort(n.published_date))} · ${esc(n.category)}</div>
+      <div class="result-meta">${esc(fmtDateShort(n.published_date))} · ${esc(displayCategory(n))}</div>
       <h4>${esc(n.title)}</h4>
       <div class="muted">${esc(n.summary.slice(0,160))}${n.summary.length>160?"…":""}</div>
     </button></div>`).join("");
@@ -1001,7 +1002,7 @@ function openSearch() {
     });
     result.innerHTML = filtered.slice(0,60).map(n=>`
       <div class="result-item"><button data-jump="${n.id}">
-        <div class="result-meta">${esc(fmtDateShort(n.published_date))} · ${esc(n.category)}</div>
+        <div class="result-meta">${esc(fmtDateShort(n.published_date))} · ${esc(displayCategory(n))}</div>
         <h4>${esc(n.title)}</h4>
       </button></div>`).join("") || `<p class="muted">Keine Treffer.</p>`;
     result.querySelectorAll("[data-jump]").forEach(b=>b.onclick=()=>scrollToNews(b.dataset.jump,{highlightTerm:input.value.trim()}));
@@ -1158,6 +1159,30 @@ function collectWelcomeSettings(){
     notifications:Boolean($("welcomeNotifications")?.checked)
   };
 }
+// Die sichtbaren Grundeinstellungen im Erststart sind gleichzeitig eine Live-Vorschau.
+// So sehen Nutzer direkt, was Hell/Dunkel, Textgröße und Datensparmodus bewirken.
+// Diese drei rein lokalen Einstellungen werden sofort gespeichert; Push bleibt bewusst
+// beim abschließenden „Los geht's“, weil dafür ggf. eine Systemberechtigung nötig ist.
+function previewAndSaveWelcomeAppearance(){
+  const next=collectWelcomeSettings();
+  saveUserPreferences({
+    ...userPrefs,
+    appearance:next.appearance,
+    textSize:next.textSize,
+    dataSaver:next.dataSaver
+  });
+}
+function saveWelcomeAnalyticsChoice(){
+  const enabled=Boolean($("welcomeAnalytics")?.checked);
+  const wasEnabled=Boolean(userPrefs.analytics);
+  saveUserPreferences({...userPrefs,analytics:enabled});
+  rememberAnalyticsConsent(enabled?"allowed":"declined");
+  if(!enabled){
+    clearLocalAnalyticsIdentifiers();
+  }else if(!wasEnabled){
+    trackDailyActive().catch(()=>{});
+  }
+}
 async function maybeOpenInstallWelcome(){
   if(!analyticsConsentDialog || analyticsConsentDialog.open) return;
   if(passwordRecoveryActive || passwordRecoveryDialog?.open) return;
@@ -1192,6 +1217,12 @@ $("welcomeNextBtn")?.addEventListener("click",()=>{
   populateWelcomeSettings(userPrefs);
   showWelcomeStep("settings");
 });
+["welcomeAppearance","welcomeTextSize"].forEach(id=>{
+  $(id)?.addEventListener("input",previewAndSaveWelcomeAppearance);
+  $(id)?.addEventListener("change",previewAndSaveWelcomeAppearance);
+});
+$("welcomeDataSaver")?.addEventListener("change",previewAndSaveWelcomeAppearance);
+$("welcomeAnalytics")?.addEventListener("change",saveWelcomeAnalyticsChoice);
 $("welcomeContinueBtn")?.addEventListener("click",async()=>{
   const button=$("welcomeContinueBtn");
   const msg=$("welcomeSettingsMessage");
@@ -1641,9 +1672,9 @@ userPreferencesForm?.addEventListener("submit",async e=>{
   if(msg)msg.textContent="Speichern …";
   try{
     if(next.notifications){
-      const existing=await getPushSubscription();
-      if(!existing || Notification.permission!=="granted") await enablePush(next);
-      else await savePushSubscription(existing,next);
+      // Immer über enablePush gehen: dort werden bereits vorhandene oder zu einer
+      // früheren Anmeldung gehörende Browser-Subscriptions sicher abgefangen.
+      await enablePush(next);
       localStorage.setItem("goodnews_push_enabled","1");
     }else{
       // Nur ein für dieses Konto zuvor aktives Push-Abo abschalten. So kann ein
@@ -2756,7 +2787,7 @@ async function editArticle(id){
   if($("pexelsResults")){$("pexelsResults").innerHTML="";$("pexelsResults").hidden=true;}
   if($("pexelsMessage"))$("pexelsMessage").textContent="";
   $("newsId").value=n.id;$("publishedDate").value=n.published_date;
-  $("publishedTime").value=n.published_time?.slice(0,5)||"00:00";$("category").value=categoryBucket(n)||"rund um die Welt";
+  $("publishedTime").value=n.published_time?.slice(0,5)||"00:00";$("category").value=categoryBucket(n)||"Rund um die Welt";
   $("storyKey").value=n.story_key||"";$("title").value=n.title;$("summary").value=n.summary;
   if($("bylineName")) $("bylineName").value=n.byline_name||"";
   if($("bylineVisible")) $("bylineVisible").value=n.byline_visible?"true":"false";
@@ -2911,7 +2942,7 @@ queueMicrotask(()=>setTimeout(()=>void maybeOpenInstallWelcome(),180));
 // selbst alle offenen Good-News-Fenster auf den neuen Build führen. So hängt die
 // installierte PWA nicht mehr an einer alten Cache-/Worker-Version fest.
 // Build 35 – adaptive Überschriften (max. 4 Zeilen) und stärkerer Lesbarkeitsverlauf.
-const AUFWIND_BUILD=98;
+const AUFWIND_BUILD=100;
 let aufwindSwRegistration=null;
 let aufwindReloading=false;
 
@@ -3550,7 +3581,7 @@ async function setSubmissionStatus(id,status){
 async function acceptSubmission(id){
   const x=readerSubmissions.find(v=>String(v.id)===String(id));if(!x)return;
   resetEditor();
-  $("category").value=categoryBucket(x)||"rund um die Welt";
+  $("category").value=categoryBucket(x)||"Rund um die Welt";
   $("title").value=x.title;
   $("summary").value=x.story_text;
   $("sourcesEditor").innerHTML="";addSourceRow("Leserhinweis / Originalquelle",x.source_url);
@@ -3650,7 +3681,7 @@ function normalizeCandidateItem(item,category){
 
 // Kompatibilität mit älteren Dreier-Entwürfen.
 function normalizeTripleItem(item,slot){
-  const defaults={damals:"Was war...",fortschritt:"Medizin & Technologie",heute:"rund um die Welt"};
+  const defaults={damals:"Was war...",fortschritt:"Medizin & Technologie",heute:"Rund um die Welt"};
   return normalizeCandidateItem(item,slot==="damals"?"Was war...":(item?.category||defaults[slot]));
 }
 
@@ -3928,6 +3959,43 @@ async function savePushSubscription(sub,prefs=userPrefs){
       .neq("endpoint",j.endpoint);
   }
 }
+function isPushSubscriptionRlsError(err){
+  const code=String(err?.code||"");
+  const message=String(err?.message||err||"").toLowerCase();
+  return code==="42501" || message.includes("row-level security") || message.includes("row level security");
+}
+function friendlyPushSubscriptionError(err){
+  if(isPushSubscriptionRlsError(err)){
+    return new Error("Die Benachrichtigungen konnten auf diesem Gerät noch nicht gespeichert werden. Bitte versuche es noch einmal.");
+  }
+  return err instanceof Error ? err : new Error(String(err||"Push konnte nicht gespeichert werden."));
+}
+async function savePushSubscriptionWithRecovery(reg,sub,prefs=userPrefs){
+  try{
+    await savePushSubscription(sub,prefs);
+    return sub;
+  }catch(err){
+    if(!isPushSubscriptionRlsError(err)) throw friendlyPushSubscriptionError(err);
+    // Ein vorhandener Browser-Endpunkt kann noch zu einer früheren Anmeldung gehören.
+    // Die RLS-Regeln dürfen diesen Datensatz absichtlich nicht auf ein anderes Konto umhängen.
+    // Deshalb lokal abmelden und genau einmal eine frische Subscription erzeugen.
+    console.warn("Push-Subscription wird nach Kontokonflikt neu angelegt.");
+    await sub?.unsubscribe?.().catch(()=>{});
+    await new Promise(resolve=>setTimeout(resolve,250));
+    let fresh=null;
+    try{
+      fresh=await reg.pushManager.subscribe({
+        userVisibleOnly:true,
+        applicationServerKey:urlBase64ToUint8Array(PUSH_PUBLIC_KEY)
+      });
+      await savePushSubscription(fresh,prefs);
+      return fresh;
+    }catch(retryErr){
+      await fresh?.unsubscribe?.().catch(()=>{});
+      throw friendlyPushSubscriptionError(retryErr);
+    }
+  }
+}
 async function enablePush(prefs=userPrefs){
   if(!pushSupported()) throw new Error("Push-Benachrichtigungen werden von diesem Browser nicht unterstützt.");
   if(!PUSH_PUBLIC_KEY) throw new Error("Push ist vorbereitet, aber der Versand-Schlüssel muss vor dem öffentlichen Release noch eingerichtet werden.");
@@ -3936,7 +4004,7 @@ async function enablePush(prefs=userPrefs){
   const reg=await navigator.serviceWorker.ready;
   let sub=await reg.pushManager.getSubscription();
   if(!sub) sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlBase64ToUint8Array(PUSH_PUBLIC_KEY)});
-  await savePushSubscription(sub,prefs);
+  await savePushSubscriptionWithRecovery(reg,sub,prefs);
   return true;
 }
 async function disablePush(){
@@ -3983,6 +4051,13 @@ async function syncPushPreferencesForCurrentAccount(sessionOverride=null){
         : [...AUFWIND_CATEGORIES]
     };
     userPrefs={...USER_PREF_DEFAULTS,...next,notifyCategories:[...(next.notifyCategories||AUFWIND_CATEGORIES)]};
+    // Alte Rubrikbezeichnungen bestehender Push-Abos beim ersten Start nach dem Update
+    // automatisch auf die aktuelle Acht-Rubriken-Struktur umstellen.
+    if(enabled && sub && Array.isArray(row?.notify_categories)){
+      const before=JSON.stringify(row.notify_categories);
+      const after=JSON.stringify(userPrefs.notifyCategories);
+      if(before!==after) await savePushSubscription(sub,userPrefs).catch(()=>{});
+    }
     try{localStorage.setItem(USER_PREFS_KEY,JSON.stringify(userPrefs));}catch{}
     localStorage.setItem("goodnews_push_enabled",enabled?"1":"0");
     if(input && !userPreferencesDialog?.open){
