@@ -50,7 +50,7 @@ BUILD 85 – UX-/REDAKTIONSRUNDE
 - Beitragseditor: Priorität → Status → geplante Veröffentlichung → Kategorie; Quellen stehen direkt unter dem Kurztext.
 - Dunkle Menüs haben jetzt deutlich getrennte Hintergrund- und Buttonflächen.
 
-Stand dieses Pakets: Build 100
+Stand dieses Pakets: Build 101
 
 Aufwind ist eine installierbare Web-App/PWA für positive, redaktionell geprüfte Nachrichten. Die Leseransicht ist mobil und slide-basiert; Redaktion, Nutzerkonten, Push-Funktionen und App-Einstellungen sind über Supabase angebunden.
 

@@ -1235,9 +1235,9 @@ $("welcomeContinueBtn")?.addEventListener("click",async()=>{
     if(next.notifications){
       try{
         if(!configured || !pushSupported()) throw new Error("Push wird auf diesem Gerät nicht unterstützt.");
-        const existing=await getPushSubscription();
-        if(!existing || Notification.permission!=="granted") await enablePush(next);
-        else await savePushSubscription(existing,next);
+        // Auch beim Onboarding immer über enablePush gehen. Dort wird zwischen
+        // Konto-Upsert und sicherem Gast-Insert unterschieden und ein Endpunktkonflikt abgefangen.
+        await enablePush(next);
         localStorage.setItem("goodnews_push_enabled","1");
       }catch(err){
         next.notifications=false;
@@ -2942,7 +2942,7 @@ queueMicrotask(()=>setTimeout(()=>void maybeOpenInstallWelcome(),180));
 // selbst alle offenen Good-News-Fenster auf den neuen Build führen. So hängt die
 // installierte PWA nicht mehr an einer alten Cache-/Worker-Version fest.
 // Build 35 – adaptive Überschriften (max. 4 Zeilen) und stärkerer Lesbarkeitsverlauf.
-const AUFWIND_BUILD=100;
+const AUFWIND_BUILD=101;
 let aufwindSwRegistration=null;
 let aufwindReloading=false;
 
@@ -3947,25 +3947,45 @@ async function savePushSubscription(sub,prefs=userPrefs){
     notify_categories:categories,
     updated_at:new Date().toISOString()
   };
-  const {error}=await db.from("push_subscriptions").upsert(payload,{onConflict:"endpoint"});
-  if(error) throw error;
-  // Falls sich der Browser-/PWA-Push-Endpunkt auf derselben Installation ändert,
-  // bleibt nur der aktuelle Endpunkt aktiv. Andere Geräte behalten ihre eigene device_key.
-  if(user?.id && deviceKey){
-    await db.from("push_subscriptions")
-      .delete()
-      .eq("user_id",user.id)
-      .eq("device_key",deviceKey)
-      .neq("endpoint",j.endpoint);
+
+  // Angemeldete Konten dürfen ihr eigenes Abo aktualisieren: dafür ist das
+  // endpoint-basierte Upsert weiterhin korrekt und durch RLS auf den Besitzer begrenzt.
+  if(user?.id){
+    const {error}=await db.from("push_subscriptions").upsert(payload,{onConflict:"endpoint"});
+    if(error) throw error;
+    // Falls sich der Browser-/PWA-Push-Endpunkt auf derselben Installation ändert,
+    // bleibt nur der aktuelle Endpunkt aktiv. Andere Geräte behalten ihre eigene device_key.
+    if(deviceKey){
+      await db.from("push_subscriptions")
+        .delete()
+        .eq("user_id",user.id)
+        .eq("device_key",deviceKey)
+        .neq("endpoint",j.endpoint);
+    }
+    return;
   }
+
+  // Gäste besitzen absichtlich keine UPDATE-Policy. Ein Upsert würde deshalb selbst
+  // bei einem brandneuen Endpunkt einen UPDATE-Pfad benötigen und von RLS blockiert.
+  // Für anonyme Geräte wird daher ausschließlich ein neuer Datensatz angelegt.
+  const {error}=await db.from("push_subscriptions").insert(payload);
+  if(error) throw error;
 }
 function isPushSubscriptionRlsError(err){
   const code=String(err?.code||"");
   const message=String(err?.message||err||"").toLowerCase();
   return code==="42501" || message.includes("row-level security") || message.includes("row level security");
 }
+function isPushSubscriptionDuplicateError(err){
+  const code=String(err?.code||"");
+  const message=String(err?.message||err||"").toLowerCase();
+  return code==="23505" || message.includes("duplicate key") || message.includes("unique constraint");
+}
+function isRecoverablePushSubscriptionError(err){
+  return isPushSubscriptionRlsError(err) || isPushSubscriptionDuplicateError(err);
+}
 function friendlyPushSubscriptionError(err){
-  if(isPushSubscriptionRlsError(err)){
+  if(isRecoverablePushSubscriptionError(err)){
     return new Error("Die Benachrichtigungen konnten auf diesem Gerät noch nicht gespeichert werden. Bitte versuche es noch einmal.");
   }
   return err instanceof Error ? err : new Error(String(err||"Push konnte nicht gespeichert werden."));
@@ -3975,13 +3995,13 @@ async function savePushSubscriptionWithRecovery(reg,sub,prefs=userPrefs){
     await savePushSubscription(sub,prefs);
     return sub;
   }catch(err){
-    if(!isPushSubscriptionRlsError(err)) throw friendlyPushSubscriptionError(err);
-    // Ein vorhandener Browser-Endpunkt kann noch zu einer früheren Anmeldung gehören.
-    // Die RLS-Regeln dürfen diesen Datensatz absichtlich nicht auf ein anderes Konto umhängen.
-    // Deshalb lokal abmelden und genau einmal eine frische Subscription erzeugen.
-    console.warn("Push-Subscription wird nach Kontokonflikt neu angelegt.");
+    if(!isRecoverablePushSubscriptionError(err)) throw friendlyPushSubscriptionError(err);
+    // Ein vorhandener Browser-Endpunkt kann noch zu einer früheren Anmeldung gehören
+    // oder bei einem Gast bereits einmal registriert worden sein. Die RLS-Regeln werden
+    // bewusst nicht gelockert: lokal abmelden und genau einmal frisch registrieren.
+    console.warn("Push-Subscription wird nach Endpunktkonflikt neu angelegt.");
     await sub?.unsubscribe?.().catch(()=>{});
-    await new Promise(resolve=>setTimeout(resolve,250));
+    await new Promise(resolve=>setTimeout(resolve,350));
     let fresh=null;
     try{
       fresh=await reg.pushManager.subscribe({
@@ -4021,6 +4041,7 @@ async function syncPushPreferencesForCurrentAccount(sessionOverride=null){
   try{
     const session=sessionOverride || (await db.auth.getSession()).data.session;
     const sub=await getPushSubscription();
+    const localPushEnabled=localStorage.getItem("goodnews_push_enabled")==="1";
     let enabled=false,row=null,ownershipChecked=false;
     if(session?.user && sub && Notification.permission==="granted"){
       const result=await db.from("push_subscriptions")
@@ -4033,22 +4054,30 @@ async function syncPushPreferencesForCurrentAccount(sessionOverride=null){
         ownershipChecked=true;
         if(result.data){row=result.data;enabled=true;}
       }
+    }else if(!session?.user){
+      // Gäste können ihren Serverdatensatz wegen der absichtlich fehlenden SELECT-/UPDATE-
+      // Freigabe nicht auslesen. Deshalb gilt die lokale, vom Nutzer gesetzte Aktivierung
+      // zusammen mit der tatsächlich vorhandenen Browser-Subscription als Quelle der Wahrheit.
+      enabled=Boolean(localPushEnabled && sub && Notification.permission==="granted");
     }
-    // Ein Web-Push-Endpunkt gehört immer genau zu der aktuellen Installation.
-    // Ist er nicht dem gerade angemeldeten Konto zugeordnet, darf dieses Konto
-    // ihn nicht als "aktiv" erben. Lokal abmelden; der alte Servereintrag wird
-    // beim nächsten Versand als ungültig erkannt und automatisch bereinigt.
-    if(sub && Notification.permission==="granted" && ((session?.user && ownershipChecked && !enabled) || !session?.user)){
+    // Ein angemeldetes Konto darf keinen Endpunkt eines anderen Kontos erben.
+    // Bei Gästen wird eine bewusst aktivierte Subscription dagegen beibehalten;
+    // Build 100 hat sie fälschlich bei jedem Start wieder abgemeldet.
+    if(sub && Notification.permission==="granted" && session?.user && ownershipChecked && !enabled){
       await sub.unsubscribe().catch(()=>{});
     }
     const next={
       ...userPrefs,
       notifications:enabled,
-      notifyMorning:enabled ? row?.notify_morning!==false : true,
-      notifyEvening:enabled ? row?.notify_evening!==false : true,
-      notifyCategories:enabled && Array.isArray(row?.notify_categories)
-        ? row.notify_categories.map(migrateNotifyCategoryLabel).filter(x=>AUFWIND_CATEGORIES.includes(x))
-        : [...AUFWIND_CATEGORIES]
+      notifyMorning:session?.user ? (enabled ? row?.notify_morning!==false : true) : userPrefs.notifyMorning!==false,
+      notifyEvening:session?.user ? (enabled ? row?.notify_evening!==false : true) : userPrefs.notifyEvening!==false,
+      notifyCategories:session?.user
+        ? (enabled && Array.isArray(row?.notify_categories)
+          ? row.notify_categories.map(migrateNotifyCategoryLabel).filter(x=>AUFWIND_CATEGORIES.includes(x))
+          : [...AUFWIND_CATEGORIES])
+        : (Array.isArray(userPrefs.notifyCategories)
+          ? userPrefs.notifyCategories.map(migrateNotifyCategoryLabel).filter(x=>AUFWIND_CATEGORIES.includes(x))
+          : [...AUFWIND_CATEGORIES])
     };
     userPrefs={...USER_PREF_DEFAULTS,...next,notifyCategories:[...(next.notifyCategories||AUFWIND_CATEGORIES)]};
     // Alte Rubrikbezeichnungen bestehender Push-Abos beim ersten Start nach dem Update
