@@ -1,32 +1,40 @@
-const AUFWIND_SW_BUILD=101;
+const AUFWIND_SW_BUILD=103;
 const CACHE=`aufwind-build-${AUFWIND_SW_BUILD}`;
-const STATIC=[
-  "./",
-  "./index.html",
-  "./style.css?v=101",
-  "./app.js?v=101",
-  "./config.js",
-  "./manifest.json?v=101",
-  "./aufwind-favicon-32.png",
-  "./aufwind-apple-touch-icon.png",
-  "./aufwind-icon-192.png",
-  "./aufwind-icon-512.png",
-  "./aufwind-maskable-192.png",
-  "./aufwind-maskable-512.png",
-  "./date-slide-background-v2.png",
-  "./aufwind-icon-192.png",
-  "./notification-badge.png"
-];
+const STATIC_ASSETS=new Set([
+  "style.css",
+  "app.js",
+  "config.js",
+  "manifest.json",
+  "aufwind-favicon-32.png",
+  "aufwind-apple-touch-icon.png",
+  "aufwind-icon-192.png",
+  "aufwind-icon-512.png",
+  "aufwind-maskable-192.png",
+  "aufwind-maskable-512.png",
+  "date-slide-background-v2.png",
+  "notification-badge.png"
+]);
 
 self.addEventListener("install",event=>{
-  // Sofort übernehmen. Das Vorladen ist absichtlich nicht Voraussetzung für die
-  // Aktivierung, damit auch eine festhängende ältere Android-PWA aktualisiert wird.
+  // Ein neuer Worker darf nie hinter einem alten Build warten.
   self.skipWaiting();
 });
 
 self.addEventListener("message",event=>{
   if(event.data?.type==="SKIP_WAITING") self.skipWaiting();
+  if(event.data?.type==="CLEAR_AUFWIND_CACHES"){
+    event.waitUntil(clearOldAufwindCaches({includeCurrent:true}));
+  }
 });
+
+async function clearOldAufwindCaches({includeCurrent=false}={}){
+  const keys=await caches.keys();
+  const doomed=keys.filter(key=>{
+    const ours=key.startsWith("good-news-") || key.startsWith("aufwind-");
+    return ours && (includeCurrent || key!==CACHE);
+  });
+  await Promise.all(doomed.map(key=>caches.delete(key)));
+}
 
 function freshClientUrl(rawUrl){
   const url=new URL(rawUrl);
@@ -42,66 +50,71 @@ function freshClientUrl(rawUrl){
 self.addEventListener("activate",event=>{
   event.waitUntil((async()=>{
     const keys=await caches.keys();
-    const hadOlderGoodNewsCache=keys.some(k=>(k.startsWith("good-news-") || k.startsWith("aufwind-")) && k!==CACHE);
-    await Promise.all(keys.filter(k=>(k.startsWith("good-news-") || k.startsWith("aufwind-")) && k!==CACHE).map(k=>caches.delete(k)));
+    const hadOlderCache=keys.some(key=>(key.startsWith("good-news-") || key.startsWith("aufwind-")) && key!==CACHE);
+    await clearOldAufwindCaches();
     await self.clients.claim();
 
-    // Migrationshilfe nur beim Wechsel von einem älteren Aufwind-Build. Bei einer
-    // frischen Erstinstallation gibt es keinen alten Cache und damit keinen unnötigen
-    // Zusatz-Reload. So kann Build 37 trotzdem eine festhängende ältere Android-PWA
-    // selbst auf die neue Version führen.
-    if(hadOlderGoodNewsCache){
+    // Beim echten Build-Wechsel offene PWA-Fenster einmal auf eine eindeutige
+    // Netzwerk-URL führen. Danach kontrolliert Build 103 sämtliche Navigationen.
+    if(hadOlderCache){
       const windows=await self.clients.matchAll({type:"window",includeUncontrolled:true});
       await Promise.all(windows.map(async client=>{
         const target=freshClientUrl(client.url);
         if(!target || !("navigate" in client)) return;
-        try{await client.navigate(target)}catch{}
+        try{ await client.navigate(target); }catch{}
       }));
     }
   })());
 });
 
-function isAppShellRequest(request,url){
-  if(url.origin!==self.location.origin) return false;
-  if(request.mode==="navigate") return true;
-  const path=url.pathname;
-  return STATIC.some(item=>{
-    const clean=item.replace(/^\.\//,"").split("?")[0];
-    return path.endsWith("/"+clean) || path.endsWith(clean);
-  });
+function assetName(url){
+  return url.pathname.split("/").pop() || "";
 }
 
 self.addEventListener("fetch",event=>{
   if(event.request.method!=="GET") return;
   const url=new URL(event.request.url);
 
-  // Supabase und Versionsprüfung niemals aus einem App-Cache beantworten.
-  if(url.hostname.includes("supabase.co")) return;
-  if(url.origin===self.location.origin && url.pathname.endsWith("/version.json")){
+  // Supabase und Fremdressourcen niemals durch den App-Worker cachen.
+  if(url.hostname.includes("supabase.co") || url.origin!==self.location.origin) return;
+
+  // Versionsdatei MUSS immer direkt vom Host kommen.
+  if(url.pathname.endsWith("/version.json")){
     event.respondWith(fetch(new Request(event.request,{cache:"no-store"})));
     return;
   }
 
-  // Fremde Ressourcen (z. B. Supabase-CDN) bleiben komplett beim Browser.
-  if(url.origin!==self.location.origin) return;
+  // Entscheidend für Build 103: HTML/Navigation wird NIE mehr aus einem alten
+  // App-Cache beantwortet. Wenn das Netz fehlt, zeigen wir bewusst eine kleine
+  // Offline-Antwort statt eine veraltete Aufwind-Version zu reaktivieren.
+  if(event.request.mode==="navigate"){
+    event.respondWith((async()=>{
+      try{
+        return await fetch(new Request(event.request,{cache:"no-store"}));
+      }catch{
+        return new Response(
+          '<!doctype html><html lang="de"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Aufwind offline</title><body style="font-family:system-ui;padding:2rem"><h1>Aufwind ist gerade offline</h1><p>Bitte prüfe deine Internetverbindung und öffne die App erneut.</p></body></html>',
+          {status:503,headers:{"Content-Type":"text/html; charset=utf-8","Cache-Control":"no-store"}}
+        );
+      }
+    })());
+    return;
+  }
 
-  if(isAppShellRequest(event.request,url)){
+  // Programmdateien ebenfalls Network-first/no-store. Nur exakt der aktuelle
+  // Build darf als kurzfristiger Offline-Fallback gespeichert werden.
+  if(STATIC_ASSETS.has(assetName(url))){
     event.respondWith((async()=>{
       try{
         const response=await fetch(new Request(event.request,{cache:"no-store"}));
         if(response && response.ok){
-          const copy=response.clone();
-          caches.open(CACHE).then(cache=>cache.put(event.request,copy)).catch(()=>{});
+          const cache=await caches.open(CACHE);
+          await cache.put(event.request,response.clone());
         }
         return response;
       }catch{
-        const cached=await caches.match(event.request,{ignoreSearch:true});
-        if(cached) return cached;
-        if(event.request.mode==="navigate"){
-          const shell=await caches.match("./index.html",{ignoreSearch:true});
-          if(shell) return shell;
-        }
-        return Response.error();
+        const cached=await caches.match(event.request,{ignoreSearch:false});
+        return cached || Response.error();
       }
     })());
   }
@@ -120,6 +133,7 @@ self.addEventListener("push",event=>{
   };
   event.waitUntil(self.registration.showNotification(title,options));
 });
+
 self.addEventListener("notificationclick",event=>{
   event.notification.close();
   const url=event.notification.data?.url||"./";

@@ -2942,7 +2942,7 @@ queueMicrotask(()=>setTimeout(()=>void maybeOpenInstallWelcome(),180));
 // selbst alle offenen Good-News-Fenster auf den neuen Build führen. So hängt die
 // installierte PWA nicht mehr an einer alten Cache-/Worker-Version fest.
 // Build 35 – adaptive Überschriften (max. 4 Zeilen) und stärkerer Lesbarkeitsverlauf.
-const AUFWIND_BUILD=101;
+const AUFWIND_BUILD=103;
 let aufwindSwRegistration=null;
 let aufwindReloading=false;
 
@@ -2976,10 +2976,14 @@ async function getRemoteBuild(){
   return build;
 }
 
-async function clearAufwindCaches(){
+async function clearAufwindCaches({keepCurrent=false}={}){
   if(!("caches" in window)) return;
   const keys=await caches.keys();
-  await Promise.all(keys.filter(key=>key.startsWith("good-news-") || key.startsWith("aufwind-")).map(key=>caches.delete(key)));
+  const current=`aufwind-build-${AUFWIND_BUILD}`;
+  await Promise.all(keys.filter(key=>{
+    const ours=key.startsWith("good-news-") || key.startsWith("aufwind-");
+    return ours && (!keepCurrent || key!==current);
+  }).map(key=>caches.delete(key)));
 }
 
 function waitForServiceWorkerActivation(reg,timeoutMs=12000){
@@ -3111,6 +3115,9 @@ if("serviceWorker" in navigator){
     try{
       // Stabile URL ab Build 37. updateViaCache:none zwingt die Update-Prüfung
       // am Browser-HTTP-Cache vorbei.
+      // Bereits beim normalen Start alle Cache-Reste älterer Builds entfernen.
+      // Dadurch kann Build 103 nach erfolgreicher Übernahme nicht mehr auf z. B. 95 zurückfallen.
+      await clearAufwindCaches({keepCurrent:true}).catch(()=>{});
       aufwindSwRegistration=await navigator.serviceWorker.register("sw.js",{
         scope:"./",
         updateViaCache:"none"
@@ -3123,6 +3130,20 @@ if("serviceWorker" in navigator){
   });
 }
 $("checkUpdateBtn")?.addEventListener("click",runMenuAction(()=>checkForAppUpdate({manual:true})));
+
+// Android kann eine installierte PWA lange im Speicher halten. Deshalb bei echtem
+// Wiederaufrufen erneut prüfen, statt nur beim allerersten load-Ereignis.
+let lastAutomaticBuildCheck=0;
+async function recheckBuildAfterResume(){
+  const now=Date.now();
+  if(now-lastAutomaticBuildCheck<15000 || aufwindReloading) return;
+  lastAutomaticBuildCheck=now;
+  await checkForAppUpdate().catch(()=>{});
+}
+window.addEventListener("pageshow",()=>void recheckBuildAfterResume());
+document.addEventListener("visibilitychange",()=>{
+  if(!document.hidden) void recheckBuildAfterResume();
+});
 
 
 // ---------------- DESIGN & APP SETTINGS ----------------
@@ -3565,7 +3586,7 @@ function renderSubmissions(){
     <h4>${esc(x.title)}</h4><p>${esc(x.story_text)}</p>
     <div class="submission-source">Quelle: <a href="${esc(x.source_url)}" target="_blank" rel="noopener noreferrer">${esc(x.source_url)}</a></div>
     <div class="submission-actions">
-      ${x.status!=="accepted"?`<button class="primary accept-sub" data-id="${x.id}">Für Redaktion übernehmen</button>`:""}
+      ${x.status!=="accepted"?`<button class="primary accept-sub" data-id="${x.id}">Für Redaktion übernehmen</button>`:`<button class="primary accept-sub" data-id="${x.id}">Entwurf öffnen</button>`}
       ${x.status!=="reviewing"&&x.status!=="accepted"?`<button class="secondary review-sub" data-id="${x.id}">In Prüfung</button>`:""}
       ${x.status!=="rejected"&&x.status!=="accepted"?`<button class="secondary reject-sub" data-id="${x.id}">Ablehnen</button>`:""}
     </div></article>`).join("")||'<p class="muted">Hier gibt es aktuell keine Einsendungen.</p>';
@@ -3578,22 +3599,95 @@ async function setSubmissionStatus(id,status){
   const {error}=await db.from("submissions").update({status,reviewed_at:new Date().toISOString()}).eq("id",id);
   if(error)return alert(error.message);await loadSubmissions();
 }
+function submissionStoryKey(id){
+  return `reader-submission-${String(id).replace(/[^a-zA-Z0-9_-]/g,"").slice(0,48)}`;
+}
+
+async function ensureSubmissionDraft(id){
+  const x=readerSubmissions.find(v=>String(v.id)===String(id));if(!x)throw new Error("Lesereinsendung nicht gefunden.");
+  const storyKey=submissionStoryKey(id);
+
+  // Dublettenschutz: Eine Einsendung darf höchstens einen Redaktionsentwurf erzeugen.
+  const {data:existing,error:lookupError}=await db.from("news")
+    .select("*").eq("story_key",storyKey).order("created_at",{ascending:true}).limit(1);
+  if(lookupError)throw lookupError;
+  if(existing?.length)return existing[0];
+
+  const now=new Date();
+  const mayPublishName=Boolean(x.publish_submitter_name && x.submitter_name);
+  const row={
+    published_date:isoLocal(now),
+    published_time:localTimeValue(now),
+    publish_at:now.toISOString(),
+    category:categoryBucket(x)||"Rund um die Welt",
+    story_key:storyKey,
+    title:x.title,
+    summary:x.story_text,
+    status:"draft",
+    priority:"normal",
+    priority_rank:0,
+    byline_name:mayPublishName?x.submitter_name:null,
+    byline_visible:mayPublishName,
+    context_text:null,
+    daily_slot:"none",
+    years_ago:null,
+    feel_good_text:null,
+    image_url:null,
+    image_path:null,
+    image_credit:null,
+    image_license:null,
+    image_source_url:null,
+    image_kind:"photo",
+    is_symbol_image:false,
+    image_fit:"cover",
+    image_zoom:1,
+    image_x:50,
+    image_y:50,
+    sources:[{name:"Leserhinweis / Originalquelle",url:x.source_url}],
+    is_scheduled:false,
+    scheduled_push_processed_at:null,
+    scheduled_push_result:null,
+    updated_at:now.toISOString()
+  };
+  const {data:created,error:createError}=await db.from("news").insert(row).select("*").single();
+  if(createError)throw createError;
+
+  // Direkt per Lesezugriff verifizieren, bevor die Einsendung als übernommen markiert wird.
+  const {data:verified,error:verifyError}=await db.from("news").select("*").eq("id",created.id).single();
+  if(verifyError||!verified)throw verifyError||new Error("Der neue Redaktionsentwurf konnte nicht verifiziert werden.");
+  return verified;
+}
+
 async function acceptSubmission(id){
   const x=readerSubmissions.find(v=>String(v.id)===String(id));if(!x)return;
-  resetEditor();
-  $("category").value=categoryBucket(x)||"Rund um die Welt";
-  $("title").value=x.title;
-  $("summary").value=x.story_text;
-  $("sourcesEditor").innerHTML="";addSourceRow("Leserhinweis / Originalquelle",x.source_url);
-  $("feelGoodText").value="";
-  const mayPublishName=Boolean(x.publish_submitter_name && x.submitter_name);
-  $("bylineName").value=mayPublishName?x.submitter_name:"";
-  $("bylineVisible").value=mayPublishName?"true":"false";
-  await setSubmissionStatus(id,"accepted");
-  switchAdminTab("editor");
-  $("editorMessage").textContent=(x.publish_submitter_name&&x.submitter_name)
-    ? `Lesereinsendung übernommen. Namensnennung freigegeben: „von ${x.submitter_name}“. Bitte redaktionell prüfen und erst danach veröffentlichen.`
-    : "Lesereinsendung übernommen. Die veröffentlichte Nachricht bleibt ohne Namensnennung. Bitte redaktionell prüfen und erst danach veröffentlichen.";
+  try{
+    const draft=await ensureSubmissionDraft(id);
+
+    const {error:statusError}=await db.from("submissions")
+      .update({status:"accepted",reviewed_at:new Date().toISOString()}).eq("id",id);
+    if(statusError)throw statusError;
+
+    // Status ebenfalls erneut lesen, damit ein Teilfehler nicht unbemerkt bleibt.
+    const {data:verifiedSubmission,error:submissionVerifyError}=await db.from("submissions")
+      .select("id,status").eq("id",id).single();
+    if(submissionVerifyError||verifiedSubmission?.status!=="accepted"){
+      throw submissionVerifyError||new Error("Der Übernahmestatus der Lesereinsendung konnte nicht verifiziert werden.");
+    }
+
+    await loadSubmissions();
+    await loadAdminNews();
+    const saved=adminNews.find(n=>String(n.id)===String(draft.id))||draft;
+    resetEditor();
+    $("newsId").value=saved.id;
+    await editArticle(saved.id);
+
+    $("editorMessage").textContent=(x.publish_submitter_name&&x.submitter_name)
+      ? `Lesereinsendung als Entwurf gespeichert. Namensnennung freigegeben: „von ${x.submitter_name}“. Bitte redaktionell prüfen und erst danach veröffentlichen.`
+      : "Lesereinsendung als Entwurf unter Beiträge gespeichert. Die veröffentlichte Nachricht bleibt ohne Namensnennung. Bitte redaktionell prüfen und erst danach veröffentlichen.";
+  }catch(err){
+    console.error("Lesereinsendung übernehmen:",err);
+    alert("Die Lesereinsendung konnte nicht vollständig übernommen werden: "+(err?.message||err));
+  }
 }
 
 // Extend admin tab behavior for submissions.
