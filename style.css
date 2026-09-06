@@ -103,6 +103,18 @@ legend{padding:0 6px;color:#bbb;font-weight:800}
 .status.published{background:#173c2a;color:#d4ffe4}.status.draft{background:#493c19;color:#ffeebc}
 .admin-item-actions{display:flex;gap:7px;margin-top:12px;flex-wrap:wrap}
 .admin-item-actions button{padding:7px 9px}
+.admin-date-group{border:1px solid var(--line);border-radius:14px;margin:9px 0;background:#18181b;overflow:hidden}
+.admin-date-group>summary{display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer;list-style:none;padding:13px 14px;font-weight:700;user-select:none}
+.admin-date-group>summary::-webkit-details-marker{display:none}
+.admin-date-group>summary:before{content:"›";display:inline-block;margin-right:9px;transition:transform .15s ease;font-size:1.25em;line-height:1}
+.admin-date-group[open]>summary:before{transform:rotate(90deg)}
+.admin-date-group>summary>span:first-child{flex:1}
+.admin-group-count{min-width:27px;padding:3px 8px;border-radius:999px;background:#303036;color:#ccc;text-align:center;font-size:.72rem;font-weight:600}
+.admin-group-content{padding:0 10px 10px}
+.admin-year{background:#1d1d21}.admin-year>summary{font-size:1.08rem}
+.admin-month{background:#19191d;margin-left:5px}.admin-month>summary{font-size:1rem}
+.admin-day{background:#151518;margin-left:5px}.admin-day>summary{font-size:.94rem}
+.admin-day .admin-item{margin:8px 0}
 .result-item,.archive-day,.favorite-item{padding:14px 0;border-bottom:1px solid #303036}
 .result-item button,.archive-day button,.favorite-item button{border:0;background:none;color:#fff;text-align:left;padding:0;width:100%}
 .result-item h4,.favorite-item h4{margin:4px 0;font-size:1.05rem}
@@ -1859,3 +1871,8 @@ html.user-theme-light .welcome-settings-step input[type="range"]{accent-color:#2
   .welcome-settings-message{margin-top:4px}
   .welcome-settings-step .welcome-continue{margin-top:6px;min-height:39px}
 }
+
+html.user-theme-light .admin-date-group{background:#fff;border-color:#d9d9df}
+html.user-theme-light .admin-month{background:#fafafa}
+html.user-theme-light .admin-day{background:#f6f6f7}
+html.user-theme-light .admin-group-count{background:#e8e8ec;color:#444}

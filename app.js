@@ -2139,6 +2139,18 @@ function adminItemHtml(n){
   </article>`;
 }
 
+function adminDateParts(dateValue){
+  const m=String(dateValue||"").match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  return m?{year:m[1],month:m[2],day:m[3]}:null;
+}
+function adminMonthLabel(month){
+  return new Intl.DateTimeFormat("de-DE",{month:"long"}).format(new Date(2024,Number(month)-1,1));
+}
+function adminDayLabel(dateValue){
+  const p=adminDateParts(dateValue);
+  if(!p) return dateValue||"Ohne Datum";
+  return `${Number(p.day)}. ${adminMonthLabel(p.month)}`;
+}
 function renderAdminList(){
   const q=($("adminSearch")?.value||"").trim().toLowerCase();
   const status=$("adminStatus")?.value||"all";
@@ -2148,8 +2160,37 @@ function renderAdminList(){
     const text=`${n.title} ${n.summary} ${n.category} ${n.story_key||""}`.toLowerCase();
     return statusOk&&(!q||text.includes(q));
   });
-  $("adminList").innerHTML=rows.map(adminItemHtml).join("")||`<p class="muted">Keine Beiträge gefunden.</p>`;
-  bindAdminItemButtons($("adminList"));
+  const root=$("adminList");
+  if(!rows.length){root.innerHTML=`<p class="muted">Keine Beiträge gefunden.</p>`;return}
+
+  const today=new Date();
+  const currentYear=String(today.getFullYear());
+  const currentMonth=String(today.getMonth()+1).padStart(2,"0");
+  const currentDay=String(today.getDate()).padStart(2,"0");
+  const grouped={};
+  rows.forEach(n=>{
+    const p=adminDateParts(n.published_date);
+    const year=p?.year||"Ohne Jahr", month=p?.month||"00", day=p?.day||"00";
+    (((grouped[year]??={})[month]??={})[day]??=[]).push(n);
+  });
+  const years=Object.keys(grouped).sort((a,b)=>b.localeCompare(a,undefined,{numeric:true}));
+  root.innerHTML=years.map(year=>{
+    const yearOpen=year===currentYear;
+    const months=Object.keys(grouped[year]).sort((a,b)=>b.localeCompare(a,undefined,{numeric:true}));
+    const monthHtml=months.map(month=>{
+      const monthOpen=yearOpen&&month===currentMonth;
+      const days=Object.keys(grouped[year][month]).sort((a,b)=>b.localeCompare(a,undefined,{numeric:true}));
+      const dayHtml=days.map(day=>{
+        const items=grouped[year][month][day].sort((a,b)=>String(b.published_time||"").localeCompare(String(a.published_time||"")));
+        const date=year!=="Ohne Jahr"&&month!=="00"&&day!=="00"?`${year}-${month}-${day}`:"";
+        const dayOpen=monthOpen&&day===currentDay;
+        return `<details class="admin-date-group admin-day" ${dayOpen?"open":""}><summary><span>${esc(date?adminDayLabel(date):"Ohne Datum")}</span><span class="admin-group-count">${items.length}</span></summary><div class="admin-group-content">${items.map(adminItemHtml).join("")}</div></details>`;
+      }).join("");
+      return `<details class="admin-date-group admin-month" ${monthOpen?"open":""}><summary><span>${esc(month!=="00"?adminMonthLabel(month):"Ohne Monat")}</span><span class="admin-group-count">${days.reduce((sum,d)=>sum+grouped[year][month][d].length,0)}</span></summary><div class="admin-group-content">${dayHtml}</div></details>`;
+    }).join("");
+    return `<details class="admin-date-group admin-year" ${yearOpen?"open":""}><summary><span>${esc(year)}</span><span class="admin-group-count">${Object.values(grouped[year]).reduce((sum,m)=>sum+Object.values(m).reduce((s,d)=>s+d.length,0),0)}</span></summary><div class="admin-group-content">${monthHtml}</div></details>`;
+  }).join("");
+  bindAdminItemButtons(root);
 }
 $("adminSearch").oninput=renderAdminList;
 $("adminStatus").onchange=renderAdminList;
