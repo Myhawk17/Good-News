@@ -1,4 +1,4 @@
-const AUFWIND_SW_BUILD=103;
+const AUFWIND_SW_BUILD=105;
 const CACHE=`aufwind-build-${AUFWIND_SW_BUILD}`;
 const STATIC_ASSETS=new Set([
   "style.css",
@@ -55,7 +55,7 @@ self.addEventListener("activate",event=>{
     await self.clients.claim();
 
     // Beim echten Build-Wechsel offene PWA-Fenster einmal auf eine eindeutige
-    // Netzwerk-URL führen. Danach kontrolliert Build 103 sämtliche Navigationen.
+    // Netzwerk-URL führen. Danach kontrolliert Build 105 sämtliche Navigationen.
     if(hadOlderCache){
       const windows=await self.clients.matchAll({type:"window",includeUncontrolled:true});
       await Promise.all(windows.map(async client=>{
@@ -84,7 +84,7 @@ self.addEventListener("fetch",event=>{
     return;
   }
 
-  // Entscheidend für Build 103: HTML/Navigation wird NIE mehr aus einem alten
+  // Entscheidend für Build 105: HTML/Navigation wird NIE mehr aus einem alten
   // App-Cache beantwortet. Wenn das Netz fehlt, zeigen wir bewusst eine kleine
   // Offline-Antwort statt eine veraltete Aufwind-Version zu reaktivieren.
   if(event.request.mode==="navigate"){

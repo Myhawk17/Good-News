@@ -637,3 +637,89 @@ drop trigger if exists notify_admin_on_report on public.news_reports;
 create trigger notify_admin_on_report
 after insert on public.news_reports
 for each row execute function private.notify_admin_inbox_event('report');
+
+
+-- ============================================================
+-- BUILD 105: Favoriten synchron + öffentliche Favoritenzahl
+-- ============================================================
+create table if not exists public.news_favorites (
+  news_id bigint not null references public.news(id) on delete cascade,
+  device_id text not null check (char_length(device_id) between 8 and 128),
+  created_at timestamptz not null default now(),
+  primary key (news_id, device_id)
+);
+
+create table if not exists public.news_favorite_counts (
+  news_id bigint primary key references public.news(id) on delete cascade,
+  favorite_count bigint not null default 0 check (favorite_count >= 0),
+  updated_at timestamptz not null default now()
+);
+
+alter table public.news_favorites enable row level security;
+alter table public.news_favorite_counts enable row level security;
+
+drop policy if exists news_favorites_select_own on public.news_favorites;
+drop policy if exists news_favorites_insert_own on public.news_favorites;
+drop policy if exists news_favorites_delete_own on public.news_favorites;
+
+create policy news_favorites_select_own on public.news_favorites
+for select to anon, authenticated
+using (device_id=coalesce((current_setting('request.headers',true)::jsonb->>'x-device-id'),''));
+
+create policy news_favorites_insert_own on public.news_favorites
+for insert to anon, authenticated
+with check (
+  device_id=coalesce((current_setting('request.headers',true)::jsonb->>'x-device-id'),'')
+  and char_length(device_id) between 8 and 128
+);
+
+create policy news_favorites_delete_own on public.news_favorites
+for delete to anon, authenticated
+using (device_id=coalesce((current_setting('request.headers',true)::jsonb->>'x-device-id'),''));
+
+revoke all on table public.news_favorites from anon, authenticated;
+grant select, insert, delete on table public.news_favorites to anon, authenticated;
+
+drop policy if exists news_favorite_counts_select on public.news_favorite_counts;
+create policy news_favorite_counts_select on public.news_favorite_counts
+for select to anon, authenticated using (true);
+revoke all on table public.news_favorite_counts from anon, authenticated;
+grant select on table public.news_favorite_counts to anon, authenticated;
+
+create schema if not exists private;
+
+create or replace function private.refresh_news_favorite_count()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare target_news_id bigint;
+begin
+  target_news_id := coalesce(new.news_id, old.news_id);
+  insert into public.news_favorite_counts(news_id, favorite_count, updated_at)
+  select target_news_id, count(*)::bigint, now()
+  from public.news_favorites
+  where news_id = target_news_id
+  on conflict (news_id) do update
+  set favorite_count=excluded.favorite_count,
+      updated_at=excluded.updated_at;
+  return coalesce(new,old);
+end;
+$$;
+
+revoke all on function private.refresh_news_favorite_count() from public, anon, authenticated;
+
+drop trigger if exists news_favorites_refresh_count on public.news_favorites;
+create trigger news_favorites_refresh_count
+after insert or delete on public.news_favorites
+for each row execute function private.refresh_news_favorite_count();
+
+insert into public.news_favorite_counts(news_id, favorite_count, updated_at)
+select n.id, count(f.news_id)::bigint, now()
+from public.news n
+left join public.news_favorites f on f.news_id=n.id
+group by n.id
+on conflict (news_id) do update
+set favorite_count=excluded.favorite_count,
+    updated_at=excluded.updated_at;

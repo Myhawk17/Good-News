@@ -268,6 +268,124 @@ const toggleFavorite = (id) => {
   return next.includes(key);
 };
 
+// BUILD 105 – öffentliche Favoritenzahlen.
+// Favoriten bleiben lokal nutzbar; Supabase erhält zusätzlich pro Gerät und Beitrag
+// genau eine anonyme Favoritenzeile. Öffentlich lesbar ist ausschließlich die Summe.
+let favoriteCounts = {};
+let favoriteSyncDb = null;
+let favoriteSyncDbDeviceId = "";
+
+function getFavoriteDeviceId(){
+  let id = localStorage.getItem("goodNewsFavoriteDeviceId");
+  if(!id){
+    id = crypto.randomUUID ? crypto.randomUUID() : `fav-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    localStorage.setItem("goodNewsFavoriteDeviceId", id);
+  }
+  return id;
+}
+
+function getFavoriteDb(){
+  if(!configured || !window.supabase) return null;
+  const deviceId = getFavoriteDeviceId();
+  if(!favoriteSyncDb || favoriteSyncDbDeviceId !== deviceId){
+    favoriteSyncDbDeviceId = deviceId;
+    favoriteSyncDb = window.supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY, {
+      global:{headers:{"x-device-id":deviceId}},
+      auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}
+    });
+  }
+  return favoriteSyncDb;
+}
+
+function favoriteCountFor(newsId){
+  return Math.max(0, Number(favoriteCounts[String(newsId)] || 0));
+}
+
+async function loadFavoriteCounts(){
+  if(!allNews.length) return;
+  const fdb = getFavoriteDb();
+  if(!fdb) return;
+  const ids = allNews.map(n => n.id);
+  const {data,error} = await fdb.from("news_favorite_counts")
+    .select("news_id,favorite_count")
+    .in("news_id", ids);
+  if(error){
+    console.warn("Favoritenzahlen nicht verfügbar:", error.message);
+    return;
+  }
+  favoriteCounts = {};
+  (data || []).forEach(row => {
+    favoriteCounts[String(row.news_id)] = Math.max(0, Number(row.favorite_count || 0));
+  });
+  syncSlideQuickActions();
+}
+
+async function syncLocalFavoritesToServer(){
+  if(!allNews.length) return;
+  const fdb = getFavoriteDb();
+  if(!fdb) return;
+
+  const deviceId = getFavoriteDeviceId();
+  const newsIds = allNews.map(n => n.id);
+  const local = new Set(getFavorites().map(String));
+  const {data:mine,error:readError} = await fdb.from("news_favorites")
+    .select("news_id")
+    .in("news_id", newsIds);
+
+  if(readError){
+    console.warn("Favoritenabgleich nicht verfügbar:", readError.message);
+    await loadFavoriteCounts();
+    return;
+  }
+
+  const remote = new Set((mine || []).map(row => String(row.news_id)));
+  const addIds = newsIds.filter(id => local.has(String(id)) && !remote.has(String(id)));
+  const removeIds = newsIds.filter(id => !local.has(String(id)) && remote.has(String(id)));
+
+  if(addIds.length){
+    const {error} = await fdb.from("news_favorites").insert(
+      addIds.map(news_id => ({news_id, device_id:deviceId}))
+    );
+    if(error) console.warn("Favoriten konnten nicht vollständig synchronisiert werden:", error.message);
+  }
+  if(removeIds.length){
+    const {error} = await fdb.from("news_favorites")
+      .delete()
+      .eq("device_id", deviceId)
+      .in("news_id", removeIds);
+    if(error) console.warn("Entfernte Favoriten konnten nicht vollständig synchronisiert werden:", error.message);
+  }
+
+  await loadFavoriteCounts();
+}
+
+async function setFavoriteOnServer(newsId, active){
+  const fdb = getFavoriteDb();
+  if(!fdb) return false;
+  const deviceId = getFavoriteDeviceId();
+  let error = null;
+
+  if(active){
+    const result = await fdb.from("news_favorites").insert({news_id:newsId,device_id:deviceId});
+    error = result.error;
+    if(error?.code === "23505") error = null;
+  }else{
+    const result = await fdb.from("news_favorites")
+      .delete()
+      .eq("news_id", newsId)
+      .eq("device_id", deviceId);
+    error = result.error;
+  }
+
+  if(error){
+    console.warn("Favorit konnte nicht mit Supabase synchronisiert werden:", error.message);
+    await loadFavoriteCounts();
+    return false;
+  }
+  await loadFavoriteCounts();
+  return true;
+}
+
 const reactionLabels = {hope:"❤️ Hoffnung", touched:"🥹 Berührt", wow:"🤯 Wow"};
 const getDeviceId = () => {
   let id = localStorage.getItem("goodNewsDeviceId");
@@ -519,6 +637,10 @@ async function fetchPublicNews({preservePosition=true}={}) {
     }else if(deepId){
       setTimeout(()=>scrollToNews(deepId),30);
     }
+
+    // Öffentliche Favoritenzahlen und lokale Favoriten werden nach jedem Serverabgleich
+    // synchronisiert. Das Feed-Rendering wartet nicht darauf.
+    void syncLocalFavoritesToServer();
 
     // Reaktionen sind derzeit nicht Bestandteil der sichtbaren App und werden deshalb nicht geladen.
   }catch(err){
@@ -849,10 +971,11 @@ function syncSlideQuickActions(){
   [favBtn,shareBtn,reportBtn].filter(Boolean).forEach(btn=>btn.disabled=!available);
   if(!available||!favBtn)return;
   const active=isFavorite(item.id);
+  const count=favoriteCountFor(item.id);
   favBtn.classList.toggle("active",active);
-  favBtn.textContent=active?"♥":"♡";
-  favBtn.setAttribute("aria-label",active?"Aktuelle Meldung aus Favoriten entfernen":"Aktuelle Meldung zu Favoriten hinzufügen");
-  favBtn.title=active?"Aus Favoriten entfernen":"Favorit";
+  favBtn.innerHTML=`<span class="slide-fav-heart" aria-hidden="true">${active?"♥":"♡"}</span><span class="slide-fav-count" aria-hidden="true">${count.toLocaleString("de-DE")}</span>`;
+  favBtn.setAttribute("aria-label",active?`Aktuelle Meldung aus Favoriten entfernen. ${count} Favorisierungen.`:`Aktuelle Meldung zu Favoriten hinzufügen. ${count} Favorisierungen.`);
+  favBtn.title=`${active?"Aus Favoriten entfernen":"Favorit"} · ${count.toLocaleString("de-DE")} Favorisierungen`;
 }
 function setSlideQuickActionsOpen(open){
   const panel=$("slideQuickActions"), toggle=$("slideActionsToggleBtn");
@@ -875,8 +998,11 @@ $("slideActionsToggleBtn")?.addEventListener("click",e=>{
 $("slideFavQuickBtn")?.addEventListener("click",()=>{
   const item=currentSlideItem(); if(!item)return;
   const active=toggleFavorite(item.id);
+  const key=String(item.id);
+  favoriteCounts[key]=Math.max(0,favoriteCountFor(item.id)+(active?1:-1));
   if(active)trackAnalyticsEvent("favorite",item.id);
   syncSlideQuickActions();
+  void setFavoriteOnServer(item.id,active);
 });
 $("slideShareQuickBtn")?.addEventListener("click",()=>{
   const item=currentSlideItem();if(!item)return;
@@ -2983,7 +3109,7 @@ queueMicrotask(()=>setTimeout(()=>void maybeOpenInstallWelcome(),180));
 // selbst alle offenen Good-News-Fenster auf den neuen Build führen. So hängt die
 // installierte PWA nicht mehr an einer alten Cache-/Worker-Version fest.
 // Build 35 – adaptive Überschriften (max. 4 Zeilen) und stärkerer Lesbarkeitsverlauf.
-const AUFWIND_BUILD=103;
+const AUFWIND_BUILD=105;
 let aufwindSwRegistration=null;
 let aufwindReloading=false;
 
@@ -3157,7 +3283,7 @@ if("serviceWorker" in navigator){
       // Stabile URL ab Build 37. updateViaCache:none zwingt die Update-Prüfung
       // am Browser-HTTP-Cache vorbei.
       // Bereits beim normalen Start alle Cache-Reste älterer Builds entfernen.
-      // Dadurch kann Build 103 nach erfolgreicher Übernahme nicht mehr auf z. B. 95 zurückfallen.
+      // Dadurch kann Build 105 nach erfolgreicher Übernahme nicht mehr auf z. B. 95 zurückfallen.
       await clearAufwindCaches({keepCurrent:true}).catch(()=>{});
       aufwindSwRegistration=await navigator.serviceWorker.register("sw.js",{
         scope:"./",
@@ -4525,7 +4651,7 @@ $("downloadMyDataBtn")?.addEventListener("click",()=>{
 });
 
 async function clearGoodNewsLocalAccountData(){
-  const keys=[USER_PREFS_KEY,"goodNewsFavorites","goodNewsDeviceId","goodNewsAnalyticsActiveDay","goodnews_push_enabled",PUBLIC_FEED_CACHE_KEY,"goodNewsQuickActionsOpen"];
+  const keys=[USER_PREFS_KEY,"goodNewsFavorites","goodNewsDeviceId","goodNewsFavoriteDeviceId","goodNewsAnalyticsActiveDay","goodnews_push_enabled",PUBLIC_FEED_CACHE_KEY,"goodNewsQuickActionsOpen"];
   keys.forEach(k=>{try{localStorage.removeItem(k)}catch{}});
   try{
     const sub=await getPushSubscription();

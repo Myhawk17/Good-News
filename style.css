@@ -1876,3 +1876,32 @@ html.user-theme-light .admin-date-group{background:#fff;border-color:#d9d9df}
 html.user-theme-light .admin-month{background:#fafafa}
 html.user-theme-light .admin-day{background:#f6f6f7}
 html.user-theme-light .admin-group-count{background:#e8e8ec;color:#444}
+
+
+/* ============================================================
+   BUILD 105 – öffentliche Favoritenzahl direkt am Herz
+   ============================================================ */
+.slide-fav-quick-btn{
+  width:auto!important;
+  min-width:44px;
+  padding-left:10px!important;
+  padding-right:10px!important;
+  gap:5px;
+  grid-auto-flow:column;
+  grid-template-columns:auto auto;
+}
+.slide-fav-heart{
+  display:inline-grid;
+  place-items:center;
+  min-width:18px;
+  font-size:1.3rem;
+  line-height:1;
+}
+.slide-fav-count{
+  display:inline-block;
+  min-width:1ch;
+  font-size:.72rem;
+  font-weight:800;
+  line-height:1;
+  font-variant-numeric:tabular-nums;
+}
