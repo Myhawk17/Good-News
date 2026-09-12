@@ -1,4 +1,4 @@
-const AUFWIND_SW_BUILD=105;
+const AUFWIND_SW_BUILD=106;
 const CACHE=`aufwind-build-${AUFWIND_SW_BUILD}`;
 const STATIC_ASSETS=new Set([
   "style.css",
@@ -75,48 +75,22 @@ self.addEventListener("fetch",event=>{
   if(event.request.method!=="GET") return;
   const url=new URL(event.request.url);
 
-  // Supabase und Fremdressourcen niemals durch den App-Worker cachen.
+  // Fremdressourcen und Supabase nie beeinflussen.
   if(url.hostname.includes("supabase.co") || url.origin!==self.location.origin) return;
 
-  // Versionsdatei MUSS immer direkt vom Host kommen.
-  if(url.pathname.endsWith("/version.json")){
-    event.respondWith(fetch(new Request(event.request,{cache:"no-store"})));
-    return;
-  }
-
-  // Entscheidend für Build 105: HTML/Navigation wird NIE mehr aus einem alten
-  // App-Cache beantwortet. Wenn das Netz fehlt, zeigen wir bewusst eine kleine
-  // Offline-Antwort statt eine veraltete Aufwind-Version zu reaktivieren.
-  if(event.request.mode==="navigate"){
-    event.respondWith((async()=>{
-      try{
-        return await fetch(new Request(event.request,{cache:"no-store"}));
-      }catch{
-        return new Response(
-          '<!doctype html><html lang="de"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Aufwind offline</title><body style="font-family:system-ui;padding:2rem"><h1>Aufwind ist gerade offline</h1><p>Bitte prüfe deine Internetverbindung und öffne die App erneut.</p></body></html>',
-          {status:503,headers:{"Content-Type":"text/html; charset=utf-8","Cache-Control":"no-store"}}
-        );
-      }
-    })());
-    return;
-  }
-
-  // Programmdateien ebenfalls Network-first/no-store. Nur exakt der aktuelle
-  // Build darf als kurzfristiger Offline-Fallback gespeichert werden.
-  if(STATIC_ASSETS.has(assetName(url))){
-    event.respondWith((async()=>{
-      try{
-        const response=await fetch(new Request(event.request,{cache:"no-store"}));
-        if(response && response.ok){
-          const cache=await caches.open(CACHE);
-          await cache.put(event.request,response.clone());
-        }
-        return response;
-      }catch{
-        const cached=await caches.match(event.request,{ignoreSearch:false});
-        return cached || Response.error();
-      }
-    })());
+  // Build 106: App-Shell grundsätzlich nur aus dem Netzwerk. Kein HTML, JS, CSS,
+  // Manifest oder version.json wird noch in Cache Storage abgelegt. Damit kann
+  // ein alter Aufwind-Build nicht mehr aus dem App-Cache wiederauferstehen.
+  if(event.request.mode==="navigate" ||
+     url.pathname.endsWith("/version.json") ||
+     STATIC_ASSETS.has(assetName(url))){
+    event.respondWith(fetch(new Request(event.request,{cache:"no-store"})).catch(()=>{
+      if(event.request.mode==="navigate") return new Response(
+        '<!doctype html><html lang="de"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Aufwind offline</title><body style="font-family:system-ui;padding:2rem"><h1>Aufwind ist gerade offline</h1><p>Bitte prüfe deine Internetverbindung und öffne die App erneut.</p></body></html>',
+        {status:503,headers:{"Content-Type":"text/html; charset=utf-8","Cache-Control":"no-store"}}
+      );
+      return Response.error();
+    }));
   }
 });
 

@@ -1,3 +1,6 @@
+BUILD 106 – PWA CACHE/WORKER RESET
+Alte Aufwind-Service-Worker und App-Caches werden einmalig entfernt. App-Shell wird network-only geladen.
+
 AUFWIND – GOOD NEWS AUS ALLER WELT
 =================================
 

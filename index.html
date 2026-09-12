@@ -1,6 +1,39 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
+<script>
+/* Build 106: einmalige PWA-Bereinigung gegen alte, von Android wiederbelebte Worker/Caches. */
+(async()=>{
+  const CLEANUP_BUILD=106;
+  const key="aufwindPwaCleanupBuild";
+  const done=Number(localStorage.getItem(key)||0);
+  if(done>=CLEANUP_BUILD) return;
+  try{
+    if("serviceWorker" in navigator){
+      const regs=await navigator.serviceWorker.getRegistrations();
+      await Promise.all(regs.map(reg=>{
+        try{
+          const scope=new URL(reg.scope);
+          if(scope.origin===location.origin) return reg.unregister();
+        }catch{}
+        return false;
+      }));
+    }
+    if("caches" in window){
+      const keys=await caches.keys();
+      await Promise.all(keys.filter(k=>k.startsWith("good-news-")||k.startsWith("aufwind-")).map(k=>caches.delete(k)));
+    }
+    localStorage.setItem(key,String(CLEANUP_BUILD));
+    const url=new URL(location.href);
+    if(url.searchParams.get("pwa_reset")!==String(CLEANUP_BUILD)){
+      url.searchParams.set("pwa_reset",String(CLEANUP_BUILD));
+      url.searchParams.set("gn_refresh",String(Date.now()));
+      location.replace(url.href);
+    }
+  }catch(e){ console.warn("Aufwind PWA-Bereinigung fehlgeschlagen",e); }
+})();
+</script>
+
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#0e0e10">
@@ -11,12 +44,12 @@
   <meta name="apple-mobile-web-app-title" content="Aufwind">
   <meta name="description" content="Aufwind – Good News aus aller Welt. Positive Nachrichten kompakt, transparent und nachvollziehbar.">
   <title>Aufwind – Good News aus aller Welt</title>
-  <link rel="manifest" href="manifest.json?v=105">
+  <link rel="manifest" href="manifest.json?v=106">
   <link rel="icon" type="image/png" sizes="32x32" href="aufwind-favicon-32.png">
   <link rel="icon" type="image/png" sizes="192x192" href="aufwind-icon-192.png">
   <link rel="icon" type="image/png" sizes="512x512" href="aufwind-icon-512.png">
   <link rel="apple-touch-icon" sizes="180x180" href="aufwind-apple-touch-icon.png">
-  <link rel="stylesheet" href="style.css?v=105">
+  <link rel="stylesheet" href="style.css?v=106">
 </head>
 <body>
 <header class="appbar">
@@ -40,7 +73,7 @@
         <span class="menu-chevron" aria-hidden="true">›</span>
       </button>
         <button id="accountBtn" type="button"><span>↪</span><span id="accountBtnLabel">Anmelden</span></button>
-        <div class="app-build-label" aria-label="App-Version">Aufwind · Build 105</div>
+        <div class="app-build-label" aria-label="App-Version">Aufwind · Build 106</div>
       </div>
       <button class="icon-btn slide-actions-toggle-btn" id="slideActionsToggleBtn" type="button" aria-label="Meldungsaktionen öffnen" aria-expanded="false" aria-controls="slideQuickActions">＋</button>
       <div class="slide-quick-actions" id="slideQuickActions" hidden>
@@ -1093,6 +1126,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="app.js?v=105"></script>
+  <script src="app.js?v=106"></script>
 </body>
 </html>

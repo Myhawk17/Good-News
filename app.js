@@ -3109,7 +3109,7 @@ queueMicrotask(()=>setTimeout(()=>void maybeOpenInstallWelcome(),180));
 // selbst alle offenen Good-News-Fenster auf den neuen Build führen. So hängt die
 // installierte PWA nicht mehr an einer alten Cache-/Worker-Version fest.
 // Build 35 – adaptive Überschriften (max. 4 Zeilen) und stärkerer Lesbarkeitsverlauf.
-const AUFWIND_BUILD=105;
+const AUFWIND_BUILD=106;
 let aufwindSwRegistration=null;
 let aufwindReloading=false;
 
@@ -3127,6 +3127,7 @@ function cleanAufwindUpdateParams(){
     url.searchParams.delete("gn_build");
     url.searchParams.delete("gn_refresh");
     url.searchParams.delete("gn_sw");
+    if(Number(url.searchParams.get("pwa_reset"))<=AUFWIND_BUILD) url.searchParams.delete("pwa_reset");
     history.replaceState(null,"",url.pathname+url.search+url.hash);
   }
 }
@@ -3283,7 +3284,7 @@ if("serviceWorker" in navigator){
       // Stabile URL ab Build 37. updateViaCache:none zwingt die Update-Prüfung
       // am Browser-HTTP-Cache vorbei.
       // Bereits beim normalen Start alle Cache-Reste älterer Builds entfernen.
-      // Dadurch kann Build 105 nach erfolgreicher Übernahme nicht mehr auf z. B. 95 zurückfallen.
+      // Dadurch kann Build 106 nach erfolgreicher Übernahme nicht mehr auf z. B. 95 zurückfallen.
       await clearAufwindCaches({keepCurrent:true}).catch(()=>{});
       aufwindSwRegistration=await navigator.serviceWorker.register("sw.js",{
         scope:"./",
