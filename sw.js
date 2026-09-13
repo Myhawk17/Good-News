@@ -1,4 +1,4 @@
-const AUFWIND_SW_BUILD=106;
+const AUFWIND_SW_BUILD=107;
 const CACHE=`aufwind-build-${AUFWIND_SW_BUILD}`;
 const STATIC_ASSETS=new Set([
   "style.css",
@@ -24,6 +24,11 @@ self.addEventListener("message",event=>{
   if(event.data?.type==="SKIP_WAITING") self.skipWaiting();
   if(event.data?.type==="CLEAR_AUFWIND_CACHES"){
     event.waitUntil(clearOldAufwindCaches({includeCurrent:true}));
+  }
+  if(event.data?.type==="CLOSE_AUFWIND_NOTIFICATIONS"){
+    event.waitUntil(self.registration.getNotifications({includeTriggered:true}).then(list=>{
+      list.forEach(notification=>notification.close());
+    }));
   }
 });
 

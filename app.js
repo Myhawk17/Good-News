@@ -3109,7 +3109,7 @@ queueMicrotask(()=>setTimeout(()=>void maybeOpenInstallWelcome(),180));
 // selbst alle offenen Good-News-Fenster auf den neuen Build führen. So hängt die
 // installierte PWA nicht mehr an einer alten Cache-/Worker-Version fest.
 // Build 35 – adaptive Überschriften (max. 4 Zeilen) und stärkerer Lesbarkeitsverlauf.
-const AUFWIND_BUILD=106;
+const AUFWIND_BUILD=107;
 let aufwindSwRegistration=null;
 let aufwindReloading=false;
 
@@ -3118,6 +3118,20 @@ function aufwindFreshUrl(remoteBuild){
   url.searchParams.set("gn_build",String(remoteBuild||AUFWIND_BUILD));
   url.searchParams.set("gn_refresh",String(Date.now()));
   return url.href;
+}
+
+async function clearVisibleAufwindNotifications(){
+  if (!("serviceWorker" in navigator)) return;
+  try{
+    const reg = aufwindSwRegistration || await navigator.serviceWorker.ready;
+    if(reg && typeof reg.getNotifications === "function"){
+      const notes = await reg.getNotifications({includeTriggered:true});
+      notes.forEach(note=>note.close());
+    }
+    navigator.serviceWorker.controller?.postMessage({type:"CLOSE_AUFWIND_NOTIFICATIONS"});
+  }catch(e){
+    console.warn("Aufwind-Benachrichtigungen konnten nicht automatisch geschlossen werden",e);
+  }
 }
 
 function cleanAufwindUpdateParams(){
@@ -3284,13 +3298,14 @@ if("serviceWorker" in navigator){
       // Stabile URL ab Build 37. updateViaCache:none zwingt die Update-Prüfung
       // am Browser-HTTP-Cache vorbei.
       // Bereits beim normalen Start alle Cache-Reste älterer Builds entfernen.
-      // Dadurch kann Build 106 nach erfolgreicher Übernahme nicht mehr auf z. B. 95 zurückfallen.
+      // Dadurch kann Build 107 nach erfolgreicher Übernahme nicht mehr auf z. B. 95 zurückfallen.
       await clearAufwindCaches({keepCurrent:true}).catch(()=>{});
       aufwindSwRegistration=await navigator.serviceWorker.register("sw.js",{
         scope:"./",
         updateViaCache:"none"
       });
       await aufwindSwRegistration.update().catch(()=>{});
+      await clearVisibleAufwindNotifications();
       await checkForAppUpdate();
     }catch(e){
       console.warn("Service Worker konnte nicht aktualisiert werden",e);
@@ -3308,10 +3323,14 @@ async function recheckBuildAfterResume(){
   lastAutomaticBuildCheck=now;
   await checkForAppUpdate().catch(()=>{});
 }
-window.addEventListener("pageshow",()=>void recheckBuildAfterResume());
+window.addEventListener("pageshow",()=>{ void clearVisibleAufwindNotifications(); void recheckBuildAfterResume(); });
 document.addEventListener("visibilitychange",()=>{
-  if(!document.hidden) void recheckBuildAfterResume();
+  if(!document.hidden){
+    void clearVisibleAufwindNotifications();
+    void recheckBuildAfterResume();
+  }
 });
+window.addEventListener("focus",()=>void clearVisibleAufwindNotifications());
 
 
 // ---------------- DESIGN & APP SETTINGS ----------------
