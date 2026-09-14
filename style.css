@@ -1994,3 +1994,79 @@ html.user-theme-light .report-news-choice:hover,html.user-theme-light .report-ne
     flex-basis:100%;
   }
 }
+
+
+/* ============================================================
+   BUILD 110 – einheitliche, zentrierte Aktionssymbole + Eck-Badges
+   ============================================================ */
+.appbar-actions{
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  gap:4px!important;
+}
+.menu-toggle-btn,
+.slide-quick-actions .icon-btn,
+.slide-focus-btn,
+.slide-fav-quick-btn,
+.slide-share-quick-btn{
+  width:38px!important;
+  min-width:38px!important;
+  max-width:38px!important;
+  height:38px!important;
+  min-height:38px!important;
+  max-height:38px!important;
+  padding:0!important;
+  border-radius:12px!important;
+  display:grid!important;
+  place-items:center!important;
+  grid-template-columns:1fr!important;
+  grid-template-rows:1fr!important;
+  position:relative!important;
+  overflow:visible!important;
+  line-height:1!important;
+}
+.quick-icon-svg,
+.slide-focus-btn svg{
+  width:21px!important;
+  height:21px!important;
+  display:block!important;
+  justify-self:center!important;
+  align-self:center!important;
+  fill:none!important;
+  stroke:currentColor!important;
+  stroke-width:1.9!important;
+  stroke-linecap:round!important;
+  stroke-linejoin:round!important;
+  pointer-events:none!important;
+}
+.slide-fav-quick-btn.active .quick-heart-svg{
+  fill:currentColor!important;
+}
+.quick-count-badge{
+  position:absolute!important;
+  right:-3px!important;
+  bottom:-3px!important;
+  min-width:15px!important;
+  height:15px!important;
+  padding:0 3px!important;
+  border-radius:999px!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  box-sizing:border-box!important;
+  background:#2f588d!important;
+  color:#fff!important;
+  border:1.5px solid rgba(15,16,20,.95)!important;
+  font-size:8px!important;
+  font-weight:800!important;
+  line-height:1!important;
+  letter-spacing:-.15px!important;
+  font-variant-numeric:tabular-nums!important;
+  pointer-events:none!important;
+  z-index:3!important;
+  transform:none!important;
+}
+.slide-fav-heart,.slide-share-icon,.slide-fav-count,.slide-share-count{
+  display:none!important;
+}

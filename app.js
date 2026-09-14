@@ -1009,10 +1009,10 @@ function syncSlideQuickActions(){
   const count=favoriteCountFor(item.id);
   const shareCount=shareCountFor(item.id);
   favBtn.classList.toggle("active",active);
-  favBtn.innerHTML=`<span class="slide-fav-heart" aria-hidden="true">${active?"♥":"♡"}</span><span class="slide-fav-count" aria-hidden="true">${count.toLocaleString("de-DE")}</span>`;
+  favBtn.innerHTML=`<svg class="quick-icon-svg quick-heart-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.7a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21.3l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.8Z"></path></svg><span class="quick-count-badge" aria-hidden="true">${count.toLocaleString("de-DE")}</span>`;
   favBtn.setAttribute("aria-label",active?`Aktuelle Meldung aus Favoriten entfernen. ${count} Favorisierungen.`:`Aktuelle Meldung zu Favoriten hinzufügen. ${count} Favorisierungen.`);
   favBtn.title=`${active?"Aus Favoriten entfernen":"Favorit"} · ${count.toLocaleString("de-DE")} Favorisierungen`;
-  shareBtn.innerHTML=`<span class="slide-share-icon" aria-hidden="true">↗</span><span class="slide-share-count" aria-hidden="true">${shareCount.toLocaleString("de-DE")}</span>`;
+  shareBtn.innerHTML=`<svg class="quick-icon-svg quick-share-svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="2.4"></circle><circle cx="6" cy="12" r="2.4"></circle><circle cx="18" cy="19" r="2.4"></circle><path d="m8.2 10.9 7.6-4.5M8.2 13.1l7.6 4.5"></path></svg><span class="quick-count-badge" aria-hidden="true">${shareCount.toLocaleString("de-DE")}</span>`;
   shareBtn.setAttribute("aria-label",`Aktuelle Meldung teilen. ${shareCount} Mal geteilt.`);
   shareBtn.title=`Teilen · ${shareCount.toLocaleString("de-DE")} eindeutige Shares`;
 }
@@ -3192,7 +3192,7 @@ queueMicrotask(()=>setTimeout(()=>void maybeOpenInstallWelcome(),180));
 // selbst alle offenen Good-News-Fenster auf den neuen Build führen. So hängt die
 // installierte PWA nicht mehr an einer alten Cache-/Worker-Version fest.
 // Build 35 – adaptive Überschriften (max. 4 Zeilen) und stärkerer Lesbarkeitsverlauf.
-const AUFWIND_BUILD=109;
+const AUFWIND_BUILD=110;
 let aufwindSwRegistration=null;
 let aufwindReloading=false;
 
@@ -3381,7 +3381,7 @@ if("serviceWorker" in navigator){
       // Stabile URL ab Build 37. updateViaCache:none zwingt die Update-Prüfung
       // am Browser-HTTP-Cache vorbei.
       // Bereits beim normalen Start alle Cache-Reste älterer Builds entfernen.
-      // Dadurch kann Build 109 nach erfolgreicher Übernahme nicht mehr auf z. B. 95 zurückfallen.
+      // Dadurch kann Build 110 nach erfolgreicher Übernahme nicht mehr auf z. B. 95 zurückfallen.
       await clearAufwindCaches({keepCurrent:true}).catch(()=>{});
       aufwindSwRegistration=await navigator.serviceWorker.register("sw.js",{
         scope:"./",
