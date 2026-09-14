@@ -989,22 +989,39 @@ async function shareItem(item) {
 }
 
 function currentSlideItem(){
-  const slides=[...feed.querySelectorAll(".slide[data-id]")];
-  if(!slides.length)return null;
-  const center=window.innerHeight/2;
-  let best=slides[0],bestDist=Infinity;
-  for(const slide of slides){
-    const r=slide.getBoundingClientRect();
-    const dist=Math.abs((r.top+r.bottom)/2-center);
-    if(dist<bestDist){best=slide;bestDist=dist;}
+  // Build 111: Zuerst bestimmen, welcher Feed-Abschnitt wirklich den Bildschirm
+  // beherrscht. Ein Kalenderslide darf nicht mehr die Werte der benachbarten
+  // ersten Nachricht übernehmen.
+  const sections=[...feed.querySelectorAll(".date-slide,.slide[data-id]")];
+  if(!sections.length)return null;
+  const viewportHeight=window.innerHeight;
+  let best=null,bestVisible=-1,bestCenter=Infinity;
+  for(const section of sections){
+    const r=section.getBoundingClientRect();
+    const visible=Math.max(0,Math.min(r.bottom,viewportHeight)-Math.max(r.top,0));
+    const centerDist=Math.abs((r.top+r.bottom)/2-viewportHeight/2);
+    if(visible>bestVisible+1 || (Math.abs(visible-bestVisible)<=1 && centerDist<bestCenter)){
+      best=section;bestVisible=visible;bestCenter=centerDist;
+    }
   }
+  if(!best || best.classList.contains("date-slide"))return null;
   return allNews.find(n=>String(n.id)===String(best.dataset.id))||null;
 }
 function syncSlideQuickActions(){
   const item=currentSlideItem(), favBtn=$("slideFavQuickBtn"), shareBtn=$("slideShareQuickBtn");
   const available=!!item;
   [favBtn,shareBtn].filter(Boolean).forEach(btn=>btn.disabled=!available);
-  if(!available||!favBtn||!shareBtn)return;
+  if(!favBtn||!shareBtn)return;
+  if(!available){
+    favBtn.classList.remove("active");
+    favBtn.innerHTML=`<svg class="quick-icon-svg quick-heart-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.7a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21.3l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.8Z"></path></svg>`;
+    shareBtn.innerHTML=`<svg class="quick-icon-svg quick-share-svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="2.4"></circle><circle cx="6" cy="12" r="2.4"></circle><circle cx="18" cy="19" r="2.4"></circle><path d="m8.2 10.9 7.6-4.5M8.2 13.1l7.6 4.5"></path></svg>`;
+    favBtn.setAttribute("aria-label","Favoriten sind auf dem Tagesbildschirm nicht verfügbar");
+    shareBtn.setAttribute("aria-label","Teilen ist auf dem Tagesbildschirm nicht verfügbar");
+    favBtn.title="Favorit";
+    shareBtn.title="Teilen";
+    return;
+  }
   const active=isFavorite(item.id);
   const count=favoriteCountFor(item.id);
   const shareCount=shareCountFor(item.id);
@@ -3192,7 +3209,7 @@ queueMicrotask(()=>setTimeout(()=>void maybeOpenInstallWelcome(),180));
 // selbst alle offenen Good-News-Fenster auf den neuen Build führen. So hängt die
 // installierte PWA nicht mehr an einer alten Cache-/Worker-Version fest.
 // Build 35 – adaptive Überschriften (max. 4 Zeilen) und stärkerer Lesbarkeitsverlauf.
-const AUFWIND_BUILD=110;
+const AUFWIND_BUILD=111;
 let aufwindSwRegistration=null;
 let aufwindReloading=false;
 
@@ -3381,7 +3398,7 @@ if("serviceWorker" in navigator){
       // Stabile URL ab Build 37. updateViaCache:none zwingt die Update-Prüfung
       // am Browser-HTTP-Cache vorbei.
       // Bereits beim normalen Start alle Cache-Reste älterer Builds entfernen.
-      // Dadurch kann Build 110 nach erfolgreicher Übernahme nicht mehr auf z. B. 95 zurückfallen.
+      // Dadurch kann Build 111 nach erfolgreicher Übernahme nicht mehr auf z. B. 95 zurückfallen.
       await clearAufwindCaches({keepCurrent:true}).catch(()=>{});
       aufwindSwRegistration=await navigator.serviceWorker.register("sw.js",{
         scope:"./",
