@@ -641,6 +641,7 @@ async function fetchPublicNews({preservePosition=true}={}) {
     // Öffentliche Favoritenzahlen und lokale Favoriten werden nach jedem Serverabgleich
     // synchronisiert. Das Feed-Rendering wartet nicht darauf.
     void syncLocalFavoritesToServer();
+    void loadShareCounts();
 
     // Reaktionen sind derzeit nicht Bestandteil der sichtbaren App und werden deshalb nicht geladen.
   }catch(err){
@@ -938,6 +939,38 @@ function scrollToNews(id,{highlightTerm=""}={}) {
   }
 }
 
+let shareCounts = {};
+
+function shareCountFor(newsId){
+  return Math.max(0, Number(shareCounts[String(newsId)] || 0));
+}
+
+async function loadShareCounts(){
+  if(!allNews.length) return;
+  const fdb=getFavoriteDb();
+  if(!fdb) return;
+  const {data,error}=await fdb.from("news_share_counts")
+    .select("news_id,share_count")
+    .in("news_id",allNews.map(n=>n.id));
+  if(error){console.warn("Teil-Zahlen nicht verfügbar:",error.message);return;}
+  shareCounts={};
+  (data||[]).forEach(row=>shareCounts[String(row.news_id)]=Math.max(0,Number(row.share_count||0)));
+  syncSlideQuickActions();
+}
+
+async function countShareOnce(newsId){
+  const fdb=getFavoriteDb();
+  if(!fdb)return;
+  const deviceId=getFavoriteDeviceId();
+  const key=String(newsId);
+  const previous=shareCountFor(newsId);
+  shareCounts[key]=previous+1;
+  syncSlideQuickActions();
+  const {error}=await fdb.from("news_shares").insert({news_id:newsId,device_id:deviceId});
+  if(error && error.code!=="23505") console.warn("Teil-Zahl konnte nicht synchronisiert werden:",error.message);
+  await loadShareCounts();
+}
+
 async function shareItem(item) {
   const url = new URL(location.href); url.search=""; url.hash=""; url.searchParams.set("news",item.id);
   const text = `${item.title}\n\n${item.summary}`;
@@ -945,9 +978,11 @@ async function shareItem(item) {
     if (navigator.share) {
       await navigator.share({title:item.title,text,url:url.toString()});
       trackAnalyticsEvent("share",item.id);
+      void countShareOnce(item.id);
     } else {
       await navigator.clipboard.writeText(`${text}\n\n${url}`);
       trackAnalyticsEvent("share",item.id);
+      void countShareOnce(item.id);
       alert("Meldung und Direktlink wurden kopiert.");
     }
   } catch {}
@@ -966,16 +1001,20 @@ function currentSlideItem(){
   return allNews.find(n=>String(n.id)===String(best.dataset.id))||null;
 }
 function syncSlideQuickActions(){
-  const item=currentSlideItem(), favBtn=$("slideFavQuickBtn"), shareBtn=$("slideShareQuickBtn"), reportBtn=$("slideReportQuickBtn");
+  const item=currentSlideItem(), favBtn=$("slideFavQuickBtn"), shareBtn=$("slideShareQuickBtn");
   const available=!!item;
-  [favBtn,shareBtn,reportBtn].filter(Boolean).forEach(btn=>btn.disabled=!available);
-  if(!available||!favBtn)return;
+  [favBtn,shareBtn].filter(Boolean).forEach(btn=>btn.disabled=!available);
+  if(!available||!favBtn||!shareBtn)return;
   const active=isFavorite(item.id);
   const count=favoriteCountFor(item.id);
+  const shareCount=shareCountFor(item.id);
   favBtn.classList.toggle("active",active);
   favBtn.innerHTML=`<span class="slide-fav-heart" aria-hidden="true">${active?"♥":"♡"}</span><span class="slide-fav-count" aria-hidden="true">${count.toLocaleString("de-DE")}</span>`;
   favBtn.setAttribute("aria-label",active?`Aktuelle Meldung aus Favoriten entfernen. ${count} Favorisierungen.`:`Aktuelle Meldung zu Favoriten hinzufügen. ${count} Favorisierungen.`);
   favBtn.title=`${active?"Aus Favoriten entfernen":"Favorit"} · ${count.toLocaleString("de-DE")} Favorisierungen`;
+  shareBtn.innerHTML=`<span class="slide-share-icon" aria-hidden="true">↗</span><span class="slide-share-count" aria-hidden="true">${shareCount.toLocaleString("de-DE")}</span>`;
+  shareBtn.setAttribute("aria-label",`Aktuelle Meldung teilen. ${shareCount} Mal geteilt.`);
+  shareBtn.title=`Teilen · ${shareCount.toLocaleString("de-DE")} eindeutige Shares`;
 }
 function setSlideQuickActionsOpen(open){
   const panel=$("slideQuickActions"), toggle=$("slideActionsToggleBtn");
@@ -1010,16 +1049,57 @@ $("slideShareQuickBtn")?.addEventListener("click",()=>{
 });
 
 let reportNewsId=null;
-function openReportForCurrentSlide(){
-  const item=currentSlideItem();if(!item)return;
-  reportNewsId=item.id;
-  $("reportNewsTitle").textContent=item.title||"Aktuelle Meldung";$("reportForm").reset();$("reportMessage").textContent="";markFormClean($("reportForm"));$("reportDialog").showModal();
+function reportDateKey(item){return String(item?.published_date||item?.date||"").slice(0,10);}
+function formatReportDate(dateStr){
+  const d=new Date(`${dateStr}T12:00:00`);
+  return Number.isNaN(d.getTime())?dateStr:d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit",year:"numeric"});
 }
-$("slideReportQuickBtn")?.addEventListener("click",openReportForCurrentSlide);
+function renderReportPicker(){
+  const root=$("reportDateList");if(!root)return;
+  const groups=new Map();
+  [...allNews].filter(n=>reportDateKey(n)).sort((a,b)=>{
+    const da=reportDateKey(a),db=reportDateKey(b);
+    if(da!==db)return db.localeCompare(da);
+    return String(a.published_time||"").localeCompare(String(b.published_time||""));
+  }).forEach(n=>{
+    const key=reportDateKey(n);
+    if(!groups.has(key))groups.set(key,[]);
+    groups.get(key).push(n);
+  });
+  root.innerHTML=[...groups].map(([date,items])=>`<section class="report-date-group"><button class="report-date-toggle" type="button" data-report-date="${esc(date)}" aria-expanded="false"><span>${esc(formatReportDate(date))}</span><span class="report-date-count">${items.length}</span><span class="report-date-chevron">›</span></button><div class="report-news-list" data-report-news-list="${esc(date)}" hidden>${items.map(item=>`<button type="button" class="report-news-choice" data-report-news-id="${esc(item.id)}"><span class="report-news-time">${esc(item.published_time||"")}</span><span>${esc(item.title||"Ohne Überschrift")}</span></button>`).join("")}</div></section>`).join("")||'<p class="muted">Aktuell sind keine Nachrichten auswählbar.</p>';
+  root.querySelectorAll(".report-date-toggle").forEach(btn=>btn.addEventListener("click",()=>{
+    const list=root.querySelector(`[data-report-news-list="${CSS.escape(btn.dataset.reportDate)}"]`);
+    if(!list)return;const open=list.hidden;list.hidden=!open;btn.setAttribute("aria-expanded",String(open));
+  }));
+  root.querySelectorAll(".report-news-choice").forEach(btn=>btn.addEventListener("click",()=>selectReportNews(btn.dataset.reportNewsId)));
+}
+function openReportMenu(){
+  reportNewsId=null;
+  $("reportForm")?.reset();
+  if($("reportMessage"))$("reportMessage").textContent="";
+  if($("reportCharCount"))$("reportCharCount").textContent="0";
+  $("reportForm").hidden=true;$("reportPicker").hidden=false;
+  renderReportPicker();markFormClean($("reportForm"));$("reportDialog").showModal();
+}
+function selectReportNews(id){
+  const item=allNews.find(n=>String(n.id)===String(id));if(!item)return;
+  reportNewsId=item.id;
+  $("reportNewsTitle").textContent=item.title||"Ausgewählte Meldung";
+  $("reportPicker").hidden=true;$("reportForm").hidden=false;
+  $("reportComment")?.focus();
+}
+$("reportMenuBtn")?.addEventListener("click",runMenuAction(openReportMenu));
+$("reportBackBtn")?.addEventListener("click",()=>{
+  reportNewsId=null;$("reportForm").hidden=true;$("reportPicker").hidden=false;
+  if($("reportMessage"))$("reportMessage").textContent="";
+});
+$("reportComment")?.addEventListener("input",()=>{
+  if($("reportCharCount"))$("reportCharCount").textContent=String($("reportComment").value.trim().length);
+});
 $("reportForm")?.addEventListener("submit",async e=>{
-  e.preventDefault();const msg=$("reportMessage");if(!configured||!reportNewsId){msg.textContent="Meldung konnte nicht gesendet werden.";return;}
+  e.preventDefault();const msg=$("reportMessage");if(!configured||!reportNewsId){msg.textContent="Bitte wähle zuerst eine Nachricht aus.";return;}
   const comment=$("reportComment").value.trim();
-  if(comment.length<5){msg.textContent="Bitte beschreibe kurz, was genau falsch ist (mindestens 5 Zeichen).";$("reportComment").focus();return;}
+  if(comment.length<30){msg.textContent="Bitte beschreibe den Fehler konkret mit mindestens 30 Zeichen.";$("reportComment").focus();return;}
   msg.textContent="Wird gesendet …";
   try{
     const {data:{user}}=await db.auth.getUser();
@@ -2253,8 +2333,11 @@ function adminItemHtml(n){
   const statusLabel=scheduled?"Geplant":(n.status==="published"?"Veröffentlicht":"Entwurf");
   return `<article class="admin-item" data-admin-id="${n.id}">
     <div class="admin-item-head">
-      <div><h4>${esc(displayTitle(n))}</h4><div class="admin-meta">${scheduled?"Geplant: ":""}${esc(fmtDateShort(n.published_date))} · ${esc(n.published_time?.slice(0,5)||"")} · ${esc(displayCategory(n))}</div></div>
-      <span class="status ${esc(statusClass)}">${statusLabel}</span>
+      <h4>${esc(displayTitle(n))}</h4>
+      <div class="admin-item-info">
+        <span class="status ${esc(statusClass)}">${statusLabel}</span>
+        <div class="admin-meta">${esc(fmtDateShort(n.published_date))} · ${esc(n.published_time?.slice(0,5)||"")} · ${esc(displayCategory(n))}</div>
+      </div>
     </div>
     <div class="admin-item-actions">
       <button class="secondary edit-admin" data-id="${n.id}">Bearbeiten</button>
@@ -3109,7 +3192,7 @@ queueMicrotask(()=>setTimeout(()=>void maybeOpenInstallWelcome(),180));
 // selbst alle offenen Good-News-Fenster auf den neuen Build führen. So hängt die
 // installierte PWA nicht mehr an einer alten Cache-/Worker-Version fest.
 // Build 35 – adaptive Überschriften (max. 4 Zeilen) und stärkerer Lesbarkeitsverlauf.
-const AUFWIND_BUILD=107;
+const AUFWIND_BUILD=109;
 let aufwindSwRegistration=null;
 let aufwindReloading=false;
 
@@ -3298,7 +3381,7 @@ if("serviceWorker" in navigator){
       // Stabile URL ab Build 37. updateViaCache:none zwingt die Update-Prüfung
       // am Browser-HTTP-Cache vorbei.
       // Bereits beim normalen Start alle Cache-Reste älterer Builds entfernen.
-      // Dadurch kann Build 107 nach erfolgreicher Übernahme nicht mehr auf z. B. 95 zurückfallen.
+      // Dadurch kann Build 109 nach erfolgreicher Übernahme nicht mehr auf z. B. 95 zurückfallen.
       await clearAufwindCaches({keepCurrent:true}).catch(()=>{});
       aufwindSwRegistration=await navigator.serviceWorker.register("sw.js",{
         scope:"./",

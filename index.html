@@ -44,12 +44,12 @@
   <meta name="apple-mobile-web-app-title" content="Aufwind">
   <meta name="description" content="Aufwind – Good News aus aller Welt. Positive Nachrichten kompakt, transparent und nachvollziehbar.">
   <title>Aufwind – Good News aus aller Welt</title>
-  <link rel="manifest" href="manifest.json?v=107">
+  <link rel="manifest" href="manifest.json?v=109">
   <link rel="icon" type="image/png" sizes="32x32" href="aufwind-favicon-32.png">
   <link rel="icon" type="image/png" sizes="192x192" href="aufwind-icon-192.png">
   <link rel="icon" type="image/png" sizes="512x512" href="aufwind-icon-512.png">
   <link rel="apple-touch-icon" sizes="180x180" href="aufwind-apple-touch-icon.png">
-  <link rel="stylesheet" href="style.css?v=107">
+  <link rel="stylesheet" href="style.css?v=109">
 </head>
 <body>
 <header class="appbar">
@@ -62,6 +62,7 @@
         <button id="searchBtn" type="button"><span>⌕</span>Suche</button>
         <button id="archiveBtn" type="button"><span>▦</span>Archiv</button>
         <button id="favoritesBtn" type="button"><span>♡</span>Meine Favoriten</button>
+        <button id="reportMenuBtn" type="button"><span>⚑</span>Fehler melden</button>
         <button id="submitNewsBtn" type="button"><span>＋</span>Nachricht einreichen</button>
         <div class="menu-separator" aria-hidden="true"></div>
         <button id="aboutBtn" type="button"><span>ⓘ</span>Über Aufwind</button>
@@ -73,10 +74,9 @@
         <span class="menu-chevron" aria-hidden="true">›</span>
       </button>
         <button id="accountBtn" type="button"><span>↪</span><span id="accountBtnLabel">Anmelden</span></button>
-        <div class="app-build-label" aria-label="App-Version">Aufwind · Build 107</div>
+        <div class="app-build-label" aria-label="App-Version">Aufwind · Build 109</div>
       </div>
-      <button class="icon-btn slide-actions-toggle-btn" id="slideActionsToggleBtn" type="button" aria-label="Meldungsaktionen öffnen" aria-expanded="false" aria-controls="slideQuickActions">＋</button>
-      <div class="slide-quick-actions" id="slideQuickActions" hidden>
+      <div class="slide-quick-actions" id="slideQuickActions">
         <button class="icon-btn slide-focus-btn" id="slideFocusBtn" type="button" aria-label="Slide-Text ausblenden" aria-pressed="false" title="Nur Bild anzeigen">
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"></path>
@@ -85,7 +85,6 @@
         </button>
         <button class="icon-btn slide-fav-quick-btn" id="slideFavQuickBtn" type="button" aria-label="Aktuelle Meldung zu Favoriten hinzufügen" title="Favorit">♡</button>
         <button class="icon-btn slide-share-quick-btn" id="slideShareQuickBtn" type="button" aria-label="Aktuelle Meldung teilen" title="Teilen">↗</button>
-        <button class="icon-btn slide-report-quick-btn" id="slideReportQuickBtn" type="button" aria-label="Fehler in aktueller Meldung melden" title="Fehler melden">⚑</button>
       </div>
       <button class="icon-btn admin-quick-btn" id="adminBtn" aria-label="Redaktion öffnen" hidden>⚙</button>
     </div>
@@ -117,14 +116,20 @@
 
   <dialog id="reportDialog" class="sheet report-dialog">
     <div class="dialog-head"><div><div class="eyebrow">Aufwind</div><h2>Fehler melden</h2></div><button class="icon-btn dialog-close" data-close="reportDialog">✕</button></div>
-    <form id="reportForm" class="stack">
-      <p id="reportNewsTitle" class="muted"></p>
+    <section id="reportPicker" class="report-picker">
+      <p class="muted">Wähle zuerst den Tag und anschließend die Nachricht aus, bei der dir ein Fehler aufgefallen ist.</p>
+      <div id="reportDateList" class="report-date-list"></div>
+    </section>
+    <form id="reportForm" class="stack" hidden>
+      <button id="reportBackBtn" class="secondary report-back-btn" type="button">‹ Andere Nachricht wählen</button>
+      <p id="reportNewsTitle" class="report-selected-news"></p>
       <label>Was ist dir aufgefallen?
         <select id="reportType" required>
           <option value="content">Inhaltlicher Fehler</option><option value="source">Quelle / Link fehlerhaft</option><option value="image">Bild / Bildquelle fehlerhaft</option><option value="spelling">Rechtschreibfehler</option><option value="other">Sonstiges</option>
         </select>
       </label>
-      <label>Was genau ist falsch?<textarea id="reportComment" rows="4" minlength="5" maxlength="1000" required placeholder="Beschreibe bitte kurz, was genau geprüft oder korrigiert werden soll."></textarea></label>
+      <label>Was genau ist falsch?<textarea id="reportComment" rows="5" minlength="30" maxlength="1000" required placeholder="Beschreibe bitte konkret, was falsch ist oder geprüft werden soll (mindestens 30 Zeichen)."></textarea></label>
+      <div class="report-char-hint"><span id="reportCharCount">0</span>/30 Mindestzeichen</div>
       <button class="primary" type="submit">Meldung senden</button><div id="reportMessage" class="message"></div>
     </form>
   </dialog>
@@ -1126,6 +1131,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="app.js?v=107"></script>
+  <script src="app.js?v=109"></script>
 </body>
 </html>

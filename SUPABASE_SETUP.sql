@@ -723,3 +723,34 @@ group by n.id
 on conflict (news_id) do update
 set favorite_count=excluded.favorite_count,
     updated_at=excluded.updated_at;
+
+
+-- BUILD 108: eindeutige öffentliche Teil-Zahlen
+create table if not exists public.news_shares (
+  news_id bigint not null references public.news(id) on delete cascade,
+  device_id text not null check (char_length(device_id) between 8 and 128),
+  created_at timestamptz not null default now(),
+  primary key (news_id, device_id)
+);
+create table if not exists public.news_share_counts (
+  news_id bigint primary key references public.news(id) on delete cascade,
+  share_count bigint not null default 0 check (share_count >= 0),
+  updated_at timestamptz not null default now()
+);
+alter table public.news_shares enable row level security;
+alter table public.news_share_counts enable row level security;
+drop policy if exists news_shares_select_own on public.news_shares;
+drop policy if exists news_shares_insert_own on public.news_shares;
+create policy news_shares_select_own on public.news_shares for select to anon, authenticated using (device_id=coalesce((current_setting('request.headers',true)::jsonb->>'x-device-id'),''));
+create policy news_shares_insert_own on public.news_shares for insert to anon, authenticated with check (device_id=coalesce((current_setting('request.headers',true)::jsonb->>'x-device-id'),'') and char_length(device_id) between 8 and 128);
+revoke all on table public.news_shares from anon, authenticated;
+grant select, insert on table public.news_shares to anon, authenticated;
+drop policy if exists news_share_counts_select on public.news_share_counts;
+create policy news_share_counts_select on public.news_share_counts for select to anon, authenticated using (true);
+revoke all on table public.news_share_counts from anon, authenticated;
+grant select on table public.news_share_counts to anon, authenticated;
+create schema if not exists private;
+create or replace function private.refresh_news_share_count() returns trigger language plpgsql security definer set search_path='' as $$ begin insert into public.news_share_counts(news_id,share_count,updated_at) select new.news_id,count(*)::bigint,now() from public.news_shares where news_id=new.news_id on conflict(news_id) do update set share_count=excluded.share_count,updated_at=excluded.updated_at; return new; end; $$;
+revoke all on function private.refresh_news_share_count() from public, anon, authenticated;
+drop trigger if exists news_shares_refresh_count on public.news_shares;
+create trigger news_shares_refresh_count after insert on public.news_shares for each row execute function private.refresh_news_share_count();

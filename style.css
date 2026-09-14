@@ -1905,3 +1905,92 @@ html.user-theme-light .admin-group-count{background:#e8e8ec;color:#444}
   line-height:1;
   font-variant-numeric:tabular-nums;
 }
+
+
+/* ============================================================
+   BUILD 108 – feste Meldungsaktionen + Share-Zahl + Fehlerauswahl
+   ============================================================ */
+.slide-actions-toggle-btn,.slide-report-quick-btn{display:none!important}
+.slide-quick-actions{
+  display:grid!important;
+  gap:4px;
+  justify-items:end;
+}
+.slide-quick-actions .icon-btn,
+.slide-fav-quick-btn,
+.slide-share-quick-btn{
+  width:38px!important;
+  min-width:38px!important;
+  height:38px!important;
+  padding:0!important;
+  border-radius:12px!important;
+  display:grid!important;
+  grid-template-columns:1fr!important;
+  grid-template-rows:21px 10px!important;
+  place-items:center!important;
+  gap:0!important;
+  overflow:hidden;
+}
+.slide-focus-btn{grid-template-rows:1fr!important}
+.slide-fav-heart,.slide-share-icon{font-size:1.08rem;line-height:1;min-width:0}
+.slide-fav-count,.slide-share-count{font-size:.58rem;font-weight:800;line-height:1;font-variant-numeric:tabular-nums}
+.report-dialog{width:min(680px,calc(100% - 20px));max-height:88dvh;overflow:auto}
+.report-picker{padding:0 2px 8px}
+.report-date-list{display:grid;gap:8px;margin-top:12px}
+.report-date-group{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--panel)}
+.report-date-toggle{width:100%;display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:10px;border:0;background:transparent;color:inherit;padding:13px 14px;text-align:left;font:inherit;font-weight:800;cursor:pointer}
+.report-date-count{min-width:28px;text-align:center;border-radius:999px;background:#ffffff16;padding:3px 8px;font-size:.78rem}
+.report-date-chevron{font-size:1.25rem;transition:transform .15s ease}
+.report-date-toggle[aria-expanded="true"] .report-date-chevron{transform:rotate(90deg)}
+.report-news-list{border-top:1px solid var(--line);padding:6px}
+.report-news-choice{width:100%;display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:start;border:0;background:transparent;color:inherit;padding:10px 9px;border-radius:10px;text-align:left;font:inherit;cursor:pointer}
+.report-news-choice:hover,.report-news-choice:focus-visible{background:#ffffff12}
+.report-news-time{font-size:.75rem;color:var(--muted);padding-top:2px;font-variant-numeric:tabular-nums}
+.report-selected-news{font-weight:800;color:inherit!important;margin:0;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+.report-back-btn{justify-self:start}
+.report-char-hint{text-align:right;color:var(--muted);font-size:.78rem;margin-top:-8px}
+html.user-theme-light .report-date-count{background:#0000000b}
+html.user-theme-light .report-news-choice:hover,html.user-theme-light .report-news-choice:focus-visible{background:#00000008}
+
+
+/* ============================================================
+   BUILD 109 – Admin-Beitragskarten: Titel und Status sauber trennen
+   ============================================================ */
+.admin-item-head{
+  display:block!important;
+  min-width:0;
+}
+.admin-item-head>h4{
+  width:100%;
+  min-width:0;
+  max-width:100%;
+  margin:0 0 10px;
+  overflow-wrap:anywhere;
+  word-break:normal;
+}
+.admin-item-info{
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:7px 9px;
+  width:100%;
+  min-width:0;
+}
+.admin-item-info .status{
+  flex:0 0 auto;
+  position:static!important;
+  max-width:100%;
+}
+.admin-item-info .admin-meta{
+  flex:1 1 170px;
+  min-width:0;
+  overflow-wrap:anywhere;
+}
+@media (max-width:520px){
+  .admin-item-info{
+    align-items:flex-start;
+  }
+  .admin-item-info .admin-meta{
+    flex-basis:100%;
+  }
+}
