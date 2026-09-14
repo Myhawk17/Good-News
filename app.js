@@ -989,7 +989,7 @@ async function shareItem(item) {
 }
 
 function currentSlideItem(){
-  // Build 111: Zuerst bestimmen, welcher Feed-Abschnitt wirklich den Bildschirm
+  // Build 112: Zuerst bestimmen, welcher Feed-Abschnitt wirklich den Bildschirm
   // beherrscht. Ein Kalenderslide darf nicht mehr die Werte der benachbarten
   // ersten Nachricht übernehmen.
   const sections=[...feed.querySelectorAll(".date-slide,.slide[data-id]")];
@@ -1463,10 +1463,12 @@ $("welcomeContinueBtn")?.addEventListener("click",async()=>{
         await enablePush(next);
         localStorage.setItem("goodnews_push_enabled","1");
       }catch(err){
-        next.notifications=false;
-        if($("welcomeNotifications")) $("welcomeNotifications").checked=false;
-        localStorage.setItem("goodnews_push_enabled","0");
-        pushWarning="Push konnte nicht aktiviert werden und bleibt aus.";
+        // Build 112: Ein vorübergehender Registrierungs-/Netzwerkfehler darf den
+        // ausdrücklichen Nutzerwunsch nicht selbstständig auf "Aus" zurücksetzen.
+        next.notifications=true;
+        if($("welcomeNotifications")) $("welcomeNotifications").checked=true;
+        localStorage.setItem("goodnews_push_enabled","1");
+        pushWarning="Push ist weiterhin gewünscht, konnte auf diesem Gerät aber gerade nicht neu registriert werden. Aufwind versucht es beim nächsten Start erneut.";
       }
     }else{
       if(previous.notifications){
@@ -2353,6 +2355,7 @@ function adminItemHtml(n){
       <h4>${esc(displayTitle(n))}</h4>
       <div class="admin-item-info">
         <span class="status ${esc(statusClass)}">${statusLabel}</span>
+        ${n.push_enabled?'<span class="status push-enabled-status">Push ✓</span>':""}
         <div class="admin-meta">${esc(fmtDateShort(n.published_date))} · ${esc(n.published_time?.slice(0,5)||"")} · ${esc(displayCategory(n))}</div>
       </div>
     </div>
@@ -2513,6 +2516,7 @@ function saveEditorDraft(){
     publishedDate:$("publishedDate")?.value||"",
     publishedTime:$("publishedTime")?.value||"",
     scheduledPublish:Boolean($("scheduledPublish")?.checked),
+    pushEnabled:Boolean($("pushEnabled")?.checked),
     category:$("category")?.value||"",
     storyKey:$("storyKey")?.value||"",
     title:$("title")?.value||"",
@@ -2560,6 +2564,7 @@ function restoreEditorDraft(){
     $("status").disabled=false;
     $("status").value=d.status||"draft";
     if($("scheduledPublish")) $("scheduledPublish").checked=Boolean(d.scheduledPublish);
+    if($("pushEnabled")) $("pushEnabled").checked=Boolean(d.pushEnabled);
     updateScheduledPublishUi({fromLoad:true});
     $("priority").value=d.priority||"normal";
     $("imageUrl").value=d.imageUrl||"";
@@ -2649,6 +2654,7 @@ function resetEditor(){
   if($("imageIsSymbol")) $("imageIsSymbol").checked=false;
   const now=new Date();setPublishDateTime(now);
   if($("scheduledPublish")) $("scheduledPublish").checked=false;
+  if($("pushEnabled")) $("pushEnabled").checked=false;
   $("status").disabled=false;$("status").value="draft";$("priority").value="normal";
   updateScheduledPublishUi({fromLoad:true});
   $("saveBtn").textContent="Speichern";$("cancelEditBtn").hidden=true;
@@ -3011,7 +3017,7 @@ function formToDraft(){
   if(!scheduled && !$("newsId").value) setPublishDateTime(new Date());
   const d=$("publishedDate").value,t=$("publishedTime").value||"00:00";
   return {
-    id:$("newsId").value||null,published_date:d,published_time:t,scheduled_publish:scheduled,
+    id:$("newsId").value||null,published_date:d,published_time:t,scheduled_publish:scheduled,push_enabled:Boolean($("pushEnabled")?.checked),
     category:$("category").value.trim(),story_key:$("storyKey").value.trim()||null,
     title:$("title").value.trim(),summary:$("summary").value.trim(),
     status:scheduled?"published":$("status").value,priority:$("priority").value,
@@ -3060,6 +3066,7 @@ async function editArticle(id){
   if($("bylineVisible")) $("bylineVisible").value=n.byline_visible?"true":"false";
   $("status").disabled=false;$("status").value=n.status;$("priority").value=n.priority||"normal";$("contextText").value=n.context_text||"";
   if($("scheduledPublish")) $("scheduledPublish").checked=isScheduledNews(n);
+  if($("pushEnabled")) $("pushEnabled").checked=Boolean(n.push_enabled);
   updateScheduledPublishUi({fromLoad:true});
   if($("dailySlot")) $("dailySlot").value=n.daily_slot||"none";
   if($("yearsAgo")) $("yearsAgo").value=n.years_ago||"";
@@ -3106,7 +3113,7 @@ $("newsForm").onsubmit=async(e)=>{
       image_url:imageUrl,image_path:imagePath,image_credit:d.image_credit,
       image_license:d.image_license,image_source_url:d.image_source_url,image_kind:d.image_kind,is_symbol_image:d.is_symbol_image,
       image_fit:d.image_fit,image_zoom:d.image_zoom,image_x:d.image_pos_x,image_y:d.image_pos_y,
-      sources:d.sources,publish_at:publishAt,is_scheduled:Boolean(d.scheduled_publish),
+      sources:d.sources,publish_at:publishAt,is_scheduled:Boolean(d.scheduled_publish),push_enabled:Boolean(d.push_enabled),
       scheduled_push_processed_at:null,scheduled_push_result:null,updated_at:new Date().toISOString()
     };
     const id=$("newsId").value;
@@ -3118,7 +3125,7 @@ $("newsForm").onsubmit=async(e)=>{
     const result=await query;
     if(result.error)throw result.error;
     let saveNotice="Gespeichert.";
-    if(becamePublished){
+    if(becamePublished && d.push_enabled){
       try{
         const push=await broadcastPublishedNews(result.data||{...row,id});
         saveNotice=push?.sent>0?`Gespeichert. Push gesendet (${push.sent}).`:"Gespeichert. Kein passendes aktives Push-Abo.";
@@ -3209,7 +3216,7 @@ queueMicrotask(()=>setTimeout(()=>void maybeOpenInstallWelcome(),180));
 // selbst alle offenen Good-News-Fenster auf den neuen Build führen. So hängt die
 // installierte PWA nicht mehr an einer alten Cache-/Worker-Version fest.
 // Build 35 – adaptive Überschriften (max. 4 Zeilen) und stärkerer Lesbarkeitsverlauf.
-const AUFWIND_BUILD=111;
+const AUFWIND_BUILD=112;
 let aufwindSwRegistration=null;
 let aufwindReloading=false;
 
@@ -3398,7 +3405,7 @@ if("serviceWorker" in navigator){
       // Stabile URL ab Build 37. updateViaCache:none zwingt die Update-Prüfung
       // am Browser-HTTP-Cache vorbei.
       // Bereits beim normalen Start alle Cache-Reste älterer Builds entfernen.
-      // Dadurch kann Build 111 nach erfolgreicher Übernahme nicht mehr auf z. B. 95 zurückfallen.
+      // Dadurch kann Build 112 nach erfolgreicher Übernahme nicht mehr auf z. B. 95 zurückfallen.
       await clearAufwindCaches({keepCurrent:true}).catch(()=>{});
       aufwindSwRegistration=await navigator.serviceWorker.register("sw.js",{
         scope:"./",

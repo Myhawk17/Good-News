@@ -44,12 +44,12 @@
   <meta name="apple-mobile-web-app-title" content="Aufwind">
   <meta name="description" content="Aufwind – Good News aus aller Welt. Positive Nachrichten kompakt, transparent und nachvollziehbar.">
   <title>Aufwind – Good News aus aller Welt</title>
-  <link rel="manifest" href="manifest.json?v=111">
+  <link rel="manifest" href="manifest.json?v=112">
   <link rel="icon" type="image/png" sizes="32x32" href="aufwind-favicon-32.png">
   <link rel="icon" type="image/png" sizes="192x192" href="aufwind-icon-192.png">
   <link rel="icon" type="image/png" sizes="512x512" href="aufwind-icon-512.png">
   <link rel="apple-touch-icon" sizes="180x180" href="aufwind-apple-touch-icon.png">
-  <link rel="stylesheet" href="style.css?v=111">
+  <link rel="stylesheet" href="style.css?v=112">
 </head>
 <body>
 <header class="appbar">
@@ -74,7 +74,7 @@
         <span class="menu-chevron" aria-hidden="true">›</span>
       </button>
         <button id="accountBtn" type="button"><span>↪</span><span id="accountBtnLabel">Anmelden</span></button>
-        <div class="app-build-label" aria-label="App-Version">Aufwind · Build 111</div>
+        <div class="app-build-label" aria-label="App-Version">Aufwind · Build 112</div>
       </div>
       <div class="slide-quick-actions" id="slideQuickActions">
         <button class="icon-btn slide-focus-btn" id="slideFocusBtn" type="button" aria-label="Slide-Text ausblenden" aria-pressed="false" title="Nur Bild anzeigen">
@@ -773,6 +773,16 @@
             </div>
           </div>
 
+          <div class="schedule-publish-card push-per-news-card">
+            <label class="toggle-row schedule-publish-toggle">
+              <input id="pushEnabled" type="checkbox">
+              <span>
+                <strong>Push-Benachrichtigung</strong>
+                <small>Für diesen Beitrag beim Veröffentlichen eine Push-Nachricht senden</small>
+              </span>
+            </label>
+          </div>
+
           <div class="form-grid two">
             <label>Kategorie
               <select id="category" required>
@@ -1131,6 +1141,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="app.js?v=111"></script>
+  <script src="app.js?v=112"></script>
 </body>
 </html>

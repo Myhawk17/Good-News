@@ -2070,3 +2070,7 @@ html.user-theme-light .report-news-choice:hover,html.user-theme-light .report-ne
 .slide-fav-heart,.slide-share-icon,.slide-fav-count,.slide-share-count{
   display:none!important;
 }
+
+/* BUILD 112 – Push pro Beitrag */
+.push-per-news-card{margin-top:10px}
+.push-enabled-status{background:#173d2b!important;color:#baf4cf!important;border-color:#2d6a4a!important}
