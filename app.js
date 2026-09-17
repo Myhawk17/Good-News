@@ -3281,7 +3281,7 @@ queueMicrotask(()=>setTimeout(()=>void maybeOpenInstallWelcome(),180));
 // selbst alle offenen Good-News-Fenster auf den neuen Build führen. So hängt die
 // installierte PWA nicht mehr an einer alten Cache-/Worker-Version fest.
 // Build 35 – adaptive Überschriften (max. 4 Zeilen) und stärkerer Lesbarkeitsverlauf.
-const AUFWIND_BUILD=113;
+const AUFWIND_BUILD=114;
 let aufwindSwRegistration=null;
 let aufwindReloading=false;
 

@@ -1433,7 +1433,7 @@ html.main-menu-open .main-menu{pointer-events:auto}
   line-height:1;
 }
 .slide-fav-quick-btn.active{background:#f5f5f5!important;color:#111!important}
-.slide-fav-quick-btn:disabled,.slide-share-quick-btn:disabled,.slide-report-quick-btn:disabled{opacity:.45!important}
+.slide-fav-quick-btn:disabled,.slide-comment-quick-btn:disabled,.slide-share-quick-btn:disabled,.slide-report-quick-btn:disabled{opacity:.45!important}
 
 /* Suche – Treffer im geöffneten Slide sichtbar markieren */
 .search-hit-mark{
@@ -2075,6 +2075,7 @@ html.user-theme-light .report-news-choice:hover,html.user-theme-light .report-ne
 .push-per-news-card{margin-top:10px}
 .push-enabled-status{background:#173d2b!important;color:#baf4cf!important;border-color:#2d6a4a!important}
 
+/* BUILD 114 – Datumsfolie: Kommentar-Aktion wie Favorit/Teilen deaktiviert darstellen */
 /* BUILD 113 – Kommentare + kompaktere Schnellaktionen */
 .menu-toggle-btn,
 .slide-quick-actions .icon-btn,

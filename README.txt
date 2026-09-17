@@ -1,3 +1,8 @@
+BUILD 114 – DATUMSFOLIE: KOMMENTAR-SYMBOL DEAKTIVIERT
+---------------------------------------------------
+- Auf Datumsfolien ist das Kommentar-Symbol jetzt wie Favorit und Teilen grau/deaktiviert dargestellt.
+- Auf Nachrichtenfolien bleibt die Kommentar-Funktion unverändert aktiv.
+
 BUILD 106 – PWA CACHE/WORKER RESET
 Alte Aufwind-Service-Worker und App-Caches werden einmalig entfernt. App-Shell wird network-only geladen.
 
