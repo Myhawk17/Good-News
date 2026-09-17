@@ -2074,3 +2074,25 @@ html.user-theme-light .report-news-choice:hover,html.user-theme-light .report-ne
 /* BUILD 112 – Push pro Beitrag */
 .push-per-news-card{margin-top:10px}
 .push-enabled-status{background:#173d2b!important;color:#baf4cf!important;border-color:#2d6a4a!important}
+
+/* BUILD 113 – Kommentare + kompaktere Schnellaktionen */
+.menu-toggle-btn,
+.slide-quick-actions .icon-btn,
+.slide-focus-btn,
+.slide-fav-quick-btn,
+.slide-comment-quick-btn,
+.slide-share-quick-btn{
+  width:34px!important;min-width:34px!important;max-width:34px!important;
+  height:34px!important;min-height:34px!important;max-height:34px!important;
+  border-radius:10px!important;
+}
+.quick-icon-svg,.slide-focus-btn svg{width:18px!important;height:18px!important}
+.quick-count-badge{min-width:14px!important;height:14px!important;font-size:7.5px!important;right:-3px!important;bottom:-3px!important}
+.comment-card{padding:12px 0;border-bottom:1px solid rgba(255,255,255,.12)}
+.comment-card p{white-space:pre-wrap;margin:.35rem 0 .5rem}
+.comment-meta{font-size:.76rem;opacity:.62}
+.comments-story-title{font-weight:700;margin-top:0}
+.comment-form{margin-top:18px;display:grid;gap:10px}
+.comment-form textarea{width:100%;box-sizing:border-box;resize:vertical}
+.comment-form-foot{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.comment-login-note{padding:12px;border-radius:12px;background:rgba(255,255,255,.07)}

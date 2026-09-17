@@ -989,7 +989,7 @@ async function shareItem(item) {
 }
 
 function currentSlideItem(){
-  // Build 112: Zuerst bestimmen, welcher Feed-Abschnitt wirklich den Bildschirm
+  // Build 113: Zuerst bestimmen, welcher Feed-Abschnitt wirklich den Bildschirm
   // beherrscht. Ein Kalenderslide darf nicht mehr die Werte der benachbarten
   // ersten Nachricht übernehmen.
   const sections=[...feed.querySelectorAll(".date-slide,.slide[data-id]")];
@@ -1007,16 +1007,75 @@ function currentSlideItem(){
   if(!best || best.classList.contains("date-slide"))return null;
   return allNews.find(n=>String(n.id)===String(best.dataset.id))||null;
 }
+
+let commentCounts={};
+
+async function loadCommentCounts(){
+  if(!configured||!db)return;
+  try{
+    const {data,error}=await db.from("news_comments").select("news_id");
+    if(error)throw error;
+    const next={};
+    (data||[]).forEach(r=>{const k=String(r.news_id);next[k]=(next[k]||0)+1});
+    commentCounts=next;
+    syncSlideQuickActions();
+  }catch(err){console.warn("Kommentarzahlen konnten nicht geladen werden",err)}
+}
+function commentCountFor(id){return Math.max(0,Number(commentCounts[String(id)])||0)}
+async function openComments(item){
+  if(!item)return;
+  openReader("Kommentare","Zum Beitrag",`<div class="comments-loading">Kommentare werden geladen …</div>`);
+  try{
+    const {data:{session}}=await db.auth.getSession();
+    const {data,error}=await db.from("news_comments").select("id,news_id,user_id,body,created_at").eq("news_id",item.id).order("created_at",{ascending:true});
+    if(error)throw error;
+    const rows=data||[];
+    commentCounts[String(item.id)]=rows.length;
+    const list=rows.length?rows.map(x=>`<article class="comment-card">
+      <div class="comment-meta">${esc(new Date(x.created_at).toLocaleString("de-DE"))}</div>
+      <p>${esc(x.body)}</p>
+      ${session?.user?.id===x.user_id?`<button class="secondary compact comment-delete" type="button" data-comment-delete="${x.id}">Löschen</button>`:""}
+    </article>`).join(""):`<p class="muted">Noch keine Kommentare. Schreib den ersten.</p>`;
+    const composer=session?`<form id="commentForm" class="comment-form">
+      <label>Dein Kommentar<textarea id="commentBody" rows="4" maxlength="500" required placeholder="Schreib etwas Freundliches …"></textarea></label>
+      <div class="comment-form-foot"><small><span id="commentChars">0</span>/500</small><button class="primary" type="submit">Kommentieren</button></div>
+      <div id="commentMessage" class="message" aria-live="polite"></div>
+    </form>`:`<p class="comment-login-note">Zum Kommentieren musst du mit deinem Aufwind-Konto angemeldet sein. Lesen kannst du die Kommentare auch ohne Anmeldung.</p>`;
+    $("readerContent").innerHTML=`<p class="comments-story-title">${esc(item.title)}</p><div class="comments-list">${list}</div>${composer}`;
+    $("commentBody")?.addEventListener("input",()=>{$("commentChars").textContent=String($("commentBody").value.length)});
+    $("commentForm")?.addEventListener("submit",async e=>{
+      e.preventDefault();
+      const body=$("commentBody").value.trim(), msg=$("commentMessage");
+      if(!body){msg.textContent="Bitte gib einen Kommentar ein.";return}
+      const {data:{user}}=await db.auth.getUser();
+      if(!user){msg.textContent="Bitte melde dich erneut an.";return}
+      const {error}=await db.from("news_comments").insert({news_id:item.id,user_id:user.id,body});
+      if(error){msg.textContent=error.message||String(error);return}
+      await openComments(item); syncSlideQuickActions();
+    });
+    $("readerContent").querySelectorAll("[data-comment-delete]").forEach(btn=>btn.addEventListener("click",async()=>{
+      if(!confirm("Kommentar wirklich löschen?"))return;
+      const {error}=await db.from("news_comments").delete().eq("id",btn.dataset.commentDelete);
+      if(error){alert(error.message||String(error));return}
+      await openComments(item); syncSlideQuickActions();
+    }));
+    syncSlideQuickActions();
+  }catch(err){
+    $("readerContent").innerHTML=`<p class="message">Kommentare konnten nicht geladen werden: ${esc(err.message||String(err))}</p>`;
+  }
+}
 function syncSlideQuickActions(){
-  const item=currentSlideItem(), favBtn=$("slideFavQuickBtn"), shareBtn=$("slideShareQuickBtn");
+  const item=currentSlideItem(), favBtn=$("slideFavQuickBtn"), commentBtn=$("slideCommentQuickBtn"), shareBtn=$("slideShareQuickBtn");
   const available=!!item;
-  [favBtn,shareBtn].filter(Boolean).forEach(btn=>btn.disabled=!available);
-  if(!favBtn||!shareBtn)return;
+  [favBtn,commentBtn,shareBtn].filter(Boolean).forEach(btn=>btn.disabled=!available);
+  if(!favBtn||!commentBtn||!shareBtn)return;
   if(!available){
     favBtn.classList.remove("active");
     favBtn.innerHTML=`<svg class="quick-icon-svg quick-heart-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.7a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21.3l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.8Z"></path></svg>`;
+    commentBtn.innerHTML=`<svg class="quick-icon-svg quick-comment-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9.5 9.5 0 0 1-3.8-.8L3 21l1.6-4.4A8.2 8.2 0 0 1 3 11.5a8.5 8.5 0 0 1 9-8.4 8.5 8.5 0 0 1 9 8.4Z"></path></svg>`;
     shareBtn.innerHTML=`<svg class="quick-icon-svg quick-share-svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="2.4"></circle><circle cx="6" cy="12" r="2.4"></circle><circle cx="18" cy="19" r="2.4"></circle><path d="m8.2 10.9 7.6-4.5M8.2 13.1l7.6 4.5"></path></svg>`;
     favBtn.setAttribute("aria-label","Favoriten sind auf dem Tagesbildschirm nicht verfügbar");
+    commentBtn.setAttribute("aria-label","Kommentare sind auf dem Tagesbildschirm nicht verfügbar");
     shareBtn.setAttribute("aria-label","Teilen ist auf dem Tagesbildschirm nicht verfügbar");
     favBtn.title="Favorit";
     shareBtn.title="Teilen";
@@ -1024,11 +1083,15 @@ function syncSlideQuickActions(){
   }
   const active=isFavorite(item.id);
   const count=favoriteCountFor(item.id);
+  const commentCount=commentCountFor(item.id);
   const shareCount=shareCountFor(item.id);
   favBtn.classList.toggle("active",active);
   favBtn.innerHTML=`<svg class="quick-icon-svg quick-heart-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.7a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21.3l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.8Z"></path></svg><span class="quick-count-badge" aria-hidden="true">${count.toLocaleString("de-DE")}</span>`;
   favBtn.setAttribute("aria-label",active?`Aktuelle Meldung aus Favoriten entfernen. ${count} Favorisierungen.`:`Aktuelle Meldung zu Favoriten hinzufügen. ${count} Favorisierungen.`);
   favBtn.title=`${active?"Aus Favoriten entfernen":"Favorit"} · ${count.toLocaleString("de-DE")} Favorisierungen`;
+  commentBtn.innerHTML=`<svg class="quick-icon-svg quick-comment-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9.5 9.5 0 0 1-3.8-.8L3 21l1.6-4.4A8.2 8.2 0 0 1 3 11.5a8.5 8.5 0 0 1 9-8.4 8.5 8.5 0 0 1 9 8.4Z"></path></svg><span class="quick-count-badge" aria-hidden="true">${commentCount.toLocaleString("de-DE")}</span>`;
+  commentBtn.setAttribute("aria-label",`Kommentare öffnen. ${commentCount} Kommentare.`);
+  commentBtn.title=`Kommentare · ${commentCount.toLocaleString("de-DE")}`;
   shareBtn.innerHTML=`<svg class="quick-icon-svg quick-share-svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="2.4"></circle><circle cx="6" cy="12" r="2.4"></circle><circle cx="18" cy="19" r="2.4"></circle><path d="m8.2 10.9 7.6-4.5M8.2 13.1l7.6 4.5"></path></svg><span class="quick-count-badge" aria-hidden="true">${shareCount.toLocaleString("de-DE")}</span>`;
   shareBtn.setAttribute("aria-label",`Aktuelle Meldung teilen. ${shareCount} Mal geteilt.`);
   shareBtn.title=`Teilen · ${shareCount.toLocaleString("de-DE")} eindeutige Shares`;
@@ -1060,6 +1123,7 @@ $("slideFavQuickBtn")?.addEventListener("click",()=>{
   syncSlideQuickActions();
   void setFavoriteOnServer(item.id,active);
 });
+$("slideCommentQuickBtn")?.addEventListener("click",()=>{const item=currentSlideItem();if(item)void openComments(item)});
 $("slideShareQuickBtn")?.addEventListener("click",()=>{
   const item=currentSlideItem();if(!item)return;
   shareItem(item);
@@ -1463,7 +1527,7 @@ $("welcomeContinueBtn")?.addEventListener("click",async()=>{
         await enablePush(next);
         localStorage.setItem("goodnews_push_enabled","1");
       }catch(err){
-        // Build 112: Ein vorübergehender Registrierungs-/Netzwerkfehler darf den
+        // Build 113: Ein vorübergehender Registrierungs-/Netzwerkfehler darf den
         // ausdrücklichen Nutzerwunsch nicht selbstständig auf "Aus" zurücksetzen.
         next.notifications=true;
         if($("welcomeNotifications")) $("welcomeNotifications").checked=true;
@@ -3191,6 +3255,7 @@ if(localStorage.getItem("goodNewsAdminTab")==="editor"){
 }
 // Sofort den letzten bekannten Feed zeigen; danach im Hintergrund aktualisieren.
 renderCachedFeed();
+void loadCommentCounts();
 trackDailyActive();
 fetchPublicNews({preservePosition:false});
 
@@ -3216,7 +3281,7 @@ queueMicrotask(()=>setTimeout(()=>void maybeOpenInstallWelcome(),180));
 // selbst alle offenen Good-News-Fenster auf den neuen Build führen. So hängt die
 // installierte PWA nicht mehr an einer alten Cache-/Worker-Version fest.
 // Build 35 – adaptive Überschriften (max. 4 Zeilen) und stärkerer Lesbarkeitsverlauf.
-const AUFWIND_BUILD=112;
+const AUFWIND_BUILD=113;
 let aufwindSwRegistration=null;
 let aufwindReloading=false;
 
@@ -3405,7 +3470,7 @@ if("serviceWorker" in navigator){
       // Stabile URL ab Build 37. updateViaCache:none zwingt die Update-Prüfung
       // am Browser-HTTP-Cache vorbei.
       // Bereits beim normalen Start alle Cache-Reste älterer Builds entfernen.
-      // Dadurch kann Build 112 nach erfolgreicher Übernahme nicht mehr auf z. B. 95 zurückfallen.
+      // Dadurch kann Build 113 nach erfolgreicher Übernahme nicht mehr auf z. B. 95 zurückfallen.
       await clearAufwindCaches({keepCurrent:true}).catch(()=>{});
       aufwindSwRegistration=await navigator.serviceWorker.register("sw.js",{
         scope:"./",
