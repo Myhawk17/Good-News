@@ -3281,7 +3281,7 @@ queueMicrotask(()=>setTimeout(()=>void maybeOpenInstallWelcome(),180));
 // selbst alle offenen Good-News-Fenster auf den neuen Build führen. So hängt die
 // installierte PWA nicht mehr an einer alten Cache-/Worker-Version fest.
 // Build 35 – adaptive Überschriften (max. 4 Zeilen) und stärkerer Lesbarkeitsverlauf.
-const AUFWIND_BUILD=114;
+const AUFWIND_BUILD=115;
 let aufwindSwRegistration=null;
 let aufwindReloading=false;
 
@@ -4139,19 +4139,29 @@ function normalizeTripleItem(item,slot){
 }
 
 function isCandidateBatch(payload){
-  return payload?.schema==="candidate_batch_v1" && Array.isArray(payload?.groups) && payload.groups.length===3;
+  return payload?.schema==="candidate_batch_v1" && Array.isArray(payload?.groups) && payload.groups.length>0 && payload.groups.some(g=>Array.isArray(g?.candidates));
 }
 function batchHeading(payload){
   return payload?.batch_type==="evening"?"🌙 Abend-Auswahl":"☀️ Morgen-Auswahl";
 }
-function candidateCardHtml(x,group,index){
-  const n=normalizeCandidateItem(group.candidates?.[index],group.category);
-  const inputName=`batch-${x.id}-${group.key}`;
+function flattenBatchCandidates(payload){
+  const out=[];
+  (payload?.groups||[]).forEach((group,groupIndex)=>{
+    (Array.isArray(group?.candidates)?group.candidates:[]).forEach((raw,candidateIndex)=>{
+      out.push({group,raw,groupIndex,candidateIndex});
+    });
+  });
+  return out;
+}
+function candidateCardHtml(x,item,index){
+  const group=item.group||{};
+  const n=normalizeCandidateItem(item.raw,group.category);
+  const inputId=`batch-${x.id}-candidate-${index}`;
   return `<label class="candidate-card" data-candidate-card>
-    <input type="radio" name="${esc(inputName)}" value="${index}" data-batch-id="${x.id}" data-group-key="${esc(group.key)}">
+    <input type="checkbox" id="${esc(inputId)}" value="${index}" data-batch-id="${x.id}" data-candidate-index="${index}">
     <span class="candidate-choice-mark" aria-hidden="true"></span>
     <span class="candidate-copy">
-      <span class="candidate-kicker">Vorschlag ${index===0?"A":"B"}</span>
+      <span class="candidate-kicker">${esc(categoryBucket({category:n.category||group.category}))}</span>
       <strong>${esc(n.title||"Ohne Überschrift")}</strong>
       <span class="candidate-summary">${esc(n.summary)}</span>
       <span class="candidate-meta">${n.image_url?(n.image_kind==="ai"?"🖼️ KI-Illustration":"🖼️ Bild vorhanden"):"Kein Bild"}${n.is_symbol_image?" · Symbolbild":""} · ${n.sources.length} ${n.sources.length===1?"Quelle":"Quellen"}</span>
@@ -4160,7 +4170,7 @@ function candidateCardHtml(x,group,index){
 }
 function batchDraftHtml(x){
   const p=x.payload||{};
-  const groups=p.groups||[];
+  const candidates=flattenBatchCandidates(p);
   return `<article class="triple-draft-card candidate-batch-card" data-batch-card="${x.id}">
     <div class="batch-draft-head">
       <div>
@@ -4170,19 +4180,18 @@ function batchDraftHtml(x){
       <div class="triple-draft-source">${esc(x.source_label||"ChatGPT")}</div>
     </div>
     <div class="candidate-groups">
-      ${groups.map(group=>`<section class="candidate-group">
-        <div class="candidate-group-head"><strong>${esc(categoryBucket({category:group.category}))}</strong><span>1 von 2 wählen</span></div>
+      <section class="candidate-group">
+        <div class="candidate-group-head"><strong>6 Vorschläge</strong><span>3 frei auswählen</span></div>
         <div class="candidate-pair">
-          ${candidateCardHtml(x,group,0)}
-          ${candidateCardHtml(x,group,1)}
+          ${candidates.map((item,index)=>candidateCardHtml(x,item,index)).join("")}
         </div>
-      </section>`).join("")}
+      </section>
     </div>
     <div class="submission-actions">
       ${x.status!=="imported"?`<button class="primary import-selected-batch" data-id="${x.id}" disabled>3 ausgewählte Entwürfe übernehmen</button>`:""}
       ${x.status==="new"?`<button class="secondary reject-triple" data-id="${x.id}">Ablehnen</button>`:""}
     </div>
-    ${x.status==="new"?`<div class="batch-selection-note" data-selection-note>Bitte aus jeder Rubrik einen Vorschlag auswählen.</div>`:""}
+    ${x.status==="new"?`<div class="batch-selection-note" data-selection-note>Bitte genau 3 der 6 Vorschläge auswählen.</div>`:""}
   </article>`;
 }
 function legacyTripleHtml(x){
@@ -4208,8 +4217,10 @@ function renderTripleDrafts(){
   const rows=tripleDrafts.filter(x=>filter==="all"||x.status===filter);
   root.innerHTML=rows.map(x=>isCandidateBatch(x.payload)?batchDraftHtml(x):legacyTripleHtml(x)).join("")||'<p class="muted">Hier gibt es aktuell keine Entwürfe.</p>';
 
-  root.querySelectorAll('.candidate-card input[type="radio"]').forEach(input=>input.addEventListener("change",()=>{
+  root.querySelectorAll('.candidate-card input[type="checkbox"]').forEach(input=>input.addEventListener("change",()=>{
     const card=input.closest(".candidate-batch-card");
+    const checked=[...(card?.querySelectorAll('.candidate-card input[type="checkbox"]:checked')||[])];
+    if(checked.length>3){ input.checked=false; return; }
     card?.querySelectorAll("[data-candidate-card]").forEach(c=>c.classList.toggle("selected",Boolean(c.querySelector("input:checked"))));
     updateBatchSelectionState(input.dataset.batchId);
   }));
@@ -4220,12 +4231,11 @@ function renderTripleDrafts(){
 function updateBatchSelectionState(id){
   const x=tripleDrafts.find(v=>String(v.id)===String(id));if(!x||!isCandidateBatch(x.payload))return;
   const card=document.querySelector(`[data-batch-card="${CSS.escape(String(id))}"]`);if(!card)return;
-  const groups=x.payload.groups||[];
-  const complete=groups.every(g=>card.querySelector(`input[name="batch-${CSS.escape(String(id))}-${CSS.escape(g.key)}"]:checked`));
+  const count=card.querySelectorAll('.candidate-card input[type="checkbox"]:checked').length;
   const btn=card.querySelector(".import-selected-batch");
-  if(btn)btn.disabled=!complete;
+  if(btn)btn.disabled=count!==3;
   const note=card.querySelector("[data-selection-note]");
-  if(note)note.textContent=complete?"Auswahl komplett – diese drei Beiträge können übernommen werden.":"Bitte aus jeder Rubrik einen Vorschlag auswählen.";
+  if(note)note.textContent=count===3?"Auswahl komplett – diese drei Beiträge können übernommen werden.":`${count}/3 ausgewählt – bitte genau 3 Vorschläge auswählen.`;
 }
 $("tripleDraftStatus")?.addEventListener("change",renderTripleDrafts);
 
@@ -4277,14 +4287,12 @@ async function importCandidateBatch(id){
   const x=tripleDrafts.find(v=>String(v.id)===String(id));if(!x||!isCandidateBatch(x.payload))return;
   const card=document.querySelector(`[data-batch-card="${CSS.escape(String(id))}"]`);
   if(!card)return;
-  const selected=[];
-  for(const group of x.payload.groups){
-    const checked=card.querySelector(`input[name="batch-${CSS.escape(String(id))}-${CSS.escape(group.key)}"]:checked`);
-    if(!checked)return alert("Bitte aus jeder Rubrik genau einen Vorschlag auswählen.");
-    const raw=group.candidates?.[Number(checked.value)];
-    selected.push([group,raw]);
-  }
-  const rows=selected.map(([group,raw],index)=>rowFromCandidate(x,group,raw,index));
+  const all=flattenBatchCandidates(x.payload);
+  const indexes=[...card.querySelectorAll('.candidate-card input[type="checkbox"]:checked')].map(el=>Number(el.value));
+  if(indexes.length!==3)return alert("Bitte genau drei Vorschläge auswählen.");
+  const selected=indexes.map(i=>all[i]).filter(Boolean);
+  if(selected.length!==3)return alert("Die Auswahl konnte nicht gelesen werden. Bitte erneut auswählen.");
+  const rows=selected.map((item,index)=>rowFromCandidate(x,item.group,item.raw,index));
   if(rows.some(r=>!r.title||!r.summary||!r.sources.length))return alert("Mindestens ein ausgewählter Vorschlag ist unvollständig. Überschrift, Text und mindestens eine Quelle sind erforderlich.");
   for(const row of rows) row.image_url=await resolveDisplayImageUrl(row.image_url);
   const {error}=await db.from("news").insert(rows);
