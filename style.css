@@ -2097,3 +2097,15 @@ html.user-theme-light .report-news-choice:hover,html.user-theme-light .report-ne
 .comment-form textarea{width:100%;box-sizing:border-box;resize:vertical}
 .comment-form-foot{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .comment-login-note{padding:12px;border-radius:12px;background:rgba(255,255,255,.07)}
+
+/* BUILD 116 – zuverlässige native Datum-/Uhrzeit-Picker */
+.native-picker-field{display:grid;grid-template-columns:minmax(0,1fr) 40px;gap:6px;align-items:stretch}
+.native-picker-field input[type="date"],.native-picker-field input[type="time"]{
+  min-width:0;width:100%;box-sizing:border-box;color-scheme:dark;
+}
+.user-theme-light .native-picker-field input[type="date"],
+.user-theme-light .native-picker-field input[type="time"]{color-scheme:light}
+.native-picker-btn{
+  min-width:40px;width:40px;padding:0;border-radius:10px;
+  display:grid;place-items:center;font-size:19px;line-height:1;
+}

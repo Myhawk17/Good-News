@@ -2692,6 +2692,22 @@ function updateScheduledPublishUi({fromLoad=false}={}){
   }
 }
 
+function openNativePicker(input){
+  if(!input)return;
+  try{
+    if(typeof input.showPicker==="function"){input.showPicker();return;}
+  }catch{}
+  input.focus({preventScroll:true});
+  input.click();
+}
+$("publishedDatePickerBtn")?.addEventListener("click",()=>openNativePicker($("publishedDate")));
+$("publishedTimePickerBtn")?.addEventListener("click",()=>openNativePicker($("publishedTime")));
+// Auch ein Tipp direkt auf das Feld öffnet den nativen Android/Browser-Picker.
+["publishedDate","publishedTime"].forEach(id=>{
+  const input=$(id);
+  input?.addEventListener("click",()=>{try{if(typeof input.showPicker==="function")input.showPicker()}catch{}});
+});
+
 $("scheduledPublish")?.addEventListener("change",()=>{
   updateScheduledPublishUi();
   markFormDirty($("newsForm"));
@@ -3281,7 +3297,7 @@ queueMicrotask(()=>setTimeout(()=>void maybeOpenInstallWelcome(),180));
 // selbst alle offenen Good-News-Fenster auf den neuen Build führen. So hängt die
 // installierte PWA nicht mehr an einer alten Cache-/Worker-Version fest.
 // Build 35 – adaptive Überschriften (max. 4 Zeilen) und stärkerer Lesbarkeitsverlauf.
-const AUFWIND_BUILD=115;
+const AUFWIND_BUILD=116;
 let aufwindSwRegistration=null;
 let aufwindReloading=false;
 
@@ -4498,64 +4514,53 @@ async function disablePush(){
 }
 async function syncPushPreferencesForCurrentAccount(sessionOverride=null){
   const input=$("prefNotifications");
-  if(!configured||!pushSupported())return false;
+  if(!configured||!pushSupported())return Boolean(userPrefs.notifications);
+  // Build 116: Die gespeicherte Nutzerentscheidung ist die Quelle der Wahrheit.
+  // Ein Update, ein temporär fehlendes Abo oder ein Server-Lesefehler darf sie nicht überschreiben.
+  const wanted=Boolean(userPrefs.notifications || localStorage.getItem("goodnews_push_enabled")==="1");
+  if(Notification.permission==="denied"){
+    // Die App ändert den Wunsch nicht; Android/Browser hat Push lediglich blockiert.
+    if(input && !userPreferencesDialog?.open)input.checked=wanted;
+    return false;
+  }
   try{
     const session=sessionOverride || (await db.auth.getSession()).data.session;
-    const sub=await getPushSubscription();
-    const localPushEnabled=localStorage.getItem("goodnews_push_enabled")==="1";
-    let enabled=false,row=null,ownershipChecked=false;
+    let sub=await getPushSubscription();
+    if(wanted && Notification.permission==="granted" && !sub){
+      // Nach einem Update kann die Browser-Subscription fehlen. Ohne neuen Permission-Prompt
+      // versuchen wir sie anhand des bereits erteilten Rechts wiederherzustellen.
+      try{sub=await enablePush(userPrefs)}catch(err){console.warn("Push-Abo konnte noch nicht wiederhergestellt werden",err)}
+    }
+    let row=null;
     if(session?.user && sub && Notification.permission==="granted"){
       const result=await db.from("push_subscriptions")
         .select("enabled,notify_morning,notify_evening,notify_categories")
         .eq("user_id",session.user.id)
         .eq("endpoint",sub.endpoint)
-        .eq("enabled",true)
         .maybeSingle();
-      if(!result.error){
-        ownershipChecked=true;
-        if(result.data){row=result.data;enabled=true;}
+      if(!result.error && result.data)row=result.data;
+    }
+    // Serverwerte dürfen Filter aktualisieren, aber niemals den lokalen Master-Schalter
+    // nur wegen eines Updates oder eines vorübergehenden Sync-Problems deaktivieren.
+    if(wanted && row){
+      if(typeof row.notify_morning==="boolean")userPrefs.notifyMorning=row.notify_morning;
+      if(typeof row.notify_evening==="boolean")userPrefs.notifyEvening=row.notify_evening;
+      if(Array.isArray(row.notify_categories)){
+        userPrefs.notifyCategories=row.notify_categories.map(migrateNotifyCategoryLabel).filter(x=>AUFWIND_CATEGORIES.includes(x));
       }
-    }else if(!session?.user){
-      // Gäste können ihren Serverdatensatz wegen der absichtlich fehlenden SELECT-/UPDATE-
-      // Freigabe nicht auslesen. Deshalb gilt die lokale, vom Nutzer gesetzte Aktivierung
-      // zusammen mit der tatsächlich vorhandenen Browser-Subscription als Quelle der Wahrheit.
-      enabled=Boolean(localPushEnabled && sub && Notification.permission==="granted");
     }
-    // Ein angemeldetes Konto darf keinen Endpunkt eines anderen Kontos erben.
-    // Bei Gästen wird eine bewusst aktivierte Subscription dagegen beibehalten;
-    // Build 100 hat sie fälschlich bei jedem Start wieder abgemeldet.
-    if(sub && Notification.permission==="granted" && session?.user && ownershipChecked && !enabled){
-      await sub.unsubscribe().catch(()=>{});
-    }
-    const next={
-      ...userPrefs,
-      notifications:enabled,
-      notifyMorning:session?.user ? (enabled ? row?.notify_morning!==false : true) : userPrefs.notifyMorning!==false,
-      notifyEvening:session?.user ? (enabled ? row?.notify_evening!==false : true) : userPrefs.notifyEvening!==false,
-      notifyCategories:session?.user
-        ? (enabled && Array.isArray(row?.notify_categories)
-          ? row.notify_categories.map(migrateNotifyCategoryLabel).filter(x=>AUFWIND_CATEGORIES.includes(x))
-          : [...AUFWIND_CATEGORIES])
-        : (Array.isArray(userPrefs.notifyCategories)
-          ? userPrefs.notifyCategories.map(migrateNotifyCategoryLabel).filter(x=>AUFWIND_CATEGORIES.includes(x))
-          : [...AUFWIND_CATEGORIES])
-    };
-    userPrefs={...USER_PREF_DEFAULTS,...next,notifyCategories:[...(next.notifyCategories||AUFWIND_CATEGORIES)]};
-    // Alte Rubrikbezeichnungen bestehender Push-Abos beim ersten Start nach dem Update
-    // automatisch auf die aktuelle Acht-Rubriken-Struktur umstellen.
-    if(enabled && sub && Array.isArray(row?.notify_categories)){
-      const before=JSON.stringify(row.notify_categories);
-      const after=JSON.stringify(userPrefs.notifyCategories);
-      if(before!==after) await savePushSubscription(sub,userPrefs).catch(()=>{});
-    }
+    userPrefs.notifications=wanted;
     try{localStorage.setItem(USER_PREFS_KEY,JSON.stringify(userPrefs));}catch{}
-    localStorage.setItem("goodnews_push_enabled",enabled?"1":"0");
+    localStorage.setItem("goodnews_push_enabled",wanted?"1":"0");
     if(input && !userPreferencesDialog?.open){
-      input.checked=enabled;
+      input.checked=wanted;
       updateNotificationPreferencesVisibility();
     }
-    return enabled;
-  }catch{
+    return Boolean(wanted && sub && Notification.permission==="granted");
+  }catch(err){
+    console.warn("Push-Einstellungen konnten nicht synchronisiert werden",err);
+    // Wichtig: gespeicherte Einstellungen bei Fehlern unverändert lassen.
+    if(input && !userPreferencesDialog?.open)input.checked=wanted;
     return false;
   }
 }

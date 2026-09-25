@@ -1,4 +1,4 @@
-const AUFWIND_SW_BUILD=115;
+const AUFWIND_SW_BUILD=116;
 const CACHE=`aufwind-build-${AUFWIND_SW_BUILD}`;
 const STATIC_ASSETS=new Set([
   "style.css",
@@ -60,7 +60,7 @@ self.addEventListener("activate",event=>{
     await self.clients.claim();
 
     // Beim echten Build-Wechsel offene PWA-Fenster einmal auf eine eindeutige
-    // Netzwerk-URL führen. Danach kontrolliert Build 105 sämtliche Navigationen.
+    // Netzwerk-URL führen. Danach kontrolliert Build 116 sämtliche Navigationen.
     if(hadOlderCache){
       const windows=await self.clients.matchAll({type:"window",includeUncontrolled:true});
       await Promise.all(windows.map(async client=>{
@@ -83,7 +83,7 @@ self.addEventListener("fetch",event=>{
   // Fremdressourcen und Supabase nie beeinflussen.
   if(url.hostname.includes("supabase.co") || url.origin!==self.location.origin) return;
 
-  // Build 106: App-Shell grundsätzlich nur aus dem Netzwerk. Kein HTML, JS, CSS,
+  // Build 116: App-Shell grundsätzlich nur aus dem Netzwerk. Kein HTML, JS, CSS,
   // Manifest oder version.json wird noch in Cache Storage abgelegt. Damit kann
   // ein alter Aufwind-Build nicht mehr aus dem App-Cache wiederauferstehen.
   if(event.request.mode==="navigate" ||
