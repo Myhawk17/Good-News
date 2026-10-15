@@ -236,7 +236,7 @@
         <div class="user-setting-toggle-row">
           <div class="user-setting-copy">
             <strong>Benachrichtigungen</strong>
-            <span>Stelle Zeiten und Kategorien frei zusammen. Erst mit „Speichern“ wird die komplette Auswahl übernommen. Beim ersten Aktivieren fragt dein Browser nach der Erlaubnis.</span>
+            <span>Push-Nachrichten erhalten: Ja oder Nein. Welche Beiträge gesendet werden, entscheidet die Redaktion. Beim ersten Aktivieren fragt dein Browser nach der Erlaubnis.</span>
           </div>
           <label class="switch-control" aria-label="Benachrichtigungen vormerken">
             <input id="prefNotifications" type="checkbox">
@@ -244,24 +244,6 @@
           </label>
         </div>
 
-        <div id="notificationPreferenceDetails" class="notification-preference-details">
-          <div class="notification-times">
-            <label><input id="prefNotifyMorning" type="checkbox"> Morgens</label>
-            <label><input id="prefNotifyEvening" type="checkbox"> Abends</label>
-          </div>
-
-          <div class="notification-category-title">Benachrichtigungskategorien</div>
-          <div class="notification-category-grid">
-            <label><input type="checkbox" data-notify-category="Kultur & Unterhaltung"> Kultur &amp; Unterhaltung</label>
-            <label><input type="checkbox" data-notify-category="Natur & Tiere"> Natur &amp; Tiere</label>
-            <label><input type="checkbox" data-notify-category="Rund um die Welt"> Rund um die Welt</label>
-            <label><input type="checkbox" data-notify-category="Wirtschaft & Politik"> Wirtschaft &amp; Politik</label>
-            <label><input type="checkbox" data-notify-category="Was war..."> Was war...</label>
-            <label><input type="checkbox" data-notify-category="Sport"> Sport</label>
-            <label><input type="checkbox" data-notify-category="Medizin & Technologie"> Medizin &amp; Technologie</label>
-            <label><input type="checkbox" data-notify-category="Wissenschaft"> Wissenschaft</label>
-          </div>
-        </div>
       </section>
     </div>
 
@@ -1167,11 +1149,11 @@ var messages=[], started=Date.now(), taps=0;
 function record(type,detail){messages.push(new Date().toLocaleTimeString()+' '+type+': '+String(detail||'').slice(0,900));if(messages.length>30)messages.shift();}
 window.addEventListener('error',function(e){record('ERROR',(e.message||'')+' '+(e.filename||'')+':'+(e.lineno||''));},true);
 window.addEventListener('unhandledrejection',function(e){record('PROMISE',e.reason&&e.reason.message||String(e.reason));});
-record('DIAG','Build 124 geladen');
+record('DIAG','Build 125 geladen');
 function report(){
  var el=document.getElementById('aufwind-diagnostic-panel');if(el){el.remove();return;}
  el=document.createElement('section');el.id='aufwind-diagnostic-panel';el.style.cssText='position:fixed!important;inset:10px!important;z-index:2147483647!important;background:#fff!important;color:#111!important;border:3px solid #222!important;border-radius:12px!important;padding:16px!important;overflow:auto!important;font:14px/1.5 Arial,sans-serif!important;';
- var title=document.createElement('h2');title.textContent='Aufwind – Fehlerdiagnose (Build 124)';el.appendChild(title);
+ var title=document.createElement('h2');title.textContent='Aufwind – Fehlerdiagnose (Build 125)';el.appendChild(title);
  var pre=document.createElement('pre');pre.style.cssText='white-space:pre-wrap!important;word-break:break-word!important;background:#eee!important;padding:10px!important;';
  var active='';try{var node=document.elementFromPoint(innerWidth/2,innerHeight/2);active=node?node.tagName+'#'+node.id+'.'+String(node.className).slice(0,100):'keins';}catch(e){active=String(e)}
  pre.textContent=['URL: '+location.pathname,'Zeit seit Start: '+Math.round((Date.now()-started)/1000)+'s','Berührungen erkannt: '+taps,'Element in Bildschirmmitte: '+active,'Bereit: '+document.readyState,'Supabase geladen: '+!!window.supabase,'--- FEHLER ---'].concat(messages).join('\n');el.appendChild(pre);
@@ -1187,6 +1169,6 @@ setInterval(mount,2000);
 </script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="app.js?v=124"></script>
+  <script src="app.js?v=125"></script>
 </body>
 </html>

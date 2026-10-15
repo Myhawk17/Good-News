@@ -41,18 +41,7 @@ const USER_PREF_DEFAULTS={
   dataSaver:false,
   notifications:false,
   analytics:false,
-  notifyMorning:true,
-  notifyEvening:true,
-  notifyCategories:[
-    "Kultur & Unterhaltung",
-    "Natur & Tiere",
-    "Rund um die Welt",
-    "Wirtschaft & Politik",
-    "Was war...",
-    "Sport",
-    "Medizin & Technologie",
-    "Wissenschaft"
-  ]
+
 };
 let userPrefs={...USER_PREF_DEFAULTS};
 
@@ -74,23 +63,21 @@ function readUserPreferences(){
     const normalized={
       ...USER_PREF_DEFAULTS,
       ...saved,
-      notifyCategories:Array.isArray(saved.notifyCategories)
-        ? [...new Set(saved.notifyCategories.map(migrateNotifyCategoryLabel).filter(x=>AUFWIND_CATEGORIES.includes(x)))]
-        : [...USER_PREF_DEFAULTS.notifyCategories]
+      notifications:localStorage.getItem("goodnews_push_enabled")===null ? Boolean(saved.notifications) : localStorage.getItem("goodnews_push_enabled")==="1"
     };
     if(!["dark","light"].includes(normalized.appearance))normalized.appearance="dark";
     if(!["small","normal","large"].includes(normalized.textSize))normalized.textSize="normal";
     delete normalized.reduceMotion;
     return normalized;
   }catch{
-    return {...USER_PREF_DEFAULTS,notifyCategories:[...USER_PREF_DEFAULTS.notifyCategories]};
+    return {...USER_PREF_DEFAULTS,notifications:localStorage.getItem("goodnews_push_enabled")==="1"};
   }
 }
 function saveUserPreferences(next=userPrefs){
   userPrefs={
     ...USER_PREF_DEFAULTS,
     ...next,
-    notifyCategories:Array.isArray(next.notifyCategories)?next.notifyCategories:[...USER_PREF_DEFAULTS.notifyCategories]
+    notifications:Boolean(next.notifications)
   };
   try{localStorage.setItem(USER_PREFS_KEY,JSON.stringify(userPrefs))}catch{}
   applyUserPreferences();
@@ -113,12 +100,7 @@ function populateUserPreferences(prefs=userPrefs){
   if($("prefDataSaver"))$("prefDataSaver").checked=Boolean(prefs.dataSaver);
   if($("prefNotifications"))$("prefNotifications").checked=Boolean(prefs.notifications);
   if($("prefAnalytics"))$("prefAnalytics").checked=Boolean(prefs.analytics);
-  if($("prefNotifyMorning"))$("prefNotifyMorning").checked=Boolean(prefs.notifyMorning);
-  if($("prefNotifyEvening"))$("prefNotifyEvening").checked=Boolean(prefs.notifyEvening);
-  document.querySelectorAll("[data-notify-category]").forEach(input=>{
-    input.checked=(prefs.notifyCategories||[]).includes(input.dataset.notifyCategory);
-  });
-  updateNotificationPreferencesVisibility();
+
 }
 function collectUserPreferences(){
   return {
@@ -126,19 +108,10 @@ function collectUserPreferences(){
     textSize:$("prefTextSize")?.value||"normal",
     dataSaver:Boolean($("prefDataSaver")?.checked),
     notifications:Boolean($("prefNotifications")?.checked),
-    analytics:Boolean($("prefAnalytics")?.checked),
-    notifyMorning:Boolean($("prefNotifyMorning")?.checked),
-    notifyEvening:Boolean($("prefNotifyEvening")?.checked),
-    notifyCategories:[...document.querySelectorAll("[data-notify-category]:checked")].map(x=>x.dataset.notifyCategory)
+    analytics:Boolean($("prefAnalytics")?.checked)
   };
 }
-function updateNotificationPreferencesVisibility(){
-  const details=$("notificationPreferenceDetails");
-  if(!details)return;
-  const enabled=Boolean($("prefNotifications")?.checked);
-  details.classList.toggle("disabled",!enabled);
-  details.querySelectorAll("input").forEach(input=>input.disabled=!enabled);
-}
+function updateNotificationPreferencesVisibility(){}
 // Formulare werden erst beim expliziten Speichern übernommen. Für alle bearbeitbaren
 // Bereiche merken wir einen Ausgangszustand und warnen beim Verlassen mit Änderungen.
 const trackedFormStates=new WeakMap();
@@ -1478,7 +1451,7 @@ $("welcomeAnalytics")?.addEventListener("change",saveWelcomeAnalyticsChoice);
 $("welcomeContinueBtn")?.addEventListener("click",async()=>{
   const button=$("welcomeContinueBtn");
   const msg=$("welcomeSettingsMessage");
-  const previous={...userPrefs,notifyCategories:[...(userPrefs.notifyCategories||[])]};
+  const previous={...userPrefs};
   const next=collectWelcomeSettings();
   if(button) button.disabled=true;
   if(msg) msg.textContent="Einstellungen werden übernommen …";
@@ -1920,14 +1893,14 @@ $("passwordRecoveryForm")?.addEventListener("submit",async(e)=>{
     if(btn)btn.disabled=false;
   }
 });
-["prefAppearance","prefTextSize","prefDataSaver","prefAnalytics","prefNotifyMorning","prefNotifyEvening"].forEach(id=>{
+["prefAppearance","prefTextSize","prefDataSaver","prefAnalytics"].forEach(id=>{
   $(id)?.addEventListener("change",()=>{});
 });
 $("prefNotifications")?.addEventListener("change",()=>updateNotificationPreferencesVisibility());
 document.querySelectorAll("[data-notify-category]").forEach(input=>input.addEventListener("change",()=>{}));
 
 $("resetUserPreferencesBtn")?.addEventListener("click",()=>{
-  populateUserPreferences({...USER_PREF_DEFAULTS,notifyCategories:[...USER_PREF_DEFAULTS.notifyCategories]});
+  populateUserPreferences({...USER_PREF_DEFAULTS,notifications:userPrefs.notifications});
   markFormDirty(userPreferencesForm);
   const msg=$("userPreferencesMessage");
   if(msg)msg.textContent="Standard ausgewählt – zum Übernehmen noch speichern.";
@@ -1938,7 +1911,7 @@ userPreferencesForm?.addEventListener("submit",async e=>{
   const msg=$("userPreferencesMessage");
   const saveBtn=$("saveUserPreferencesBtn");
   const next=collectUserPreferences();
-  const previous={...userPrefs,notifyCategories:[...(userPrefs.notifyCategories||[])]};
+  const previous={...userPrefs};
   if(saveBtn)saveBtn.disabled=true;
   if(msg)msg.textContent="Speichern …";
   try{
@@ -4392,7 +4365,7 @@ async function savePushSubscription(sub,prefs=userPrefs){
   const j=sub.toJSON();
   const {data:{session}}=await db.auth.getSession();
   const user=session?.user||null;
-  const categories=Array.isArray(prefs?.notifyCategories)?prefs.notifyCategories.map(migrateNotifyCategoryLabel).filter(x=>AUFWIND_CATEGORIES.includes(x)):[...AUFWIND_CATEGORIES];
+  const categories=[...AUFWIND_CATEGORIES];
   const deviceKey=getPushDeviceKey();
   const payload={
     user_id:user?.id||null,
@@ -4401,8 +4374,8 @@ async function savePushSubscription(sub,prefs=userPrefs){
     p256dh:j.keys?.p256dh||"",
     auth:j.keys?.auth||"",
     enabled:true,
-    notify_morning:prefs?.notifyMorning!==false,
-    notify_evening:prefs?.notifyEvening!==false,
+    notify_morning:true,
+    notify_evening:true,
     notify_categories:categories,
     updated_at:new Date().toISOString()
   };
@@ -4499,7 +4472,8 @@ async function syncPushPreferencesForCurrentAccount(sessionOverride=null){
   if(!configured||!pushSupported())return Boolean(userPrefs.notifications);
   // Build 118: Die gespeicherte Nutzerentscheidung ist die Quelle der Wahrheit.
   // Ein Update, ein temporär fehlendes Abo oder ein Server-Lesefehler darf sie nicht überschreiben.
-  const wanted=Boolean(userPrefs.notifications || localStorage.getItem("goodnews_push_enabled")==="1");
+  const savedPushChoice=localStorage.getItem("goodnews_push_enabled");
+  const wanted=savedPushChoice===null ? Boolean(userPrefs.notifications) : savedPushChoice==="1";
   if(Notification.permission==="denied"){
     // Die App ändert den Wunsch nicht; Android/Browser hat Push lediglich blockiert.
     if(input && !userPreferencesDialog?.open)input.checked=wanted;
@@ -4511,25 +4485,12 @@ async function syncPushPreferencesForCurrentAccount(sessionOverride=null){
     if(wanted && Notification.permission==="granted" && !sub){
       // Nach einem Update kann die Browser-Subscription fehlen. Ohne neuen Permission-Prompt
       // versuchen wir sie anhand des bereits erteilten Rechts wiederherzustellen.
-      try{sub=await enablePush(userPrefs)}catch(err){console.warn("Push-Abo konnte noch nicht wiederhergestellt werden",err)}
+      try{await enablePush(userPrefs);sub=await getPushSubscription()}catch(err){console.warn("Push-Abo konnte noch nicht wiederhergestellt werden",err)}
     }
-    let row=null;
-    if(session?.user && sub && Notification.permission==="granted"){
-      const result=await db.from("push_subscriptions")
-        .select("enabled,notify_morning,notify_evening,notify_categories")
-        .eq("user_id",session.user.id)
-        .eq("endpoint",sub.endpoint)
-        .maybeSingle();
-      if(!result.error && result.data)row=result.data;
-    }
-    // Serverwerte dürfen Filter aktualisieren, aber niemals den lokalen Master-Schalter
-    // nur wegen eines Updates oder eines vorübergehenden Sync-Problems deaktivieren.
-    if(wanted && row){
-      if(typeof row.notify_morning==="boolean")userPrefs.notifyMorning=row.notify_morning;
-      if(typeof row.notify_evening==="boolean")userPrefs.notifyEvening=row.notify_evening;
-      if(Array.isArray(row.notify_categories)){
-        userPrefs.notifyCategories=row.notify_categories.map(migrateNotifyCategoryLabel).filter(x=>AUFWIND_CATEGORIES.includes(x));
-      }
+    // Keine serverseitigen Themen- oder Zeitfilter mehr in die Nutzereinstellungen übernehmen.
+    // Bei bestehendem Abo alte Filter auf alle Themen und Tageszeiten zurücksetzen.
+    if(wanted && sub && Notification.permission==="granted"){
+      await savePushSubscription(sub,userPrefs).catch(err=>console.warn("Push-Filter konnten nicht aktualisiert werden",err));
     }
     userPrefs.notifications=wanted;
     try{localStorage.setItem(USER_PREFS_KEY,JSON.stringify(userPrefs));}catch{}
@@ -4788,9 +4749,8 @@ function renderPrivacyExport(target,data,{showEmail=true,localData=null}={}){
     : `<p class="muted">Keine deinem Konto zugeordneten Fehlermeldungen.</p>`;
   const pushRows=pushes.length
     ? `<ul class="privacy-compact-list">${pushes.map(p=>{
-        const times=[p.notify_morning!==false?"morgens":null,p.notify_evening!==false?"abends":null].filter(Boolean).join(" & ")||"keine Zeit ausgewählt";
-        const cats=Array.isArray(p.notify_categories)&&p.notify_categories.length?p.notify_categories.join(", "):"keine Kategorie ausgewählt";
-        return `<li><strong>Push-Abo #${esc(p.id)}</strong> · ${p.enabled?"aktiv":"inaktiv"}<br><span class="muted">${esc(times)} · ${esc(cats)}<br>angelegt ${esc(fmtPrivacyDate(p.created_at))}</span></li>`;
+        
+        return `<li><strong>Push-Abo #${esc(p.id)}</strong> · ${p.enabled?"aktiv":"inaktiv"}<br><span class="muted">Alle von der Redaktion ausgewählten Push-Meldungen<br>angelegt ${esc(fmtPrivacyDate(p.created_at))}</span></li>`;
       }).join("")}</ul>`
     : `<p class="muted">Keine Push-Abonnements gespeichert.</p>`;
   target.innerHTML=`
