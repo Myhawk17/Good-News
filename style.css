@@ -2109,3 +2109,4 @@ html.user-theme-light .report-news-choice:hover,html.user-theme-light .report-ne
   min-width:40px;width:40px;padding:0;border-radius:10px;
   display:grid;place-items:center;font-size:19px;line-height:1;
 }
+.comment-moderation-actions{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.55rem}.community-consent{display:flex;align-items:flex-start;gap:.45rem;font-size:.88rem}.community-consent input{margin-top:.2rem;flex:0 0 auto}

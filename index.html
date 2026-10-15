@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://hkhuspzqhagodxtujxkv.supabase.co wss://hkhuspzqhagodxtujxkv.supabase.co https://api.pwnedpasswords.com https://commons.wikimedia.org; manifest-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests">
 <script>
 /* Build 106: einmalige PWA-Bereinigung gegen alte, von Android wiederbelebte Worker/Caches. */
 (async()=>{
@@ -44,12 +45,12 @@
   <meta name="apple-mobile-web-app-title" content="Aufwind">
   <meta name="description" content="Aufwind – Good News aus aller Welt. Positive Nachrichten kompakt, transparent und nachvollziehbar.">
   <title>Aufwind – Good News aus aller Welt</title>
-  <link rel="manifest" href="manifest.json?v=116">
+  <link rel="manifest" href="manifest.json?v=120">
   <link rel="icon" type="image/png" sizes="32x32" href="aufwind-favicon-32.png">
   <link rel="icon" type="image/png" sizes="192x192" href="aufwind-icon-192.png">
   <link rel="icon" type="image/png" sizes="512x512" href="aufwind-icon-512.png">
   <link rel="apple-touch-icon" sizes="180x180" href="aufwind-apple-touch-icon.png">
-  <link rel="stylesheet" href="style.css?v=116">
+  <link rel="stylesheet" href="style.css?v=120">
 </head>
 <body>
 <header class="appbar">
@@ -74,7 +75,7 @@
         <span class="menu-chevron" aria-hidden="true">›</span>
       </button>
         <button id="accountBtn" type="button"><span>↪</span><span id="accountBtnLabel">Anmelden</span></button>
-        <div class="app-build-label" aria-label="App-Version">Aufwind · Build 116</div>
+        <div class="app-build-label" aria-label="App-Version">Aufwind · Build 120</div>
       </div>
       <div class="slide-quick-actions" id="slideQuickActions">
         <button class="icon-btn slide-focus-btn" id="slideFocusBtn" type="button" aria-label="Slide-Text ausblenden" aria-pressed="false" title="Nur Bild anzeigen">
@@ -236,7 +237,7 @@
         <div class="user-setting-toggle-row">
           <div class="user-setting-copy">
             <strong>Benachrichtigungen</strong>
-            <span>Stelle Zeiten und Kategorien frei zusammen. Erst mit „Speichern“ wird die komplette Auswahl übernommen. Beim ersten Aktivieren fragt dein Browser nach der Erlaubnis.</span>
+            <span>Erhalte ausgewählte Push-Nachrichten der Redaktion. Du entscheidest nur, ob du Benachrichtigungen erhalten möchtest. Deine Wahl bleibt bei Updates erhalten.</span>
           </div>
           <label class="switch-control" aria-label="Benachrichtigungen vormerken">
             <input id="prefNotifications" type="checkbox">
@@ -244,24 +245,6 @@
           </label>
         </div>
 
-        <div id="notificationPreferenceDetails" class="notification-preference-details">
-          <div class="notification-times">
-            <label><input id="prefNotifyMorning" type="checkbox"> Morgens</label>
-            <label><input id="prefNotifyEvening" type="checkbox"> Abends</label>
-          </div>
-
-          <div class="notification-category-title">Benachrichtigungskategorien</div>
-          <div class="notification-category-grid">
-            <label><input type="checkbox" data-notify-category="Kultur & Unterhaltung"> Kultur &amp; Unterhaltung</label>
-            <label><input type="checkbox" data-notify-category="Natur & Tiere"> Natur &amp; Tiere</label>
-            <label><input type="checkbox" data-notify-category="Rund um die Welt"> Rund um die Welt</label>
-            <label><input type="checkbox" data-notify-category="Wirtschaft & Politik"> Wirtschaft &amp; Politik</label>
-            <label><input type="checkbox" data-notify-category="Was war..."> Was war...</label>
-            <label><input type="checkbox" data-notify-category="Sport"> Sport</label>
-            <label><input type="checkbox" data-notify-category="Medizin & Technologie"> Medizin &amp; Technologie</label>
-            <label><input type="checkbox" data-notify-category="Wissenschaft"> Wissenschaft</label>
-          </div>
-        </div>
       </section>
     </div>
 
@@ -392,6 +375,7 @@
     <div class="legal-tabs" role="tablist" aria-label="Rechtliche Informationen">
       <button class="legal-tab active" type="button" data-legal-tab="imprint">Impressum</button>
       <button class="legal-tab" type="button" data-legal-tab="privacy">Datenschutz</button>
+      <button class="legal-tab" type="button" data-legal-tab="community">Community-Regeln</button>
     </div>
     <div class="legal-scroll">
       <section class="legal-panel active" data-legal-panel="imprint">
@@ -448,15 +432,30 @@
         <p>Aufwind enthält Links zu externen Text- und Bildquellen. Beim Öffnen eines solchen Links wird eine Verbindung zum jeweiligen externen Anbieter hergestellt. Redaktionell eingebundene Bilder können außerdem unmittelbar von einem externen Bildserver geladen werden, beispielsweise von Pexels. In diesem Fall erhält der jeweilige Bildanbieter bereits beim Anzeigen der Meldung technisch erforderliche Verbindungsdaten wie insbesondere die IP-Adresse und Browserinformationen. Für die weitere Datenverarbeitung des externen Anbieters gelten dessen Datenschutzbestimmungen.</p>
         <p class="legal-small">Pexels: <a href="https://www.pexels.com/privacy-policy/" target="_blank" rel="noopener noreferrer">Datenschutzhinweise von Pexels</a></p>
 
-        <h4>10. Speicherdauer</h4>
+        <h4>10. Kommentare, Meldungen und Moderation</h4>
+        <p>Angemeldete Nutzer können Kommentare veröffentlichen. Dabei werden die Nutzerkennung, die betroffene Meldung, der Kommentartext sowie Zeitangaben bei Supabase gespeichert. Kommentare sind öffentlich sichtbar. Zur Missbrauchsprävention wird serverseitig die Häufigkeit neuer Kommentare pro Konto begrenzt.</p>
+        <p>Angemeldete Nutzer können Kommentare und Nutzer melden. Dabei werden die Nutzerkennung des Meldenden, der Bezug zum gemeldeten Kommentar bzw. Nutzer, der Meldegrund, der Bearbeitungsstatus und Zeitangaben gespeichert und der Redaktion zur Moderation bereitgestellt. Blockierte Nutzer werden ausschließlich lokal auf dem jeweiligen Gerät gespeichert. Die Verarbeitung dient dem sicheren Betrieb und der Moderation der Community-Funktionen auf Grundlage von Art. 6 Abs. 1 lit. f DSGVO.</p>
+
+        <h4>11. Speicherdauer</h4>
         <p>Personenbezogene Daten werden nur so lange gespeichert, wie sie für den jeweiligen Zweck erforderlich sind oder gesetzliche Aufbewahrungspflichten bestehen. Lokale App-Daten können durch Zurücksetzen der Einstellungen, Löschen von Favoriten, Löschen der Website-/App-Daten oder Deinstallation entfernt werden. Nicht mehr benötigte redaktionelle Einsendungen und Fehlermeldungen werden im Rahmen der redaktionellen Pflege gelöscht. Ungültige Push-Abonnements werden beim Versand technisch erkannt und entfernt.</p>
 
-        <h4>11. Deine Rechte</h4>
+        <h4>12. Deine Rechte</h4>
         <p>Du hast im Rahmen der gesetzlichen Voraussetzungen insbesondere Rechte auf Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung, Datenübertragbarkeit und Widerspruch. Erteilte Einwilligungen kannst du jederzeit mit Wirkung für die Zukunft widerrufen. Angemeldete Nutzer können die ihrem Konto zugeordneten Aufwind-Daten zusätzlich direkt im Kontobereich einsehen und herunterladen sowie ihr Konto und die direkt zugeordneten Serverdaten löschen. Außerdem besteht ein Beschwerderecht bei einer Datenschutzaufsichtsbehörde.</p>
         <p class="legal-small">Für Verantwortliche mit Sitz in Bremen ist insbesondere der Landesbeauftragte für Datenschutz und Informationsfreiheit der Freien Hansestadt Bremen zuständig: <a href="https://www.datenschutz.bremen.de/" target="_blank" rel="noopener noreferrer">datenschutz.bremen.de</a>.</p>
 
-        <h4>12. Änderungen dieser Datenschutzerklärung</h4>
+        <h4>13. Änderungen dieser Datenschutzerklärung</h4>
         <p>Diese Datenschutzerklärung wird angepasst, wenn sich Funktionen, eingesetzte Dienste oder die Datenverarbeitung von Aufwind wesentlich ändern.</p>
+      </section>
+      <section class="legal-panel" data-legal-panel="community">
+        <h3>Community-Regeln</h3>
+        <p>Stand: 27. September 2026</p>
+        <p>Aufwind soll ein freundlicher und sicherer Ort für den Austausch über gute Nachrichten sein. Mit dem Veröffentlichen eines Kommentars akzeptierst du diese Regeln.</p>
+        <h4>Was nicht erlaubt ist</h4>
+        <p>Untersagt sind insbesondere Beleidigungen, Bedrohungen, Belästigung, Hass oder Diskriminierung, sexuell anstößige oder gewaltverherrlichende Inhalte, rechtswidrige Inhalte, die Veröffentlichung personenbezogener Daten anderer ohne Erlaubnis, Werbung und Spam sowie wiederholte oder gezielte Störungen der Diskussion.</p>
+        <h4>Moderation</h4>
+        <p>Kommentare und Nutzer können direkt in der Kommentaransicht gemeldet werden. Aufwind kann gemeldete oder anderweitig bekannt gewordene Inhalte prüfen und bei Regelverstößen entfernen. Nutzer können andere Nutzer außerdem blockieren; deren Kommentare werden dann auf dem jeweiligen Gerät ausgeblendet.</p>
+        <h4>Fair melden</h4>
+        <p>Die Meldefunktion darf nicht missbräuchlich eingesetzt werden. Meldungen sollen einen nachvollziehbaren Grund enthalten.</p>
       </section>
     </div>
   </dialog>
@@ -850,6 +849,11 @@
               <div id="pexelsResults" class="pexels-results" hidden></div>
             </div>
 
+            <div class="pexels-picker" aria-labelledby="aiImageTitle">
+              <div class="pexels-picker-head"><div><strong id="aiImageTitle">KI-Bild erstellen</strong><span>Eigene Illustrationen statt Stockfotos</span></div></div>
+              <div class="pexels-search-row"><input id="aiImagePrompt" data-transient maxlength="500" placeholder="z. B. Saturn mit seinen Ringen, fotorealistisch"><button class="secondary compact" id="aiImageGenerateBtn" type="button">Bild generieren</button></div>
+              <div id="aiImageMessage" class="muted pexels-message" aria-live="polite">Benötigt einen eingerichteten serverseitigen Bildgenerierungsdienst.</div>
+            </div>
             <div class="image-source-fields">
               <label>Bildquelle
                 <input id="imageSourceUrl" type="url" placeholder="Link zur Original-/Quellseite">
@@ -1146,6 +1150,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="app.js?v=116"></script>
+  <script src="app.js?v=120"></script>
 </body>
 </html>

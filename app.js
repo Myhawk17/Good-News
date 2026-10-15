@@ -127,9 +127,9 @@ function collectUserPreferences(){
     dataSaver:Boolean($("prefDataSaver")?.checked),
     notifications:Boolean($("prefNotifications")?.checked),
     analytics:Boolean($("prefAnalytics")?.checked),
-    notifyMorning:Boolean($("prefNotifyMorning")?.checked),
-    notifyEvening:Boolean($("prefNotifyEvening")?.checked),
-    notifyCategories:[...document.querySelectorAll("[data-notify-category]:checked")].map(x=>x.dataset.notifyCategory)
+    notifyMorning:true,
+    notifyEvening:true,
+    notifyCategories:[...AUFWIND_CATEGORIES]
   };
 }
 function updateNotificationPreferencesVisibility(){
@@ -1022,6 +1022,15 @@ async function loadCommentCounts(){
   }catch(err){console.warn("Kommentarzahlen konnten nicht geladen werden",err)}
 }
 function commentCountFor(id){return Math.max(0,Number(commentCounts[String(id)])||0)}
+const COMMUNITY_RULES_VERSION="2026-09-27";
+function blockedCommentUsers(){try{return new Set(JSON.parse(localStorage.getItem("aufwind_blocked_comment_users")||"[]"))}catch{return new Set()}}
+function blockCommentUser(userId){const set=blockedCommentUsers();set.add(String(userId));localStorage.setItem("aufwind_blocked_comment_users",JSON.stringify([...set]));}
+function communityAccepted(userId){return localStorage.getItem(`aufwind_community_rules_${userId}`)===COMMUNITY_RULES_VERSION}
+function acceptCommunityRules(userId){localStorage.setItem(`aufwind_community_rules_${userId}`,COMMUNITY_RULES_VERSION)}
+function showCommunityRules(){
+  document.querySelector('[data-legal-tab="community"]')?.click();
+  const d=$("legalDialog"); if(d&&!d.open)d.showModal();
+}
 async function openComments(item){
   if(!item)return;
   openReader("Kommentare","Zum Beitrag",`<div class="comments-loading">Kommentare werden geladen …</div>`);
@@ -1029,105 +1038,55 @@ async function openComments(item){
     const {data:{session}}=await db.auth.getSession();
     const {data,error}=await db.from("news_comments").select("id,news_id,user_id,body,created_at").eq("news_id",item.id).order("created_at",{ascending:true});
     if(error)throw error;
-    const rows=data||[];
-    commentCounts[String(item.id)]=rows.length;
+    const blocked=blockedCommentUsers();
+    const rows=(data||[]).filter(x=>!blocked.has(String(x.user_id)));
+    commentCounts[String(item.id)]=(data||[]).length;
     const list=rows.length?rows.map(x=>`<article class="comment-card">
       <div class="comment-meta">${esc(new Date(x.created_at).toLocaleString("de-DE"))}</div>
       <p>${esc(x.body)}</p>
-      ${session?.user?.id===x.user_id?`<button class="secondary compact comment-delete" type="button" data-comment-delete="${x.id}">Löschen</button>`:""}
-    </article>`).join(""):`<p class="muted">Noch keine Kommentare. Schreib den ersten.</p>`;
+      ${session?.user?.id===x.user_id?`<button class="secondary compact comment-delete" type="button" data-comment-delete="${x.id}">Löschen</button>`:session?`<div class="comment-moderation-actions"><button class="secondary compact comment-report" type="button" data-comment-report="${x.id}">Kommentar melden</button><button class="secondary compact user-report" type="button" data-user-report="${x.user_id}" data-comment-id="${x.id}">Nutzer melden</button><button class="secondary compact user-block" type="button" data-user-block="${x.user_id}">Nutzer blockieren</button></div>`:""}
+    </article>`).join(""):`<p class="muted">Noch keine sichtbaren Kommentare.</p>`;
     const composer=session?`<form id="commentForm" class="comment-form">
       <label>Dein Kommentar<textarea id="commentBody" rows="4" maxlength="500" required placeholder="Schreib etwas Freundliches …"></textarea></label>
+      ${communityAccepted(session.user.id)?`<p class="legal-small">Mit dem Kommentieren gelten die <button class="text-button" id="commentRulesBtn" type="button">Community-Regeln</button>.</p>`:`<label class="community-consent"><input id="communityConsent" type="checkbox" required> Ich akzeptiere die <button class="text-button" id="commentRulesBtn" type="button">Community-Regeln</button>.</label>`}
       <div class="comment-form-foot"><small><span id="commentChars">0</span>/500</small><button class="primary" type="submit">Kommentieren</button></div>
       <div id="commentMessage" class="message" aria-live="polite"></div>
     </form>`:`<p class="comment-login-note">Zum Kommentieren musst du mit deinem Aufwind-Konto angemeldet sein. Lesen kannst du die Kommentare auch ohne Anmeldung.</p>`;
     $("readerContent").innerHTML=`<p class="comments-story-title">${esc(item.title)}</p><div class="comments-list">${list}</div>${composer}`;
+    $("commentRulesBtn")?.addEventListener("click",showCommunityRules);
     $("commentBody")?.addEventListener("input",()=>{$("commentChars").textContent=String($("commentBody").value.length)});
     $("commentForm")?.addEventListener("submit",async e=>{
-      e.preventDefault();
-      const body=$("commentBody").value.trim(), msg=$("commentMessage");
+      e.preventDefault(); const body=$("commentBody").value.trim(), msg=$("commentMessage");
       if(!body){msg.textContent="Bitte gib einen Kommentar ein.";return}
-      const {data:{user}}=await db.auth.getUser();
-      if(!user){msg.textContent="Bitte melde dich erneut an.";return}
+      const {data:{user}}=await db.auth.getUser(); if(!user){msg.textContent="Bitte melde dich erneut an.";return}
+      if(!communityAccepted(user.id)){if(!$("communityConsent")?.checked){msg.textContent="Bitte akzeptiere zuerst die Community-Regeln.";return} acceptCommunityRules(user.id)}
       const {error}=await db.from("news_comments").insert({news_id:item.id,user_id:user.id,body});
-      if(error){msg.textContent=error.message||String(error);return}
-      await openComments(item); syncSlideQuickActions();
+      if(error){msg.textContent=error.message||String(error);return} await openComments(item); syncSlideQuickActions();
     });
+    $("readerContent").querySelectorAll("[data-comment-report]").forEach(btn=>btn.addEventListener("click",async()=>{
+      const reason=prompt("Warum möchtest du diesen Kommentar melden? (mindestens 3 Zeichen)","")?.trim(); if(!reason)return;
+      if(reason.length<3){alert("Bitte beschreibe den Grund etwas genauer.");return}
+      const {data:{user}}=await db.auth.getUser(); if(!user){alert("Bitte melde dich an, um Kommentare zu melden.");return}
+      const {error}=await db.from("comment_reports").insert({comment_id:Number(btn.dataset.commentReport),reporter_user_id:user.id,reason});
+      if(error){alert(error.code==="23505"?"Du hast diesen Kommentar bereits gemeldet.":(error.message||String(error)));return} alert("Danke. Die Meldung wurde an die Redaktion geschickt.");
+    }));
+    $("readerContent").querySelectorAll("[data-user-report]").forEach(btn=>btn.addEventListener("click",async()=>{
+      const reason=prompt("Warum möchtest du diesen Nutzer melden? (mindestens 3 Zeichen)","")?.trim(); if(!reason)return;
+      if(reason.length<3){alert("Bitte beschreibe den Grund etwas genauer.");return}
+      const {data:{user}}=await db.auth.getUser(); if(!user){alert("Bitte melde dich an.");return}
+      const {error}=await db.from("user_reports").insert({reported_user_id:btn.dataset.userReport,reporter_user_id:user.id,comment_id:Number(btn.dataset.commentId),reason});
+      if(error){alert(error.code==="23505"?"Du hast diesen Nutzer in diesem Zusammenhang bereits gemeldet.":(error.message||String(error)));return} alert("Danke. Die Nutzermeldung wurde an die Redaktion geschickt.");
+    }));
+    $("readerContent").querySelectorAll("[data-user-block]").forEach(btn=>btn.addEventListener("click",async()=>{
+      if(!confirm("Kommentare dieses Nutzers auf diesem Gerät ausblenden?"))return; blockCommentUser(btn.dataset.userBlock); await openComments(item);
+    }));
     $("readerContent").querySelectorAll("[data-comment-delete]").forEach(btn=>btn.addEventListener("click",async()=>{
-      if(!confirm("Kommentar wirklich löschen?"))return;
-      const {error}=await db.from("news_comments").delete().eq("id",btn.dataset.commentDelete);
-      if(error){alert(error.message||String(error));return}
-      await openComments(item); syncSlideQuickActions();
+      if(!confirm("Kommentar wirklich löschen?"))return; const {error}=await db.from("news_comments").delete().eq("id",btn.dataset.commentDelete);
+      if(error){alert(error.message||String(error));return} await openComments(item); syncSlideQuickActions();
     }));
     syncSlideQuickActions();
-  }catch(err){
-    $("readerContent").innerHTML=`<p class="message">Kommentare konnten nicht geladen werden: ${esc(err.message||String(err))}</p>`;
-  }
+  }catch(err){$("readerContent").innerHTML=`<p class="message">Kommentare konnten nicht geladen werden: ${esc(err.message||String(err))}</p>`;}
 }
-function syncSlideQuickActions(){
-  const item=currentSlideItem(), favBtn=$("slideFavQuickBtn"), commentBtn=$("slideCommentQuickBtn"), shareBtn=$("slideShareQuickBtn");
-  const available=!!item;
-  [favBtn,commentBtn,shareBtn].filter(Boolean).forEach(btn=>btn.disabled=!available);
-  if(!favBtn||!commentBtn||!shareBtn)return;
-  if(!available){
-    favBtn.classList.remove("active");
-    favBtn.innerHTML=`<svg class="quick-icon-svg quick-heart-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.7a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21.3l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.8Z"></path></svg>`;
-    commentBtn.innerHTML=`<svg class="quick-icon-svg quick-comment-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9.5 9.5 0 0 1-3.8-.8L3 21l1.6-4.4A8.2 8.2 0 0 1 3 11.5a8.5 8.5 0 0 1 9-8.4 8.5 8.5 0 0 1 9 8.4Z"></path></svg>`;
-    shareBtn.innerHTML=`<svg class="quick-icon-svg quick-share-svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="2.4"></circle><circle cx="6" cy="12" r="2.4"></circle><circle cx="18" cy="19" r="2.4"></circle><path d="m8.2 10.9 7.6-4.5M8.2 13.1l7.6 4.5"></path></svg>`;
-    favBtn.setAttribute("aria-label","Favoriten sind auf dem Tagesbildschirm nicht verfügbar");
-    commentBtn.setAttribute("aria-label","Kommentare sind auf dem Tagesbildschirm nicht verfügbar");
-    shareBtn.setAttribute("aria-label","Teilen ist auf dem Tagesbildschirm nicht verfügbar");
-    favBtn.title="Favorit";
-    shareBtn.title="Teilen";
-    return;
-  }
-  const active=isFavorite(item.id);
-  const count=favoriteCountFor(item.id);
-  const commentCount=commentCountFor(item.id);
-  const shareCount=shareCountFor(item.id);
-  favBtn.classList.toggle("active",active);
-  favBtn.innerHTML=`<svg class="quick-icon-svg quick-heart-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.7a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21.3l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.8Z"></path></svg><span class="quick-count-badge" aria-hidden="true">${count.toLocaleString("de-DE")}</span>`;
-  favBtn.setAttribute("aria-label",active?`Aktuelle Meldung aus Favoriten entfernen. ${count} Favorisierungen.`:`Aktuelle Meldung zu Favoriten hinzufügen. ${count} Favorisierungen.`);
-  favBtn.title=`${active?"Aus Favoriten entfernen":"Favorit"} · ${count.toLocaleString("de-DE")} Favorisierungen`;
-  commentBtn.innerHTML=`<svg class="quick-icon-svg quick-comment-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9.5 9.5 0 0 1-3.8-.8L3 21l1.6-4.4A8.2 8.2 0 0 1 3 11.5a8.5 8.5 0 0 1 9-8.4 8.5 8.5 0 0 1 9 8.4Z"></path></svg><span class="quick-count-badge" aria-hidden="true">${commentCount.toLocaleString("de-DE")}</span>`;
-  commentBtn.setAttribute("aria-label",`Kommentare öffnen. ${commentCount} Kommentare.`);
-  commentBtn.title=`Kommentare · ${commentCount.toLocaleString("de-DE")}`;
-  shareBtn.innerHTML=`<svg class="quick-icon-svg quick-share-svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="2.4"></circle><circle cx="6" cy="12" r="2.4"></circle><circle cx="18" cy="19" r="2.4"></circle><path d="m8.2 10.9 7.6-4.5M8.2 13.1l7.6 4.5"></path></svg><span class="quick-count-badge" aria-hidden="true">${shareCount.toLocaleString("de-DE")}</span>`;
-  shareBtn.setAttribute("aria-label",`Aktuelle Meldung teilen. ${shareCount} Mal geteilt.`);
-  shareBtn.title=`Teilen · ${shareCount.toLocaleString("de-DE")} eindeutige Shares`;
-}
-function setSlideQuickActionsOpen(open){
-  const panel=$("slideQuickActions"), toggle=$("slideActionsToggleBtn");
-  if(!panel||!toggle)return;
-  if(open){
-    // Das Plus-Menü darf die aktuelle Slide-Position niemals verändern.
-    // Das Hauptmenü wird deshalb nur geschlossen, wenn es wirklich offen ist;
-    // andernfalls könnte eine alte gespeicherte Menü-Scrollposition restauriert werden.
-    if(mainMenu && !mainMenu.hidden) closeMainMenu();
-    syncSlideQuickActions();
-  }
-  panel.hidden=!open;
-  toggle.setAttribute("aria-expanded",String(open));
-  toggle.classList.toggle("active",open);
-}
-$("slideActionsToggleBtn")?.addEventListener("click",e=>{
-  e.preventDefault();e.stopPropagation();
-  setSlideQuickActionsOpen($("slideQuickActions")?.hidden!==false);
-});
-$("slideFavQuickBtn")?.addEventListener("click",()=>{
-  const item=currentSlideItem(); if(!item)return;
-  const active=toggleFavorite(item.id);
-  const key=String(item.id);
-  favoriteCounts[key]=Math.max(0,favoriteCountFor(item.id)+(active?1:-1));
-  if(active)trackAnalyticsEvent("favorite",item.id);
-  syncSlideQuickActions();
-  void setFavoriteOnServer(item.id,active);
-});
-$("slideCommentQuickBtn")?.addEventListener("click",()=>{const item=currentSlideItem();if(item)void openComments(item)});
-$("slideShareQuickBtn")?.addEventListener("click",()=>{
-  const item=currentSlideItem();if(!item)return;
-  shareItem(item);
-});
 
 let reportNewsId=null;
 function reportDateKey(item){return String(item?.published_date||item?.date||"").slice(0,10);}
@@ -1206,39 +1165,45 @@ function refreshAdminInboxBadges(){
   paintCountBadge("adminSettingsBadge",adminInboxCounts.reports);
 }
 const reportStatusLabels={new:"Offen",resolved:"Erledigt",dismissed:"Verworfen"};
-let adminNewsReports=[];
+let adminNewsReports=[],adminCommentReports=[],adminUserReports=[];
 async function loadNewsReports(){
   if(!currentAdminSession)return;
-  const {data,error}=await db.from("news_reports").select("id,news_id,report_type,comment,status,created_at,news(title)").order("created_at",{ascending:false});
-  if(error){if($("reportList"))$("reportList").innerHTML=`<p class="message">${esc(error.message)}</p>`;return;}
-  adminNewsReports=data||[];
-  adminInboxCounts.reports=adminNewsReports.filter(r=>r.status==="new").length;
-  refreshAdminInboxBadges();
-  renderNewsReports();
+  const [newsRes,commentRes,userRes]=await Promise.all([
+    db.from("news_reports").select("id,news_id,report_type,comment,status,created_at,news(title)").order("created_at",{ascending:false}),
+    db.from("comment_reports").select("id,comment_id,reason,status,created_at,news_comments(body,news_id)").order("created_at",{ascending:false}),
+    db.from("user_reports").select("id,reported_user_id,comment_id,reason,status,created_at").order("created_at",{ascending:false})
+  ]);
+  if(newsRes.error||commentRes.error||userRes.error){if($("reportList"))$("reportList").innerHTML=`<p class="message">${esc((newsRes.error||commentRes.error||userRes.error).message)}</p>`;return;}
+  adminNewsReports=newsRes.data||[]; adminCommentReports=commentRes.data||[]; adminUserReports=userRes.data||[];
+  adminInboxCounts.reports=adminNewsReports.filter(r=>r.status==="new").length+adminCommentReports.filter(r=>r.status==="new").length+adminUserReports.filter(r=>r.status==="new").length;
+  refreshAdminInboxBadges(); renderNewsReports();
 }
 function renderNewsReports(){
-  const root=$("reportList");if(!root)return;
-  const filter=$("reportStatus")?.value||"new";
-  const rows=adminNewsReports.filter(r=>filter==="all"||r.status===filter);
-  root.innerHTML=rows.length?rows.map(r=>`<article class="submission-card report-card" data-report-card="${r.id}"><div class="submission-meta"><span class="report-state ${esc(r.status)}">${esc(reportStatusLabels[r.status]||r.status)}</span> · ${esc(reportTypeLabels[r.report_type]||r.report_type)} · ${esc(new Date(r.created_at).toLocaleString("de-DE"))}</div><h4>${esc(r.news?.title||`Beitrag #${r.news_id}`)}</h4>${r.comment?`<p>${esc(r.comment)}</p>`:""}${r.status==="new"?`<div class="row report-actions"><button class="secondary report-status-btn" data-report-id="${r.id}" data-status="resolved">✓ Erledigt</button><button class="secondary report-status-btn" data-report-id="${r.id}" data-status="dismissed">Verwerfen</button></div>`:""}</article>`).join(""):`<p class="muted">Keine ${filter==="new"?"offenen ":""}Fehlermeldungen vorhanden.</p>`;
+  const root=$("reportList");if(!root)return; const filter=$("reportStatus")?.value||"new";
+  const newsRows=adminNewsReports.filter(r=>filter==="all"||r.status===filter).map(r=>({kind:"news",...r}));
+  const commentRows=adminCommentReports.filter(r=>filter==="all"||r.status===filter).map(r=>({kind:"comment",...r}));
+  const userRows=adminUserReports.filter(r=>filter==="all"||r.status===filter).map(r=>({kind:"user",...r}));
+  const rows=[...newsRows,...commentRows,...userRows].sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+  root.innerHTML=rows.length?rows.map(r=>r.kind==="user"?`<article class="submission-card report-card"><div class="submission-meta"><span class="report-state ${esc(r.status)}">${esc(reportStatusLabels[r.status]||r.status)}</span> · Nutzer gemeldet · ${esc(new Date(r.created_at).toLocaleString("de-DE"))}</div><h4>Nutzermeldung</h4><p><strong>Grund:</strong> ${esc(r.reason)}</p>${r.status==="new"?`<div class="row report-actions"><button class="secondary user-report-status" data-report-id="${r.id}" data-status="resolved">✓ Erledigt</button><button class="secondary user-report-status" data-report-id="${r.id}" data-status="dismissed">Verwerfen</button></div>`:""}</article>`:r.kind==="comment"?`<article class="submission-card report-card" data-comment-report-card="${r.id}"><div class="submission-meta"><span class="report-state ${esc(r.status)}">${esc(reportStatusLabels[r.status]||r.status)}</span> · Kommentar gemeldet · ${esc(new Date(r.created_at).toLocaleString("de-DE"))}</div><h4>Kommentar zu Beitrag #${esc(r.news_comments?.news_id||"")}</h4><p><strong>Kommentar:</strong> ${esc(r.news_comments?.body||"(bereits gelöscht)")}</p><p><strong>Meldegrund:</strong> ${esc(r.reason)}</p>${r.status==="new"?`<div class="row report-actions"><button class="secondary comment-report-delete" data-comment-id="${r.comment_id}" data-report-id="${r.id}">Kommentar löschen</button><button class="secondary comment-report-status" data-report-id="${r.id}" data-status="dismissed">Verwerfen</button></div>`:""}</article>`:`<article class="submission-card report-card" data-report-card="${r.id}"><div class="submission-meta"><span class="report-state ${esc(r.status)}">${esc(reportStatusLabels[r.status]||r.status)}</span> · ${esc(reportTypeLabels[r.report_type]||r.report_type)} · ${esc(new Date(r.created_at).toLocaleString("de-DE"))}</div><h4>${esc(r.news?.title||`Beitrag #${r.news_id}`)}</h4>${r.comment?`<p>${esc(r.comment)}</p>`:""}${r.status==="new"?`<div class="row report-actions"><button class="secondary report-status-btn" data-report-id="${r.id}" data-status="resolved">✓ Erledigt</button><button class="secondary report-status-btn" data-report-id="${r.id}" data-status="dismissed">Verwerfen</button></div>`:""}</article>`).join(""):`<p class="muted">Keine ${filter==="new"?"offenen ":""}Meldungen vorhanden.</p>`;
   root.querySelectorAll(".report-status-btn").forEach(b=>b.onclick=()=>setNewsReportStatus(b));
+  root.querySelectorAll(".comment-report-status").forEach(b=>b.onclick=()=>setCommentReportStatus(b.dataset.reportId,b.dataset.status));
+  root.querySelectorAll(".user-report-status").forEach(b=>b.onclick=async()=>{const {error}=await db.from("user_reports").update({status:b.dataset.status,updated_at:new Date().toISOString()}).eq("id",b.dataset.reportId);if(error)showAppNotice("Änderung fehlgeschlagen: "+error.message);else await loadNewsReports()});
+  root.querySelectorAll(".comment-report-delete").forEach(b=>b.onclick=()=>deleteReportedComment(b));
 }
 async function setNewsReportStatus(button){
   const id=button.dataset.reportId,status=button.dataset.status;
-  const card=button.closest("[data-report-card]");
-  card?.classList.add("is-saving");
-  card?.querySelectorAll("button").forEach(btn=>btn.disabled=true);
-  try{
-    const {data,error}=await db.from("news_reports").update({status,updated_at:new Date().toISOString()}).eq("id",id).select("id,status").single();
-    if(error)throw error;
-    if(!data||String(data.id)!==String(id))throw new Error("Die Fehlermeldung konnte nicht aktualisiert werden.");
-    showAppNotice(status==="resolved"?"Fehlermeldung als erledigt markiert.":"Fehlermeldung verworfen.");
-    await loadNewsReports();
-  }catch(err){
-    card?.classList.remove("is-saving");
-    card?.querySelectorAll("button").forEach(btn=>btn.disabled=false);
-    showAppNotice("Änderung fehlgeschlagen: "+(err?.message||String(err)));
-  }
+  const {error}=await db.from("news_reports").update({status,updated_at:new Date().toISOString()}).eq("id",id);
+  if(error){showAppNotice("Änderung fehlgeschlagen: "+error.message);return} await loadNewsReports();
+}
+async function setCommentReportStatus(id,status){
+  const {error}=await db.from("comment_reports").update({status,updated_at:new Date().toISOString()}).eq("id",id);
+  if(error){showAppNotice("Änderung fehlgeschlagen: "+error.message);return} await loadNewsReports();
+}
+async function deleteReportedComment(button){
+  if(!confirm("Gemeldeten Kommentar wirklich löschen?"))return;
+  const {error}=await db.from("news_comments").delete().eq("id",button.dataset.commentId);
+  if(error){showAppNotice("Löschen fehlgeschlagen: "+error.message);return}
+  await setCommentReportStatus(button.dataset.reportId,"resolved");
 }
 $("reportStatus")?.addEventListener("change",renderNewsReports);
 
@@ -3297,7 +3262,7 @@ queueMicrotask(()=>setTimeout(()=>void maybeOpenInstallWelcome(),180));
 // selbst alle offenen Good-News-Fenster auf den neuen Build führen. So hängt die
 // installierte PWA nicht mehr an einer alten Cache-/Worker-Version fest.
 // Build 35 – adaptive Überschriften (max. 4 Zeilen) und stärkerer Lesbarkeitsverlauf.
-const AUFWIND_BUILD=116;
+const AUFWIND_BUILD=118;
 let aufwindSwRegistration=null;
 let aufwindReloading=false;
 
@@ -4419,9 +4384,9 @@ async function savePushSubscription(sub,prefs=userPrefs){
     p256dh:j.keys?.p256dh||"",
     auth:j.keys?.auth||"",
     enabled:true,
-    notify_morning:prefs?.notifyMorning!==false,
-    notify_evening:prefs?.notifyEvening!==false,
-    notify_categories:categories,
+    notify_morning:true,
+    notify_evening:true,
+    notify_categories:[...AUFWIND_CATEGORIES],
     updated_at:new Date().toISOString()
   };
 
@@ -4515,7 +4480,7 @@ async function disablePush(){
 async function syncPushPreferencesForCurrentAccount(sessionOverride=null){
   const input=$("prefNotifications");
   if(!configured||!pushSupported())return Boolean(userPrefs.notifications);
-  // Build 116: Die gespeicherte Nutzerentscheidung ist die Quelle der Wahrheit.
+  // Build 118: Die gespeicherte Nutzerentscheidung ist die Quelle der Wahrheit.
   // Ein Update, ein temporär fehlendes Abo oder ein Server-Lesefehler darf sie nicht überschreiben.
   const wanted=Boolean(userPrefs.notifications || localStorage.getItem("goodnews_push_enabled")==="1");
   if(Notification.permission==="denied"){
@@ -4529,7 +4494,7 @@ async function syncPushPreferencesForCurrentAccount(sessionOverride=null){
     if(wanted && Notification.permission==="granted" && !sub){
       // Nach einem Update kann die Browser-Subscription fehlen. Ohne neuen Permission-Prompt
       // versuchen wir sie anhand des bereits erteilten Rechts wiederherzustellen.
-      try{sub=await enablePush(userPrefs)}catch(err){console.warn("Push-Abo konnte noch nicht wiederhergestellt werden",err)}
+      try{await enablePush(userPrefs);sub=await getPushSubscription()}catch(err){console.warn("Push-Abo konnte noch nicht wiederhergestellt werden",err)}
     }
     let row=null;
     if(session?.user && sub && Notification.permission==="granted"){
@@ -4542,7 +4507,7 @@ async function syncPushPreferencesForCurrentAccount(sessionOverride=null){
     }
     // Serverwerte dürfen Filter aktualisieren, aber niemals den lokalen Master-Schalter
     // nur wegen eines Updates oder eines vorübergehenden Sync-Problems deaktivieren.
-    if(wanted && row){
+    if(false && wanted && row){
       if(typeof row.notify_morning==="boolean")userPrefs.notifyMorning=row.notify_morning;
       if(typeof row.notify_evening==="boolean")userPrefs.notifyEvening=row.notify_evening;
       if(Array.isArray(row.notify_categories)){
@@ -4913,3 +4878,10 @@ $("privacyAdminDownloadBtn")?.addEventListener("click",()=>{
   downloadJsonFile(`aufwind-dsgvo-${email}-${stamp}.json`,adminPrivacyExportCache);
 });
 
+
+// KI-Bilder werden ausschließlich über einen gesicherten Server-Endpunkt erzeugt.
+// Ohne bereitgestellten Dienst darf die App keine Bildgenerierung vortäuschen.
+$("aiImageGenerateBtn")?.addEventListener("click",()=>{
+  const msg=$("aiImageMessage");
+  if(msg)msg.textContent="Die KI-Bildgenerierung benötigt noch einen serverseitigen Anbieter/API-Schlüssel. Pexels kann bereits verwendet werden.";
+});
