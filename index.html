@@ -1167,11 +1167,11 @@ var messages=[], started=Date.now(), taps=0;
 function record(type,detail){messages.push(new Date().toLocaleTimeString()+' '+type+': '+String(detail||'').slice(0,900));if(messages.length>30)messages.shift();}
 window.addEventListener('error',function(e){record('ERROR',(e.message||'')+' '+(e.filename||'')+':'+(e.lineno||''));},true);
 window.addEventListener('unhandledrejection',function(e){record('PROMISE',e.reason&&e.reason.message||String(e.reason));});
-record('DIAG','Build 123 geladen');
+record('DIAG','Build 124 geladen');
 function report(){
  var el=document.getElementById('aufwind-diagnostic-panel');if(el){el.remove();return;}
  el=document.createElement('section');el.id='aufwind-diagnostic-panel';el.style.cssText='position:fixed!important;inset:10px!important;z-index:2147483647!important;background:#fff!important;color:#111!important;border:3px solid #222!important;border-radius:12px!important;padding:16px!important;overflow:auto!important;font:14px/1.5 Arial,sans-serif!important;';
- var title=document.createElement('h2');title.textContent='Aufwind – Fehlerdiagnose (Build 123)';el.appendChild(title);
+ var title=document.createElement('h2');title.textContent='Aufwind – Fehlerdiagnose (Build 124)';el.appendChild(title);
  var pre=document.createElement('pre');pre.style.cssText='white-space:pre-wrap!important;word-break:break-word!important;background:#eee!important;padding:10px!important;';
  var active='';try{var node=document.elementFromPoint(innerWidth/2,innerHeight/2);active=node?node.tagName+'#'+node.id+'.'+String(node.className).slice(0,100):'keins';}catch(e){active=String(e)}
  pre.textContent=['URL: '+location.pathname,'Zeit seit Start: '+Math.round((Date.now()-started)/1000)+'s','Berührungen erkannt: '+taps,'Element in Bildschirmmitte: '+active,'Bereit: '+document.readyState,'Supabase geladen: '+!!window.supabase,'--- FEHLER ---'].concat(messages).join('\n');el.appendChild(pre);
@@ -1187,6 +1187,6 @@ setInterval(mount,2000);
 </script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="app.js?v=123"></script>
+  <script src="app.js?v=124"></script>
 </body>
 </html>

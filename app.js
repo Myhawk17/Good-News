@@ -1715,6 +1715,23 @@ window.addEventListener("beforeunload",e=>{
   const forms=[$("userPreferencesForm"),$("passwordChangeForm"),$("submissionForm"),$("reportForm"),$("settingsRegisterForm"),$("settingsForgotForm"),$("passwordRecoveryForm"),$("newsForm"),$("settingsForm"),$("aboutSettingsForm"),$("legalSettingsForm")].filter(Boolean);
   if(forms.some(formIsDirty)){e.preventDefault();e.returnValue="";}
 });
+
+// Build 124: Restore the missing slide action synchronizer and handlers.
+function syncSlideQuickActions(){
+  const item=currentSlideItem();
+  const rail=$("slideQuickActions");
+  if(!rail)return;
+  rail.hidden=!item;
+  if(!item)return;
+  const fav=$("slideFavQuickBtn"),comment=$("slideCommentQuickBtn"),share=$("slideShareQuickBtn");
+  if(fav){fav.classList.toggle("active",isFavorite(item.id));fav.setAttribute("aria-pressed",String(isFavorite(item.id)));const badge=fav.querySelector(".quick-count-badge");if(badge)badge.textContent=String(favoriteCountFor(item.id));}
+  if(comment){const badge=comment.querySelector(".quick-count-badge");if(badge)badge.textContent=String(commentCountFor(item.id));}
+  if(share){const badge=share.querySelector(".quick-count-badge");if(badge)badge.textContent=String(shareCountFor(item.id));}
+}
+$("slideFavQuickBtn")?.addEventListener("click",async()=>{const item=currentSlideItem();if(!item)return;toggleFavorite(item.id);syncSlideQuickActions();try{await syncLocalFavoritesToServer();await loadFavoriteCounts()}catch(e){console.warn(e)}});
+$("slideCommentQuickBtn")?.addEventListener("click",()=>{const item=currentSlideItem();if(item)openComments(item)});
+$("slideShareQuickBtn")?.addEventListener("click",()=>{const item=currentSlideItem();if(item)shareItem(item)});
+
 let quickActionScrollTimer;
 feed.addEventListener("scroll",()=>{
   if(feed.scrollTop>100)$("swipeHint").style.display="none";
