@@ -1,4 +1,4 @@
-const AUFWIND_SW_BUILD=122;
+const AUFWIND_SW_BUILD=123;
 const CACHE=`aufwind-build-${AUFWIND_SW_BUILD}`;
 const STATIC_ASSETS=new Set([
   "style.css",

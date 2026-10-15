@@ -1160,8 +1160,33 @@
     <div id="previewContent"></div>
   </dialog>
 
+  <script>
+(function(){
+'use strict';
+var messages=[], started=Date.now(), taps=0;
+function record(type,detail){messages.push(new Date().toLocaleTimeString()+' '+type+': '+String(detail||'').slice(0,900));if(messages.length>30)messages.shift();}
+window.addEventListener('error',function(e){record('ERROR',(e.message||'')+' '+(e.filename||'')+':'+(e.lineno||''));},true);
+window.addEventListener('unhandledrejection',function(e){record('PROMISE',e.reason&&e.reason.message||String(e.reason));});
+record('DIAG','Build 123 geladen');
+function report(){
+ var el=document.getElementById('aufwind-diagnostic-panel');if(el){el.remove();return;}
+ el=document.createElement('section');el.id='aufwind-diagnostic-panel';el.style.cssText='position:fixed!important;inset:10px!important;z-index:2147483647!important;background:#fff!important;color:#111!important;border:3px solid #222!important;border-radius:12px!important;padding:16px!important;overflow:auto!important;font:14px/1.5 Arial,sans-serif!important;';
+ var title=document.createElement('h2');title.textContent='Aufwind – Fehlerdiagnose (Build 123)';el.appendChild(title);
+ var pre=document.createElement('pre');pre.style.cssText='white-space:pre-wrap!important;word-break:break-word!important;background:#eee!important;padding:10px!important;';
+ var active='';try{var node=document.elementFromPoint(innerWidth/2,innerHeight/2);active=node?node.tagName+'#'+node.id+'.'+String(node.className).slice(0,100):'keins';}catch(e){active=String(e)}
+ pre.textContent=['URL: '+location.pathname,'Zeit seit Start: '+Math.round((Date.now()-started)/1000)+'s','Berührungen erkannt: '+taps,'Element in Bildschirmmitte: '+active,'Bereit: '+document.readyState,'Supabase geladen: '+!!window.supabase,'--- FEHLER ---'].concat(messages).join('\n');el.appendChild(pre);
+ var copy=document.createElement('button');copy.textContent='Bericht kopieren';copy.style.cssText='padding:12px;background:#166534;color:white;border:0;border-radius:8px;margin-right:8px;';copy.onclick=function(){var text=pre.textContent;if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(text).then(function(){copy.textContent='Kopiert';},function(){window.prompt('Bitte Text kopieren:',text);});}else window.prompt('Bitte Text kopieren:',text);};el.appendChild(copy);
+ var close=document.createElement('button');close.textContent='Schließen';close.style.cssText='padding:12px;border:1px solid #555;background:#eee;color:#111;border-radius:8px;';close.onclick=function(){el.remove();};el.appendChild(close);
+ document.body.appendChild(el);
+}
+function mount(){if(document.getElementById('aufwind-diagnostic-button'))return;var b=document.createElement('button');b.id='aufwind-diagnostic-button';b.type='button';b.textContent='Fehlerbericht 123';b.style.cssText='position:fixed!important;left:8px!important;bottom:8px!important;z-index:2147483646!important;padding:12px!important;border:2px solid white!important;border-radius:9px!important;background:#9f1239!important;color:white!important;font:700 13px Arial,sans-serif!important;pointer-events:auto!important;';b.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();report();},true);document.body.appendChild(b);}
+document.addEventListener('pointerdown',function(){taps++;},true);
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount,{once:true});else mount();
+setInterval(mount,2000);
+})();
+</script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="app.js?v=122"></script>
+  <script src="app.js?v=123"></script>
 </body>
 </html>
