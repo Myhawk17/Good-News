@@ -127,9 +127,9 @@ function collectUserPreferences(){
     dataSaver:Boolean($("prefDataSaver")?.checked),
     notifications:Boolean($("prefNotifications")?.checked),
     analytics:Boolean($("prefAnalytics")?.checked),
-    notifyMorning:true,
-    notifyEvening:true,
-    notifyCategories:[...AUFWIND_CATEGORIES]
+    notifyMorning:Boolean($("prefNotifyMorning")?.checked),
+    notifyEvening:Boolean($("prefNotifyEvening")?.checked),
+    notifyCategories:[...document.querySelectorAll("[data-notify-category]:checked")].map(x=>x.dataset.notifyCategory)
   };
 }
 function updateNotificationPreferencesVisibility(){
@@ -4384,9 +4384,9 @@ async function savePushSubscription(sub,prefs=userPrefs){
     p256dh:j.keys?.p256dh||"",
     auth:j.keys?.auth||"",
     enabled:true,
-    notify_morning:true,
-    notify_evening:true,
-    notify_categories:[...AUFWIND_CATEGORIES],
+    notify_morning:prefs?.notifyMorning!==false,
+    notify_evening:prefs?.notifyEvening!==false,
+    notify_categories:categories,
     updated_at:new Date().toISOString()
   };
 
@@ -4494,7 +4494,7 @@ async function syncPushPreferencesForCurrentAccount(sessionOverride=null){
     if(wanted && Notification.permission==="granted" && !sub){
       // Nach einem Update kann die Browser-Subscription fehlen. Ohne neuen Permission-Prompt
       // versuchen wir sie anhand des bereits erteilten Rechts wiederherzustellen.
-      try{await enablePush(userPrefs);sub=await getPushSubscription()}catch(err){console.warn("Push-Abo konnte noch nicht wiederhergestellt werden",err)}
+      try{sub=await enablePush(userPrefs)}catch(err){console.warn("Push-Abo konnte noch nicht wiederhergestellt werden",err)}
     }
     let row=null;
     if(session?.user && sub && Notification.permission==="granted"){
@@ -4507,7 +4507,7 @@ async function syncPushPreferencesForCurrentAccount(sessionOverride=null){
     }
     // Serverwerte dürfen Filter aktualisieren, aber niemals den lokalen Master-Schalter
     // nur wegen eines Updates oder eines vorübergehenden Sync-Problems deaktivieren.
-    if(false && wanted && row){
+    if(wanted && row){
       if(typeof row.notify_morning==="boolean")userPrefs.notifyMorning=row.notify_morning;
       if(typeof row.notify_evening==="boolean")userPrefs.notifyEvening=row.notify_evening;
       if(Array.isArray(row.notify_categories)){
@@ -4878,10 +4878,3 @@ $("privacyAdminDownloadBtn")?.addEventListener("click",()=>{
   downloadJsonFile(`aufwind-dsgvo-${email}-${stamp}.json`,adminPrivacyExportCache);
 });
 
-
-// KI-Bilder werden ausschließlich über einen gesicherten Server-Endpunkt erzeugt.
-// Ohne bereitgestellten Dienst darf die App keine Bildgenerierung vortäuschen.
-$("aiImageGenerateBtn")?.addEventListener("click",()=>{
-  const msg=$("aiImageMessage");
-  if(msg)msg.textContent="Die KI-Bildgenerierung benötigt noch einen serverseitigen Anbieter/API-Schlüssel. Pexels kann bereits verwendet werden.";
-});
