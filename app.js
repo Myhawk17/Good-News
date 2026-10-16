@@ -3252,7 +3252,7 @@ queueMicrotask(()=>setTimeout(()=>void maybeOpenInstallWelcome(),180));
 // selbst alle offenen Good-News-Fenster auf den neuen Build führen. So hängt die
 // installierte PWA nicht mehr an einer alten Cache-/Worker-Version fest.
 // Build 35 – adaptive Überschriften (max. 4 Zeilen) und stärkerer Lesbarkeitsverlauf.
-const AUFWIND_BUILD=118;
+const AUFWIND_BUILD=127;
 let aufwindSwRegistration=null;
 let aufwindReloading=false;
 
@@ -3412,6 +3412,15 @@ async function checkForAppUpdate({manual=false}={}){
       return;
     }
 
+    // Do not reload an active app just because a newer version is published.
+    if(!manual){
+      console.info("Aufwind: neue Version beim nächsten Start verfügbar",remoteBuild);
+      return;
+    }
+    if(document.querySelector("dialog[open]") || ["newsForm","settingsForm","aboutSettingsForm","legalSettingsForm","submissionForm","reportForm","userPreferencesForm"].some(id=>{const form=document.getElementById(id);return form && formIsDirty(form);} )){
+      alert("Bitte zuerst Änderungen speichern und geöffnete Fenster schließen, bevor du das Update startest.");
+      return;
+    }
     if(manual && button) button.innerHTML="<span>↻</span>Update wird installiert …";
 
     // Worker aktualisieren. Build 37+ navigiert beim Aktivieren zusätzlich selbst
